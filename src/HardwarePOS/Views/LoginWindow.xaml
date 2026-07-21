@@ -1,0 +1,50 @@
+<Window x:Class="HardwarePOS.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:HardwarePOS.ViewModels"
+        Title="HARDWARE — Login"
+        Height="680" Width="560"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource BgBrush}">
+    <Window.DataContext>
+        <vm:LoginViewModel/>
+    </Window.DataContext>
+    <Grid>
+        <Border Style="{StaticResource CardBorder}" VerticalAlignment="Center" HorizontalAlignment="Center" Width="440" Padding="40">
+            <StackPanel>
+                <Border Width="96" Height="96" CornerRadius="16" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16">
+                    <TextBlock Text="HW" Foreground="White" FontSize="36" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="HARDWARE" FontSize="34" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Point of Sale &amp; Inventory" Foreground="{StaticResource MutedBrush}"
+                           FontSize="15" HorizontalAlignment="Center" Margin="0,6,0,28"/>
+
+                <TextBlock Text="Username" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextBrush}"/>
+                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Height="40" Padding="10,8"/>
+
+                <TextBlock Text="Password" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="0,12,0,0"/>
+                <Grid>
+                    <PasswordBox x:Name="PasswordBoxHidden"
+                                 Visibility="{Binding ShowPassword, Converter={StaticResource InverseBoolToVis}}"
+                                 PasswordChanged="PasswordBox_OnPasswordChanged"
+                                 FontSize="15" Height="40" Padding="10,8" Margin="0,4"/>
+                    <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="15" Height="40" Padding="10,8"
+                             Visibility="{Binding ShowPassword, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+                <CheckBox Content="Show Password" IsChecked="{Binding ShowPassword}" Margin="0,10,0,0" FontSize="13"/>
+
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#C62828" TextWrapping="Wrap" Margin="0,14,0,0" MinHeight="24" FontSize="13"/>
+
+                <Button Content="Login" Style="{StaticResource PrimaryButton}" Command="{Binding LoginCommand}"
+                        Margin="0,16,0,0" Height="48" FontSize="16" IsDefault="True"/>
+
+                <TextBlock Text="Demo: admin / Password123" Foreground="{StaticResource MutedBrush}"
+                           FontSize="12" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

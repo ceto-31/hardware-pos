@@ -1,0 +1,111 @@
+<UserControl x:Class="HardwarePOS.Views.PosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.2*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Products / barcode -->
+        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <TextBlock Text="Barcode Scan" FontWeight="SemiBold"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Add" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ScanBarcodeCommand}" IsDefault="True"/>
+                        <TextBox Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding ScanBarcodeCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </DockPanel>
+                    <TextBlock Text="Search Products" FontWeight="SemiBold" Margin="0,12,0,0"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Search" Style="{StaticResource SecondaryButton}" Command="{Binding SearchProductsCommand}"/>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+                </StackPanel>
+
+                <DockPanel>
+                    <Button DockPanel.Dock="Bottom" Content="Add Selected to Cart" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding AddSelectedCommand}" Margin="0,8,0,0"/>
+                    <DataGrid ItemsSource="{Binding ProductList}" SelectedItem="{Binding SelectedProduct}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                            <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="110"/>
+                            <DataGridTextColumn Header="Price" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70"/>
+                            <DataGridTextColumn Header="UOM" Binding="{Binding UnitOfMeasure}" Width="70"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Cart -->
+        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Shopping Cart" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Subtotal"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Subtotal, StringFormat=₱{0:N2}}" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="1" Text="Discount"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Width="120" HorizontalAlignment="Right"
+                                 Text="{Binding DiscountAmount, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Grid.Row="2" Text="{Binding TaxRate, StringFormat=VAT ({0:P0})}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TaxAmount, StringFormat=₱{0:N2}}" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="3" Text="Total Due" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TotalDue, StringFormat=₱{0:N2}}"
+                                   FontWeight="Bold" FontSize="16" HorizontalAlignment="Right" Foreground="{StaticResource PrimaryBrush}"/>
+
+                        <TextBlock Grid.Row="4" Text="Cash Tendered" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Width="120" HorizontalAlignment="Right" Margin="0,8,0,0"
+                                 Text="{Binding CashTendered, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Grid.Row="5" Text="Change" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ChangeAmount, StringFormat=₱{0:N2}}"
+                                   FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="#2E7D32"/>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="−" Style="{StaticResource SecondaryButton}" Command="{Binding DecreaseQtyCommand}" Width="40"/>
+                        <Button Content="+" Style="{StaticResource SecondaryButton}" Command="{Binding IncreaseQtyCommand}" Width="40"/>
+                        <Button Content="Remove" Style="{StaticResource DangerButton}" Command="{Binding RemoveCartItemCommand}"/>
+                        <Button Content="Clear" Style="{StaticResource SecondaryButton}" Command="{Binding ClearCartCommand}"/>
+                        <Button Content="Checkout &amp; Print" Style="{StaticResource PrimaryButton}" Command="{Binding CheckoutCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <DataGrid ItemsSource="{Binding Cart}" SelectedItem="{Binding SelectedCartItem}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item" Binding="{Binding ProductName}" Width="*"/>
+                        <DataGridTextColumn Header="Qty" Binding="{Binding Quantity, StringFormat=N0}" Width="50"/>
+                        <DataGridTextColumn Header="Price" Binding="{Binding UnitPrice, StringFormat=N2}" Width="70"/>
+                        <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, StringFormat=N2}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

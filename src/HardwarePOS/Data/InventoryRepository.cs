@@ -14,6 +14,8 @@ public class InventoryRepository
 
         try
         {
+            EnsureActiveProduct(conn, tx, productId);
+
             int stockInId;
             using (var cmd = conn.CreateCommand())
             {
@@ -38,10 +40,12 @@ public class InventoryRepository
             {
                 cmd.Transaction = tx;
                 cmd.CommandText = """
-                    UPDATE dbo.Products
+                    UPDATE dbo.Products WITH (ROWLOCK)
                     SET StockQty = StockQty + @Qty,
                         CostPrice = CASE WHEN @Cost > 0 THEN @Cost ELSE CostPrice END
-                    WHERE ProductId = @ProductId;
+                    WHERE ProductId = @ProductId AND IsArchived = 0;
+                    IF @@ROWCOUNT = 0
+                        THROW 50001, 'Product not found or archived.', 1;
                     SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
                     """;
                 cmd.Parameters.AddWithValue("@Qty", quantity);
@@ -69,13 +73,22 @@ public class InventoryRepository
 
         try
         {
+            EnsureActiveProduct(conn, tx, productId);
+
             decimal currentStock;
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
-                cmd.CommandText = "SELECT StockQty FROM dbo.Products WHERE ProductId = @Id;";
+                cmd.CommandText = """
+                    SELECT StockQty
+                    FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
+                    WHERE ProductId = @Id AND IsArchived = 0;
+                    """;
                 cmd.Parameters.AddWithValue("@Id", productId);
-                currentStock = (decimal)(cmd.ExecuteScalar() ?? 0m);
+                var stockObj = cmd.ExecuteScalar();
+                if (stockObj is null)
+                    throw new InvalidOperationException("Product not found or archived.");
+                currentStock = (decimal)stockObj;
             }
 
             if (currentStock < quantity)
@@ -104,7 +117,11 @@ public class InventoryRepository
             {
                 cmd.Transaction = tx;
                 cmd.CommandText = """
-                    UPDATE dbo.Products SET StockQty = StockQty - @Qty WHERE ProductId = @ProductId;
+                    UPDATE dbo.Products
+                    SET StockQty = StockQty - @Qty
+                    WHERE ProductId = @ProductId AND StockQty >= @Qty AND IsArchived = 0;
+                    IF @@ROWCOUNT = 0
+                        THROW 50002, 'Insufficient stock or product unavailable.', 1;
                     SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
                     """;
                 cmd.Parameters.AddWithValue("@Qty", quantity);
@@ -160,6 +177,22 @@ public class InventoryRepository
             });
         }
         return list;
+    }
+
+    private static void EnsureActiveProduct(SqlConnection conn, SqlTransaction tx, int productId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = """
+            SELECT IsArchived FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
+            WHERE ProductId = @Id;
+            """;
+        cmd.Parameters.AddWithValue("@Id", productId);
+        var result = cmd.ExecuteScalar();
+        if (result is null)
+            throw new InvalidOperationException("Product not found.");
+        if ((bool)result)
+            throw new InvalidOperationException("Cannot move stock for an archived product. Restore it first.");
     }
 
     private static void InsertLedger(SqlConnection conn, SqlTransaction tx, int productId,

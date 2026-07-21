@@ -1,0 +1,14 @@
+namespace HardwarePOS.Models;
+
+public class DashboardSummary
+{
+    public decimal TodaySales { get; set; }
+    public int TodayTransactions { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+
+public class SalesPoint
+{
+    public string Label { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}

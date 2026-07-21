@@ -121,11 +121,35 @@ public partial class ProductsViewModel : ObservableObject
     private void Archive()
     {
         if (SelectedItem is null) return;
+        if (SelectedItem.IsArchived)
+        {
+            MessageBox.Show("Product is already archived. Use Restore.", "Products",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
         if (MessageBox.Show($"Archive '{SelectedItem.ProductName}'?", "Products",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
 
         _products.Archive(SelectedItem.ProductId, true);
+        Search();
+    }
+
+    [RelayCommand]
+    private void Restore()
+    {
+        if (SelectedItem is null) return;
+        if (!SelectedItem.IsArchived)
+        {
+            MessageBox.Show("Select an archived product to restore. Enable 'Show archived' first.", "Products",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (MessageBox.Show($"Restore '{SelectedItem.ProductName}'?", "Products",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        _products.Archive(SelectedItem.ProductId, false);
         Search();
     }
 

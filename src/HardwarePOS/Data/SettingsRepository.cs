@@ -1,4 +1,4 @@
-using HardwarePOS.Models;
+using System.Globalization;
 using Microsoft.Data.SqlClient;
 
 namespace HardwarePOS.Data;
@@ -19,8 +19,12 @@ public class SettingsRepository
     public decimal GetTaxRate()
     {
         var raw = GetValue("TaxRate", "0.12");
-        return decimal.TryParse(raw, out var rate) ? rate : 0.12m;
+        return decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var rate)
+            ? rate
+            : 0.12m;
     }
 
-    public string GetStoreName() => GetValue("StoreName", "HARDWARE");
+    public string GetStoreName() => GetValue("StoreName", "4KV Hardware");
+
+    public string GetReceiptFooter() => GetValue("ReceiptFooter", "Thank you for shopping with us!");
 }

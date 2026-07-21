@@ -18,7 +18,8 @@ public class ReceiptService
         decimal discountAmount,
         decimal totalDue,
         decimal cashTendered,
-        decimal changeAmount)
+        decimal changeAmount,
+        string? footer = null)
     {
         var doc = new FlowDocument
         {
@@ -48,7 +49,8 @@ public class ReceiptService
         doc.Blocks.Add(new Paragraph(new Run($"TOTAL DUE:  ₱{totalDue:N2}")) { FontWeight = FontWeights.Bold });
         doc.Blocks.Add(new Paragraph(new Run($"Cash:       ₱{cashTendered:N2}")));
         doc.Blocks.Add(new Paragraph(new Run($"Change:     ₱{changeAmount:N2}")));
-        doc.Blocks.Add(new Paragraph(new Run("Thank you for shopping with us!")) { TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0) });
+        var footerText = string.IsNullOrWhiteSpace(footer) ? "Thank you for shopping with us!" : footer;
+        doc.Blocks.Add(new Paragraph(new Run(footerText)) { TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0) });
 
         var printDialog = new PrintDialog();
         if (printDialog.ShowDialog() == true)

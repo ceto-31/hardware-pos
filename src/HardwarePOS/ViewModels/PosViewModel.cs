@@ -128,6 +128,8 @@ public partial class PosViewModel : ObservableObject
     private void Recalculate()
     {
         Subtotal = Cart.Sum(c => c.LineTotal);
+        if (DiscountAmount < 0) DiscountAmount = 0;
+        if (DiscountAmount > Subtotal) DiscountAmount = Subtotal;
         var taxable = Math.Max(0, Subtotal - DiscountAmount);
         TaxAmount = Math.Round(taxable * TaxRate, 2);
         TotalDue = Math.Round(taxable + TaxAmount, 2);
@@ -214,7 +216,8 @@ public partial class PosViewModel : ObservableObject
                     DiscountAmount,
                     TotalDue,
                     CashTendered,
-                    ChangeAmount);
+                    ChangeAmount,
+                    _settings.GetReceiptFooter());
             }
 
             ClearCart();

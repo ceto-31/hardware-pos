@@ -78,17 +78,50 @@ public class ProductRepository
     {
         using var conn = DbConnectionFactory.Create();
         conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO dbo.Products
-                (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice,
-                 StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-            VALUES
-                (@Name, @Details, @Barcode, @Uom, @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0);
-            SELECT CAST(SCOPE_IDENTITY() AS INT);
-            """;
-        AddParams(cmd, product);
-        return (int)cmd.ExecuteScalar()!;
+        using var tx = conn.BeginTransaction();
+
+        try
+        {
+            int productId;
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = """
+                    INSERT INTO dbo.Products
+                        (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice,
+                         StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+                    VALUES
+                        (@Name, @Details, @Barcode, @Uom, @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0);
+                    SELECT CAST(SCOPE_IDENTITY() AS INT);
+                    """;
+                AddParams(cmd, product);
+                productId = (int)cmd.ExecuteScalar()!;
+            }
+
+            if (product.StockQty > 0)
+            {
+                using var ledger = conn.CreateCommand();
+                ledger.Transaction = tx;
+                ledger.CommandText = """
+                    INSERT INTO dbo.InventoryLedger
+                        (ProductId, MovementType, QtyChange, BalanceAfter, ReferenceId, Remarks, CreatedBy)
+                    VALUES
+                        (@ProductId, N'IN', @Qty, @Balance, NULL, N'Opening stock', NULL);
+                    """;
+                ledger.Parameters.AddWithValue("@ProductId", productId);
+                ledger.Parameters.AddWithValue("@Qty", product.StockQty);
+                ledger.Parameters.AddWithValue("@Balance", product.StockQty);
+                ledger.ExecuteNonQuery();
+            }
+
+            tx.Commit();
+            return productId;
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
     }
 
     public void Update(Product product)

@@ -17,6 +17,8 @@ public class SalesRepository
     {
         if (items.Count == 0)
             throw new InvalidOperationException("Cart is empty.");
+        if (cashTendered < totalDue)
+            throw new InvalidOperationException("Cash tendered is less than total due.");
 
         using var conn = DbConnectionFactory.Create();
         conn.Open();
@@ -28,7 +30,11 @@ public class SalesRepository
             {
                 using var check = conn.CreateCommand();
                 check.Transaction = tx;
-                check.CommandText = "SELECT StockQty FROM dbo.Products WHERE ProductId = @Id AND IsArchived = 0;";
+                check.CommandText = """
+                    SELECT StockQty
+                    FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
+                    WHERE ProductId = @Id AND IsArchived = 0;
+                    """;
                 check.Parameters.AddWithValue("@Id", item.ProductId);
                 var stockObj = check.ExecuteScalar();
                 if (stockObj is null)
@@ -38,7 +44,7 @@ public class SalesRepository
                     throw new InvalidOperationException($"Insufficient stock for '{item.ProductName}'. Available: {stock}.");
             }
 
-            var invoiceNo = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{cashierId}";
+            var invoiceNo = $"INV-{DateTime.Now:yyyyMMddHHmmssfff}-{cashierId}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
             int saleId;
             using (var cmd = conn.CreateCommand())
             {
@@ -47,7 +53,7 @@ public class SalesRepository
                     INSERT INTO dbo.Sales
                         (InvoiceNo, SaleDate, CashierId, Subtotal, TaxAmount, DiscountAmount, TotalDue, CashTendered, ChangeAmount)
                     VALUES
-                        (@Invoice, SYSUTCDATETIME(), @Cashier, @Subtotal, @Tax, @Discount, @Total, @Cash, @Change);
+                        (@Invoice, SYSDATETIME(), @Cashier, @Subtotal, @Tax, @Discount, @Total, @Cash, @Change);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 cmd.Parameters.AddWithValue("@Invoice", invoiceNo);
@@ -83,7 +89,11 @@ public class SalesRepository
                 {
                     cmd.Transaction = tx;
                     cmd.CommandText = """
-                        UPDATE dbo.Products SET StockQty = StockQty - @Qty WHERE ProductId = @ProductId;
+                        UPDATE dbo.Products
+                        SET StockQty = StockQty - @Qty
+                        WHERE ProductId = @ProductId AND StockQty >= @Qty AND IsArchived = 0;
+                        IF @@ROWCOUNT = 0
+                            THROW 50003, 'Insufficient stock during checkout.', 1;
                         SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
                         """;
                     cmd.Parameters.AddWithValue("@Qty", item.Quantity);

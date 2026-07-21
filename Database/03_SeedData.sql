@@ -53,7 +53,7 @@ GO
 /* App settings — PHP + 12% VAT */
 MERGE dbo.AppSettings AS t
 USING (VALUES
-    (N'StoreName', N'HARDWARE'),
+    (N'StoreName', N'4KV Hardware'),
     (N'Currency', N'PHP'),
     (N'TaxRate', N'0.12'),
     (N'ReceiptFooter', N'Thank you for shopping with us!')
@@ -124,6 +124,16 @@ BEGIN
     INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
     VALUES (N'Wood Screw 1 inch', N'Phillips flat head wood screws', N'4801001000059', N'Box', 60.00, 95.00, 40, 12, @CatFastener, @Sup1, 0);
 END
+GO
+
+-- Opening ledger for seeded stock (only products with no ledger yet)
+INSERT INTO dbo.InventoryLedger
+    (ProductId, MovementType, QtyChange, BalanceAfter, ReferenceId, Remarks, CreatedBy)
+SELECT
+    p.ProductId, N'IN', p.StockQty, p.StockQty, NULL, N'Opening stock', NULL
+FROM dbo.Products p
+WHERE p.StockQty > 0
+  AND NOT EXISTS (SELECT 1 FROM dbo.InventoryLedger l WHERE l.ProductId = p.ProductId);
 GO
 
 PRINT N'Seed completed. Logins: admin/Password123 , cashier/Cashier@123';

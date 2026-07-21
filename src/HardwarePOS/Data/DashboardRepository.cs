@@ -10,10 +10,11 @@ public class DashboardRepository
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var cmd = conn.CreateCommand();
+        // Use local server time (SYSDATETIME) so "today" matches PH store hours
         cmd.CommandText = """
             SELECT
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSUTCDATETIME() AS DATE)), 0),
-                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSUTCDATETIME() AS DATE)), 0),
+                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
+                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
                 ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales), 0);
             """;
         using var reader = cmd.ExecuteReader();
@@ -34,7 +35,7 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             ;WITH Days AS (
-                SELECT CAST(DATEADD(DAY, -v.number, CAST(SYSUTCDATETIME() AS DATE)) AS DATE) AS SaleDay
+                SELECT CAST(DATEADD(DAY, -v.number, CAST(SYSDATETIME() AS DATE)) AS DATE) AS SaleDay
                 FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13)) v(number)
                 WHERE v.number < @Days
             )
@@ -65,7 +66,7 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             ;WITH Weeks AS (
-                SELECT DATEADD(WEEK, -v.number, DATEADD(WEEK, DATEDIFF(WEEK, 0, SYSUTCDATETIME()), 0)) AS WeekStart
+                SELECT DATEADD(WEEK, -v.number, DATEADD(WEEK, DATEDIFF(WEEK, 0, SYSDATETIME()), 0)) AS WeekStart
                 FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11)) v(number)
                 WHERE v.number < @Weeks
             )
@@ -97,8 +98,8 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             ;WITH Months AS (
-                SELECT DATEFROMPARTS(YEAR(DATEADD(MONTH, -v.number, SYSUTCDATETIME())),
-                                     MONTH(DATEADD(MONTH, -v.number, SYSUTCDATETIME())), 1) AS MonthStart
+                SELECT DATEFROMPARTS(YEAR(DATEADD(MONTH, -v.number, SYSDATETIME())),
+                                     MONTH(DATEADD(MONTH, -v.number, SYSDATETIME())), 1) AS MonthStart
                 FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11)) v(number)
                 WHERE v.number < @Months
             )

@@ -46,7 +46,7 @@ public partial class LoginViewModel : ObservableObject
         catch (Exception ex)
         {
             ErrorMessage = $"Login failed: {ex.Message}";
-            MessageBox.Show(ErrorMessage, "HARDWARE", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ErrorMessage, "4KV Hardware", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {

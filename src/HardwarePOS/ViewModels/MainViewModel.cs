@@ -38,6 +38,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavigateProducts()
     {
+        if (!EnsureAdmin()) return;
         HeaderTitle = "Product Management";
         Products.Load();
         CurrentPage = Products;
@@ -46,6 +47,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavigateSuppliers()
     {
+        if (!EnsureAdmin()) return;
         HeaderTitle = "Supplier Management";
         Suppliers.Load();
         CurrentPage = Suppliers;
@@ -54,6 +56,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavigateInventory()
     {
+        if (!EnsureAdmin()) return;
         HeaderTitle = "Inventory & Stocks";
         Inventory.Load();
         CurrentPage = Inventory;
@@ -70,11 +73,18 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Logout()
     {
-        if (MessageBox.Show("Log out of HARDWARE?", "Logout",
+        if (MessageBox.Show("Log out of 4KV Hardware?", "Logout",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
 
         SessionManager.SignOut();
         LogoutRequested?.Invoke();
+    }
+
+    private bool EnsureAdmin()
+    {
+        if (SessionManager.IsAdmin) return true;
+        MessageBox.Show("Admin access required.", "4KV Hardware", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return false;
     }
 }

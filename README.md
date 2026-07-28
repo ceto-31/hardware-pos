@@ -56,6 +56,7 @@ In SSMS, connect to `.\SQLEXPRESS` (Windows Authentication) and run scripts **in
 2. `Database/02_CreateTables.sql`
 3. `Database/03_SeedData.sql`
 4. `Database/04_BackfillOpeningLedger.sql` *(optional on a fresh seed; safe to re-run)*
+5. `Database/05_UpgradeSchema.sql` *(required for Units, ProductCode, security questions, ActivityLog, supplier archive)*
 
 Or from PowerShell (from the project root):
 
@@ -64,9 +65,10 @@ sqlcmd -S ".\SQLEXPRESS" -E -i "Database\01_CreateDatabase.sql"
 sqlcmd -S ".\SQLEXPRESS" -E -i "Database\02_CreateTables.sql"
 sqlcmd -S ".\SQLEXPRESS" -E -i "Database\03_SeedData.sql"
 sqlcmd -S ".\SQLEXPRESS" -E -i "Database\04_BackfillOpeningLedger.sql"
+sqlcmd -S ".\SQLEXPRESS" -E -i "Database\05_UpgradeSchema.sql"
 ```
 
-> Fresh install note: `03_SeedData.sql` already inserts opening ledger rows for seeded stock. Script `04` is mainly for databases that existed before that change.
+> Fresh install note: `03_SeedData.sql` already inserts opening ledger rows for seeded stock. Script `04` is mainly for databases that existed before that change. Always run `05` after upgrading an existing database.
 
 #### 5. Check the connection string
 
@@ -93,6 +95,8 @@ Only change `Server=...` if your SQL instance name is different (e.g. `localhost
 |----------|--------------|---------|
 | admin    | Password123  | Admin   |
 | cashier  | Cashier@123  | Cashier |
+
+**Forgot Password** security answers (demo users): favorite color `blue`, favorite number `7`, hobby `reading`. Wrong answers show which question failed.
 
 ### Pull later updates from GitHub
 

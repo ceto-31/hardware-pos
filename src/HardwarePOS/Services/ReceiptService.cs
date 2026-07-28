@@ -8,6 +8,62 @@ namespace HardwarePOS.Services;
 
 public class ReceiptService
 {
+    public void PreviewReceipt(
+        string storeName,
+        string invoiceNo,
+        string cashierName,
+        IReadOnlyList<CartItem> items,
+        decimal subtotal,
+        decimal taxAmount,
+        decimal discountAmount,
+        decimal totalDue,
+        decimal cashTendered,
+        decimal changeAmount,
+        string? footer = null)
+    {
+        var doc = BuildDocument(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
+            discountAmount, totalDue, cashTendered, changeAmount, footer);
+
+        var viewer = new FlowDocumentScrollViewer
+        {
+            Document = doc,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        var printBtn = new Button
+        {
+            Content = "Print",
+            Margin = new Thickness(8),
+            Padding = new Thickness(16, 6, 16, 6)
+        };
+        printBtn.Click += (_, _) =>
+        {
+            var printDialog = new PrintDialog();
+            if (printDialog.ShowDialog() == true)
+            {
+                doc.PageHeight = printDialog.PrintableAreaHeight;
+                doc.PageWidth = printDialog.PrintableAreaWidth;
+                printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"Receipt {invoiceNo}");
+            }
+        };
+
+        var panel = new DockPanel();
+        DockPanel.SetDock(printBtn, Dock.Bottom);
+        panel.Children.Add(printBtn);
+        panel.Children.Add(viewer);
+
+        var window = new Window
+        {
+            Title = $"Receipt Preview — {invoiceNo}",
+            Width = 480,
+            Height = 640,
+            Content = panel,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = Application.Current.MainWindow
+        };
+        window.ShowDialog();
+    }
+
     public void PrintReceipt(
         string storeName,
         string invoiceNo,
@@ -20,6 +76,30 @@ public class ReceiptService
         decimal cashTendered,
         decimal changeAmount,
         string? footer = null)
+    {
+        var doc = BuildDocument(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
+            discountAmount, totalDue, cashTendered, changeAmount, footer);
+        var printDialog = new PrintDialog();
+        if (printDialog.ShowDialog() == true)
+        {
+            doc.PageHeight = printDialog.PrintableAreaHeight;
+            doc.PageWidth = printDialog.PrintableAreaWidth;
+            printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"Receipt {invoiceNo}");
+        }
+    }
+
+    private static FlowDocument BuildDocument(
+        string storeName,
+        string invoiceNo,
+        string cashierName,
+        IReadOnlyList<CartItem> items,
+        decimal subtotal,
+        decimal taxAmount,
+        decimal discountAmount,
+        decimal totalDue,
+        decimal cashTendered,
+        decimal changeAmount,
+        string? footer)
     {
         var doc = new FlowDocument
         {
@@ -51,13 +131,6 @@ public class ReceiptService
         doc.Blocks.Add(new Paragraph(new Run($"Change:     ₱{changeAmount:N2}")));
         var footerText = string.IsNullOrWhiteSpace(footer) ? "Thank you for shopping with us!" : footer;
         doc.Blocks.Add(new Paragraph(new Run(footerText)) { TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0) });
-
-        var printDialog = new PrintDialog();
-        if (printDialog.ShowDialog() == true)
-        {
-            doc.PageHeight = printDialog.PrintableAreaHeight;
-            doc.PageWidth = printDialog.PrintableAreaWidth;
-            printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"Receipt {invoiceNo}");
-        }
+        return doc;
     }
 }

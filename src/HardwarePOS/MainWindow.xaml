@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:HardwarePOS.ViewModels"
         Title="4KV Hardware"
-        Height="768" Width="1280"
+        Height="800" Width="1360"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BgBrush}">
     <Window.DataContext>
@@ -12,40 +12,56 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="230"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="16,24,16,16">
-                    <TextBlock Text="4KV Hardware" Foreground="White" FontSize="20" FontWeight="Bold"/>
-                    <TextBlock Text="Point of Sale &amp; Inventory" Foreground="#9FB3C8" FontSize="12" Margin="0,4,0,0"/>
-                </StackPanel>
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}" Padding="0,4,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="16,24,16,16">
+                        <TextBlock Text="4KV Hardware" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="Point of Sale &amp; Inventory" Foreground="#94A3B8" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,16">
-                    <TextBlock Text="{Binding UserLabel}" Foreground="#9FB3C8" Margin="12,0,12,8" TextWrapping="Wrap"/>
-                    <Button Content="Logout" Style="{StaticResource NavButton}" Command="{Binding LogoutCommand}"/>
-                </StackPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
+                        <TextBlock Text="{Binding UserLabel}" Foreground="#94A3B8" Margin="10,0,10,10" TextWrapping="Wrap" FontSize="12"/>
+                        <Button Content="Logout" Style="{StaticResource NavButton}" Command="{Binding LogoutCommand}"/>
+                    </StackPanel>
 
-                <StackPanel>
-                    <Button Content="Dashboard" Style="{StaticResource NavButton}" Command="{Binding NavigateDashboardCommand}"/>
-                    <Button Content="Point of Sale" Style="{StaticResource NavButton}" Command="{Binding NavigatePosCommand}"/>
-                    <Button Content="Products" Style="{StaticResource NavButton}" Command="{Binding NavigateProductsCommand}"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Suppliers" Style="{StaticResource NavButton}" Command="{Binding NavigateSuppliersCommand}"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Inventory" Style="{StaticResource NavButton}" Command="{Binding NavigateInventoryCommand}"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                </StackPanel>
-            </DockPanel>
+                    <StackPanel>
+                        <Button Content="Dashboard" Tag="Dashboard" Style="{StaticResource NavButton}" Command="{Binding NavigateDashboardCommand}"/>
+                        <Button Content="Point of Sale" Tag="Pos" Style="{StaticResource NavButton}" Command="{Binding NavigatePosCommand}"/>
+
+                        <TextBlock Text="MASTER FILES" Foreground="#64748B" FontSize="11" Margin="16,14,8,4"
+                                   Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Categories" Tag="Categories" Style="{StaticResource NavButton}" Command="{Binding NavigateCategoriesCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Units" Tag="Units" Style="{StaticResource NavButton}" Command="{Binding NavigateUnitsCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Suppliers" Tag="Suppliers" Style="{StaticResource NavButton}" Command="{Binding NavigateSuppliersCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Users" Tag="Users" Style="{StaticResource NavButton}" Command="{Binding NavigateUsersCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+
+                        <TextBlock Text="OPERATIONS" Foreground="#64748B" FontSize="11" Margin="16,14,8,4"
+                                   Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Products" Tag="Products" Style="{StaticResource NavButton}" Command="{Binding NavigateProductsCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Inventory" Tag="Inventory" Style="{StaticResource NavButton}" Command="{Binding NavigateInventoryCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Archives" Tag="Archives" Style="{StaticResource NavButton}" Command="{Binding NavigateArchivesCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Reports" Tag="Reports" Style="{StaticResource NavButton}" Command="{Binding NavigateReportsCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </DockPanel>
+            </ScrollViewer>
         </Border>
 
-        <!-- Content -->
         <DockPanel Grid.Column="1">
-            <Border DockPanel.Dock="Top" Background="White" Padding="20,14" BorderBrush="#D9E2EC" BorderThickness="0,0,0,1">
-                <TextBlock Text="{Binding HeaderTitle}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+            <Border DockPanel.Dock="Top" Background="White" Padding="18,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                <TextBlock Text="{Binding HeaderTitle}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
             </Border>
             <ContentControl Content="{Binding CurrentPage}" Margin="8"/>
         </DockPanel>

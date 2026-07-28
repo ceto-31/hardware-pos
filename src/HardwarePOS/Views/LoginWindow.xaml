@@ -3,45 +3,114 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:HardwarePOS.ViewModels"
         Title="4KV Hardware — Login"
-        Height="680" Width="560"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        Background="{StaticResource BgBrush}">
+        Background="{StaticResource BgBrush}"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
     <Window.DataContext>
         <vm:LoginViewModel/>
     </Window.DataContext>
-    <Grid>
-        <Border Style="{StaticResource CardBorder}" VerticalAlignment="Center" HorizontalAlignment="Center" Width="440" Padding="40">
-            <StackPanel>
-                <Border Width="96" Height="96" CornerRadius="16" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16">
-                    <TextBlock Text="4KV" Foreground="White" FontSize="28" FontWeight="Bold"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="4KV Hardware" FontSize="32" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
-                           HorizontalAlignment="Center" TextAlignment="Center"/>
-                <TextBlock Text="Point of Sale &amp; Inventory" Foreground="{StaticResource MutedBrush}"
-                           FontSize="15" HorizontalAlignment="Center" Margin="0,6,0,28"/>
+    <Grid SnapsToDevicePixels="True">
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#0F172A" Offset="0"/>
+                <GradientStop Color="#1E3A5F" Offset="0.55"/>
+                <GradientStop Color="#0D47A1" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
 
-                <TextBlock Text="Username" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextBrush}"/>
-                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Height="40" Padding="10,8"/>
+        <!-- Login card -->
+        <Grid Width="420" VerticalAlignment="Center" HorizontalAlignment="Center"
+              Visibility="{Binding IsForgotMode, Converter={StaticResource InverseBoolToVis}}">
+            <Border Background="White" CornerRadius="8" Margin="0,3,0,-3" SnapsToDevicePixels="True">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.14" Color="#0F172A"/>
+                </Border.Effect>
+            </Border>
+            <Border Padding="32" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1"
+                    SnapsToDevicePixels="True" UseLayoutRounding="True">
+                <StackPanel>
+                    <Border Width="72" Height="72" CornerRadius="8" Background="{StaticResource PrimaryBrush}"
+                            HorizontalAlignment="Center" Margin="0,0,0,16" SnapsToDevicePixels="True">
+                        <TextBlock Text="4KV" Foreground="White" FontSize="22" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="4KV Hardware" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Point of Sale &amp; Inventory" Foreground="{StaticResource MutedBrush}"
+                               HorizontalAlignment="Center" Margin="0,4,0,28"/>
 
-                <TextBlock Text="Password" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="0,12,0,0"/>
-                <Grid>
-                    <PasswordBox x:Name="PasswordBoxHidden"
-                                 Visibility="{Binding ShowPassword, Converter={StaticResource InverseBoolToVis}}"
-                                 PasswordChanged="PasswordBox_OnPasswordChanged"
-                                 FontSize="15" Height="40" Padding="10,8" Margin="0,4"/>
-                    <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
-                             FontSize="15" Height="40" Padding="10,8"
-                             Visibility="{Binding ShowPassword, Converter={StaticResource BoolToVis}}"/>
-                </Grid>
-                <CheckBox Content="Show Password" IsChecked="{Binding ShowPassword}" Margin="0,10,0,0" FontSize="13"/>
+                    <TextBlock Text="Username" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#C62828" TextWrapping="Wrap" Margin="0,14,0,0" MinHeight="24" FontSize="13"/>
+                    <TextBlock Text="Password" Style="{StaticResource FieldLabel}" Margin="0,10,0,0"/>
+                    <Grid>
+                        <PasswordBox x:Name="PasswordBoxHidden"
+                                     Visibility="{Binding ShowPassword, Converter={StaticResource InverseBoolToVis}}"
+                                     PasswordChanged="PasswordBox_OnPasswordChanged"/>
+                        <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{Binding ShowPassword, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+                    <Button Content="{Binding ShowPasswordLabel}" Style="{StaticResource LinkButton}"
+                            Command="{Binding ToggleShowPasswordCommand}" HorizontalAlignment="Left"/>
 
-                <Button Content="Login" Style="{StaticResource PrimaryButton}" Command="{Binding LoginCommand}"
-                        Margin="0,16,0,0" Height="48" FontSize="16" IsDefault="True"/>
-            </StackPanel>
-        </Border>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,10,0,0" MinHeight="20"/>
+
+                    <Button Content="Login" Style="{StaticResource PrimaryButton}" Command="{Binding LoginCommand}"
+                            Margin="0,12,0,0" IsDefault="True"/>
+                    <Button Content="Forgot Password?" Style="{StaticResource LinkButton}"
+                            Command="{Binding OpenForgotCommand}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Forgot password card -->
+        <Grid Width="460" VerticalAlignment="Center" HorizontalAlignment="Center"
+              Visibility="{Binding IsForgotMode, Converter={StaticResource BoolToVis}}">
+            <Border Background="White" CornerRadius="8" Margin="0,3,0,-3" SnapsToDevicePixels="True">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.14" Color="#0F172A"/>
+                </Border.Effect>
+            </Border>
+            <Border Padding="32" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1"
+                    SnapsToDevicePixels="True" UseLayoutRounding="True">
+                <StackPanel>
+                    <TextBlock Text="Forgot Password" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                    <TextBlock Text="{Binding ForgotStep, StringFormat=Step {0} of 3}" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,18"/>
+
+                    <StackPanel Visibility="{Binding IsForgotStep1, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Enter your username" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding ForgotUsername, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsForgotStep2, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Favorite color" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding SecurityColor, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Favorite number" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding SecurityNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Hobby" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding SecurityHobby, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsForgotStep3, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="New password" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Confirm password" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding ConfirmPassword, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding ForgotError}" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,12,0,0" MinHeight="40"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Content="Back to Login" Style="{StaticResource SecondaryButton}" Command="{Binding CancelForgotCommand}"/>
+                        <Button Content="Continue" Style="{StaticResource PrimaryButton}" Command="{Binding ForgotNextCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

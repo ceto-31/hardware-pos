@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
 using HardwarePOS.Helpers;
 using HardwarePOS.Models;
+using HardwarePOS.Services;
 
 namespace HardwarePOS.ViewModels;
 
@@ -66,8 +66,7 @@ public partial class InventoryViewModel : ObservableObject
     {
         if (InSupplierId is null || InProductId is null || InQuantity <= 0)
         {
-            MessageBox.Show("Select supplier, product, and a quantity greater than zero.", "Stock In",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Select supplier, product, and a quantity greater than zero.", "Stock In");
             return;
         }
 
@@ -89,11 +88,11 @@ public partial class InventoryViewModel : ObservableObject
             ProductOptions = new ObservableCollection<Product>(_products.GetAll());
             RefreshMonitoring();
             RefreshHistory();
-            MessageBox.Show("Stock in saved.", "Stock In", MessageBoxButton.OK, MessageBoxImage.Information);
+            DialogService.ShowInfo("Stock in saved.", "Stock In");
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Stock In", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.ShowError(ex.Message, "Stock In");
         }
     }
 
@@ -102,8 +101,7 @@ public partial class InventoryViewModel : ObservableObject
     {
         if (OutProductId is null || OutQuantity <= 0 || string.IsNullOrWhiteSpace(OutReason))
         {
-            MessageBox.Show("Select product, reason, and a quantity greater than zero.", "Stock Out",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Select product, reason, and a quantity greater than zero.", "Stock Out");
             return;
         }
 
@@ -123,11 +121,11 @@ public partial class InventoryViewModel : ObservableObject
             ProductOptions = new ObservableCollection<Product>(_products.GetAll());
             RefreshMonitoring();
             RefreshHistory();
-            MessageBox.Show("Stock out saved.", "Stock Out", MessageBoxButton.OK, MessageBoxImage.Information);
+            DialogService.ShowInfo("Stock out saved.", "Stock Out");
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Stock Out", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.ShowError(ex.Message, "Stock Out");
         }
     }
 }

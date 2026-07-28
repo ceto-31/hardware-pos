@@ -1,15 +1,16 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
 using HardwarePOS.Models;
+using HardwarePOS.Services;
 
 namespace HardwarePOS.ViewModels;
 
 public partial class SuppliersViewModel : ObservableObject
 {
     private readonly SupplierRepository _suppliers = new();
+    private readonly ActivityRepository _activity = new();
 
     [ObservableProperty] private ObservableCollection<Supplier> _items = new();
     [ObservableProperty] private Supplier? _selectedItem;
@@ -23,14 +24,18 @@ public partial class SuppliersViewModel : ObservableObject
     [ObservableProperty] private string _address = string.Empty;
     [ObservableProperty] private bool _isActive = true;
     [ObservableProperty] private string _formTitle = "Add Supplier";
+    [ObservableProperty] private bool _hasRows;
 
     [RelayCommand]
     public void Load() => Search();
+
+    partial void OnSearchTextChanged(string value) => Search();
 
     [RelayCommand]
     private void Search()
     {
         Items = new ObservableCollection<Supplier>(_suppliers.GetAll(SearchText));
+        HasRows = Items.Count > 0;
     }
 
     [RelayCommand]
@@ -59,7 +64,7 @@ public partial class SuppliersViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(CompanyName))
         {
-            MessageBox.Show("Company name is required.", "Suppliers", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Company name is required.", "Suppliers");
             return;
         }
 
@@ -77,26 +82,40 @@ public partial class SuppliersViewModel : ObservableObject
             };
 
             if (EditingId == 0)
+            {
                 _suppliers.Insert(supplier);
+                _activity.Log("Supplier", $"Added supplier '{supplier.CompanyName}'");
+            }
             else
+            {
                 _suppliers.Update(supplier);
+                _activity.Log("Supplier", $"Updated supplier '{supplier.CompanyName}'");
+            }
 
             ClearForm();
             Search();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Suppliers", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.ShowError(ex.Message, "Suppliers");
         }
+    }
+
+    [RelayCommand]
+    private void Archive()
+    {
+        if (SelectedItem is null) return;
+        if (!DialogService.Confirm($"Archive '{SelectedItem.CompanyName}'?", "Suppliers")) return;
+        _suppliers.Archive(SelectedItem.SupplierId, true);
+        _activity.Log("Supplier", $"Archived supplier '{SelectedItem.CompanyName}'");
+        Search();
     }
 
     [RelayCommand]
     private void Delete()
     {
         if (SelectedItem is null) return;
-        if (MessageBox.Show($"Delete '{SelectedItem.CompanyName}'?", "Suppliers",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-            return;
+        if (!DialogService.Confirm($"Delete '{SelectedItem.CompanyName}'?", "Suppliers")) return;
 
         _suppliers.Delete(SelectedItem.SupplierId);
         Search();

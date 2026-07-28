@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
@@ -30,13 +29,26 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private decimal _totalDue;
     [ObservableProperty] private decimal _cashTendered;
     [ObservableProperty] private decimal _changeAmount;
+    [ObservableProperty] private int _selectedTab;
+    [ObservableProperty] private ObservableCollection<SaleHistoryRow> _saleHistory = new();
+    [ObservableProperty] private SaleHistoryRow? _selectedSale;
+    [ObservableProperty] private string _historySearch = string.Empty;
+
+    private readonly ActivityRepository _activity = new();
 
     [RelayCommand]
     public void Load()
     {
         TaxRate = _settings.GetTaxRate();
         SearchProducts();
+        LoadHistory();
         Recalculate();
+    }
+
+    [RelayCommand]
+    private void LoadHistory()
+    {
+        SaleHistory = new ObservableCollection<SaleHistoryRow>(_sales.GetHistory(HistorySearch));
     }
 
     [RelayCommand]
@@ -45,6 +57,9 @@ public partial class PosViewModel : ObservableObject
         ProductList = new ObservableCollection<Product>(_products.GetAll(SearchText));
     }
 
+    partial void OnSearchTextChanged(string value) => SearchProducts();
+    partial void OnHistorySearchChanged(string value) => LoadHistory();
+
     [RelayCommand]
     private void ScanBarcode()
     {
@@ -52,7 +67,7 @@ public partial class PosViewModel : ObservableObject
         var product = _products.GetByBarcode(BarcodeInput.Trim());
         if (product is null)
         {
-            MessageBox.Show("Barcode not found.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Barcode not found.", "POS");
             BarcodeInput = string.Empty;
             return;
         }
@@ -72,24 +87,26 @@ public partial class PosViewModel : ObservableObject
     {
         if (product.StockQty <= 0)
         {
-            MessageBox.Show("Product is out of stock.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Product is out of stock.", "POS");
             return;
         }
 
+        CartItem target;
         var existing = Cart.FirstOrDefault(c => c.ProductId == product.ProductId);
         if (existing is not null)
         {
             if (existing.Quantity + 1 > product.StockQty)
             {
-                MessageBox.Show("Not enough stock.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+                DialogService.ShowWarning("Not enough stock.", "POS");
                 return;
             }
             existing.Quantity += 1;
             Cart = new ObservableCollection<CartItem>(Cart);
+            target = existing;
         }
         else
         {
-            Cart.Add(new CartItem
+            target = new CartItem
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
@@ -98,17 +115,23 @@ public partial class PosViewModel : ObservableObject
                 UnitPrice = product.SellingPrice,
                 Quantity = 1,
                 AvailableStock = product.StockQty
-            });
+            };
+            Cart.Add(target);
         }
 
+        SelectedCartItem = target;
         Recalculate();
     }
+
+    private CartItem? GetTargetCartItem() => SelectedCartItem ?? Cart.LastOrDefault();
 
     [RelayCommand]
     private void RemoveCartItem()
     {
-        if (SelectedCartItem is null) return;
-        Cart.Remove(SelectedCartItem);
+        var item = GetTargetCartItem();
+        if (item is null) return;
+        Cart.Remove(item);
+        SelectedCartItem = Cart.LastOrDefault();
         Recalculate();
     }
 
@@ -139,13 +162,15 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void IncreaseQty()
     {
-        if (SelectedCartItem is null) return;
-        if (SelectedCartItem.Quantity + 1 > SelectedCartItem.AvailableStock)
+        var item = GetTargetCartItem();
+        if (item is null) return;
+        SelectedCartItem = item;
+        if (item.Quantity + 1 > item.AvailableStock)
         {
-            MessageBox.Show("Not enough stock.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Not enough stock.", "POS");
             return;
         }
-        SelectedCartItem.Quantity += 1;
+        item.Quantity += 1;
         Cart = new ObservableCollection<CartItem>(Cart);
         Recalculate();
     }
@@ -153,17 +178,59 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void DecreaseQty()
     {
-        if (SelectedCartItem is null) return;
-        if (SelectedCartItem.Quantity <= 1)
+        var item = GetTargetCartItem();
+        if (item is null) return;
+        SelectedCartItem = item;
+        if (item.Quantity <= 1)
         {
-            Cart.Remove(SelectedCartItem);
+            Cart.Remove(item);
+            SelectedCartItem = Cart.LastOrDefault();
         }
         else
         {
-            SelectedCartItem.Quantity -= 1;
+            item.Quantity -= 1;
             Cart = new ObservableCollection<CartItem>(Cart);
         }
         Recalculate();
+    }
+
+    [RelayCommand]
+    private void CancelTransaction()
+    {
+        if (Cart.Count == 0) return;
+        if (!DialogService.Confirm("Cancel this transaction and clear the cart?", "POS")) return;
+        ClearCart();
+    }
+
+    [RelayCommand]
+    private void PreviewSelectedReceipt()
+    {
+        if (SelectedSale is null)
+        {
+            DialogService.ShowInfo("Select a transaction first.", "POS");
+            return;
+        }
+
+        var items = _sales.GetSaleItems(SelectedSale.SaleId)
+            .Select(i => new CartItem
+            {
+                ProductName = i.ProductName,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice
+            }).ToList();
+
+        _receipts.PreviewReceipt(
+            _settings.GetStoreName(),
+            SelectedSale.InvoiceNo,
+            SelectedSale.CashierName,
+            items,
+            SelectedSale.Subtotal,
+            SelectedSale.TaxAmount,
+            SelectedSale.DiscountAmount,
+            SelectedSale.TotalDue,
+            SelectedSale.CashTendered,
+            SelectedSale.ChangeAmount,
+            _settings.GetReceiptFooter());
     }
 
     [RelayCommand]
@@ -171,20 +238,20 @@ public partial class PosViewModel : ObservableObject
     {
         if (Cart.Count == 0)
         {
-            MessageBox.Show("Cart is empty.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Cart is empty.", "POS");
             return;
         }
 
         if (CashTendered < TotalDue)
         {
-            MessageBox.Show("Cash tendered is less than total due.", "POS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            DialogService.ShowWarning("Cash tendered is less than total due.", "POS");
             return;
         }
 
         var user = SessionManager.CurrentUser;
         if (user is null)
         {
-            MessageBox.Show("Session expired. Please log in again.", "POS", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.ShowError("Session expired. Please log in again.", "POS");
             return;
         }
 
@@ -201,12 +268,13 @@ public partial class PosViewModel : ObservableObject
                 CashTendered,
                 ChangeAmount);
 
-            var print = MessageBox.Show($"Sale completed.\nInvoice: {invoiceNo}\n\nPrint receipt?", "POS",
-                MessageBoxButton.YesNo, MessageBoxImage.Information);
+            _activity.Log("Sale", $"Completed sale {invoiceNo} totaling ₱{TotalDue:N2}", user.UserId);
 
-            if (print == MessageBoxResult.Yes)
+            var preview = DialogService.Confirm($"Sale completed.\nInvoice: {invoiceNo}\n\nPreview / print receipt?", "POS");
+
+            if (preview)
             {
-                _receipts.PrintReceipt(
+                _receipts.PreviewReceipt(
                     _settings.GetStoreName(),
                     invoiceNo,
                     user.FullName,
@@ -222,10 +290,11 @@ public partial class PosViewModel : ObservableObject
 
             ClearCart();
             SearchProducts();
+            LoadHistory();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "POS", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.ShowError(ex.Message, "POS");
         }
     }
 }

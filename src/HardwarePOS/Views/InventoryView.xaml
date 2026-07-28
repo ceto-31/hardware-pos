@@ -23,7 +23,7 @@
                             <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
                             <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120"/>
                             <DataGridTextColumn Header="UOM" Binding="{Binding UnitOfMeasure}" Width="80"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N3}" Width="90">
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="90">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                                 </DataGridTextColumn.HeaderStyle>

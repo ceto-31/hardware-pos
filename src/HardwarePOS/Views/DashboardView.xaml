@@ -9,61 +9,149 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="{Binding WelcomeMessage}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                        <TextBlock Text="{Binding UserDisplay}" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding WelcomeMessage}" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding UserDisplay}" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="{Binding CurrentDateTime}" VerticalAlignment="Center"
-                               FontSize="14" Foreground="{StaticResource MutedBrush}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                        <TextBlock Text="Year" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox Width="90" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding CurrentDateTime}" VerticalAlignment="Center"
+                               Foreground="{StaticResource MutedBrush}"/>
                 </Grid>
             </Border>
 
-            <UniformGrid Columns="3">
-                <Border Style="{StaticResource CardBorder}">
-                    <StackPanel>
-                        <TextBlock Text="Today's Sales" Foreground="{StaticResource MutedBrush}"/>
-                        <TextBlock FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
-                            <Run Text="₱"/><Run Text="{Binding TodaySales, StringFormat=N2}"/>
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <StackPanel>
-                        <TextBlock Text="Today's Transactions" Foreground="{StaticResource MutedBrush}"/>
-                        <TextBlock Text="{Binding TodayTransactions}" FontSize="28" FontWeight="Bold" Foreground="#2E7D32"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <StackPanel>
-                        <TextBlock Text="Total Revenue" Foreground="{StaticResource MutedBrush}"/>
-                        <TextBlock FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}">
-                            <Run Text="₱"/><Run Text="{Binding TotalRevenue, StringFormat=N2}"/>
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
+            <UniformGrid Columns="4">
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Today's Sales" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding TodaySales, StringFormat=₱{0:N2}}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Today's Transactions" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Text="{Binding TodayTransactions}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Total Revenue" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Text="{Binding TotalRevenue, StringFormat=₱{0:N2}}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Total Products" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Text="{Binding TotalProducts}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Total Suppliers" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Text="{Binding TotalSuppliers}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Low Stock Items" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="#CA8A04" Text="{Binding LowStockCount}"/>
+                </StackPanel></Border>
+                <Border Style="{StaticResource CardBorder}"><StackPanel>
+                    <TextBlock Text="Out of Stock" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="#DC2626" Text="{Binding OutOfStockCount}"/>
+                </StackPanel></Border>
             </UniformGrid>
 
-            <UniformGrid Columns="3">
-                <Border Style="{StaticResource CardBorder}" Height="280">
+            <UniformGrid Columns="2">
+                <Border Style="{StaticResource CardBorder}" Height="240">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="Daily Sales" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock DockPanel.Dock="Top" Text="Daily Sales" FontWeight="SemiBold" Margin="0,0,0,6"/>
                         <lvc:CartesianChart Series="{Binding DailySeries}" XAxes="{Binding DailyXAxes}" YAxes="{Binding YAxes}"/>
                     </DockPanel>
                 </Border>
-                <Border Style="{StaticResource CardBorder}" Height="280">
+                <Border Style="{StaticResource CardBorder}" Height="240">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="Weekly Sales" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock DockPanel.Dock="Top" Text="Weekly Sales" FontWeight="SemiBold" Margin="0,0,0,6"/>
                         <lvc:CartesianChart Series="{Binding WeeklySeries}" XAxes="{Binding WeeklyXAxes}" YAxes="{Binding YAxes}"/>
                     </DockPanel>
                 </Border>
-                <Border Style="{StaticResource CardBorder}" Height="280">
+                <Border Style="{StaticResource CardBorder}" Height="240">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="Monthly Sales" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock DockPanel.Dock="Top" Text="Monthly Sales" FontWeight="SemiBold" Margin="0,0,0,6"/>
                         <lvc:CartesianChart Series="{Binding MonthlySeries}" XAxes="{Binding MonthlyXAxes}" YAxes="{Binding YAxes}"/>
                     </DockPanel>
                 </Border>
+                <Border Style="{StaticResource CardBorder}" Height="240">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Yearly Sales" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <lvc:CartesianChart Series="{Binding YearlySeries}" XAxes="{Binding YearlyXAxes}" YAxes="{Binding YAxes}"/>
+                    </DockPanel>
+                </Border>
             </UniformGrid>
+
+            <UniformGrid Columns="2">
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Top Selling Products" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding TopProducts}" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                                <DataGridTextColumn Header="Qty" Binding="{Binding QtySold, StringFormat=N0}" Width="70"/>
+                                <DataGridTextColumn Header="Revenue" Binding="{Binding Revenue, StringFormat=N2}" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Sales by Category" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding CategorySales}" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="*"/>
+                                <DataGridTextColumn Header="Revenue" Binding="{Binding Revenue, StringFormat=N2}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Recent Stock In/Out" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding RecentMoves}" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="When" Binding="{Binding CreatedAt, StringFormat=MM-dd HH:mm}" Width="100"/>
+                                <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding MovementType}" Width="50"/>
+                                <DataGridTextColumn Header="Qty" Binding="{Binding QtyChange, StringFormat=N0}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Latest Activities" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Activities}" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="When" Binding="{Binding CreatedAt, StringFormat=MM-dd HH:mm}" Width="100"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding ActivityType}" Width="80"/>
+                                <DataGridTextColumn Header="Details" Binding="{Binding Description}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+            </UniformGrid>
+
+            <Border Style="{StaticResource CardBorder}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Inventory Status (Low / Out of Stock)" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding InventoryAlerts}" MaxHeight="200">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="{Binding StockStatus, Converter={StaticResource StockStatusBrush}}"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="90"/>
+                            <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70"/>
+                            <DataGridTextColumn Header="Reorder" Binding="{Binding ReorderLevel, StringFormat=N0}" Width="70"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding StatusLabel}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

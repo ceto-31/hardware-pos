@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:vm="clr-namespace:HardwarePOS.ViewModels"
                     xmlns:views="clr-namespace:HardwarePOS.Views"
-                    xmlns:conv="clr-namespace:HardwarePOS.Converters">
+                    xmlns:conv="clr-namespace:HardwarePOS.Converters"
+                    xmlns:helpers="clr-namespace:HardwarePOS.Helpers">
 
     <FontFamily x:Key="AppFont">Segoe UI</FontFamily>
 
@@ -239,13 +240,31 @@
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="#CBD5E1"
                             BorderThickness="1" CornerRadius="8" SnapsToDevicePixels="True">
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                        Margin="{TemplateBinding Padding}"
-                                        VerticalAlignment="Center"
-                                        VerticalScrollBarVisibility="Hidden"
-                                        HorizontalScrollBarVisibility="Hidden"/>
+                        <Grid>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          HorizontalScrollBarVisibility="Hidden"/>
+                            <TextBlock x:Name="PlaceholderText"
+                                       Text="{Binding Path=(helpers:TextBoxHelper.Placeholder), RelativeSource={RelativeSource TemplatedParent}}"
+                                       Foreground="#94A3B8"
+                                       FontFamily="{TemplateBinding FontFamily}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       Margin="{TemplateBinding Padding}"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="Collapsed"/>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value=""/>
+                                <Condition Property="IsFocused" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
+                        </MultiTrigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource FocusBorderBrush}"/>
                             <Setter TargetName="bd" Property="Background" Value="#F8FAFF"/>

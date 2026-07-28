@@ -1,6 +1,7 @@
 <UserControl x:Class="HardwarePOS.Views.PosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="clr-namespace:HardwarePOS.Helpers">
     <TabControl Style="{StaticResource ModernTabControl}"
                 ItemContainerStyle="{StaticResource ModernTabItem}"
                 UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -23,7 +24,8 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" Margin="0,0,6,0"
-                                         Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}">
+                                         Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                                         helpers:TextBoxHelper.Placeholder="Scan or type barcode…">
                                     <TextBox.InputBindings>
                                         <KeyBinding Key="Return" Command="{Binding ScanBarcodeCommand}"/>
                                     </TextBox.InputBindings>
@@ -35,7 +37,8 @@
                             <TextBlock Text="Search Products" Style="{StaticResource FieldLabel}"/>
                             <TextBlock Text="Click a product row to add it to the cart."
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     helpers:TextBoxHelper.Placeholder="Search by name, code, or barcode…"/>
                         </StackPanel>
 
                         <DataGrid x:Name="ProductGrid"
@@ -177,7 +180,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Margin="0,0,6,0"
-                                 Text="{Binding HistorySearch, UpdateSourceTrigger=PropertyChanged}"/>
+                                 Text="{Binding HistorySearch, UpdateSourceTrigger=PropertyChanged}"
+                                 helpers:TextBoxHelper.Placeholder="Search by invoice, cashier, or date…"/>
                         <Button Grid.Column="1" Content="Preview Receipt" MinWidth="110"
                                 Style="{StaticResource SecondaryButton}" Command="{Binding PreviewSelectedReceiptCommand}"/>
                     </Grid>

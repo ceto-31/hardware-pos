@@ -22,7 +22,7 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private Product? _selectedItem;
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private bool _showArchived;
-    [ObservableProperty] private int? _filterCategoryId;
+    [ObservableProperty] private int? _filterCategoryId = 0;
     [ObservableProperty] private bool _hasRows;
 
     [ObservableProperty] private int _editingId;

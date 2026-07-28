@@ -129,4 +129,71 @@ public class SalesRepository
             throw;
         }
     }
+
+    public List<SaleHistoryRow> GetHistory(string? search = null, int? year = null)
+    {
+        var list = new List<SaleHistoryRow>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT s.SaleId, s.InvoiceNo, s.SaleDate, u.FullName, s.Subtotal, s.TaxAmount,
+                   s.DiscountAmount, s.TotalDue, s.CashTendered, s.ChangeAmount
+            FROM dbo.Sales s
+            INNER JOIN dbo.Users u ON u.UserId = s.CashierId
+            WHERE (@Year IS NULL OR YEAR(s.SaleDate) = @Year)
+              AND (@Search IS NULL OR @Search = N'' OR s.InvoiceNo LIKE N'%' + @Search + N'%' OR u.FullName LIKE N'%' + @Search + N'%')
+            ORDER BY s.SaleDate DESC;
+            """;
+        cmd.Parameters.AddWithValue("@Year", (object?)year ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new SaleHistoryRow
+            {
+                SaleId = reader.GetInt32(0),
+                InvoiceNo = reader.GetString(1),
+                SaleDate = reader.GetDateTime(2),
+                CashierName = reader.GetString(3),
+                Subtotal = reader.GetDecimal(4),
+                TaxAmount = reader.GetDecimal(5),
+                DiscountAmount = reader.GetDecimal(6),
+                TotalDue = reader.GetDecimal(7),
+                CashTendered = reader.GetDecimal(8),
+                ChangeAmount = reader.GetDecimal(9)
+            });
+        }
+        return list;
+    }
+
+    public List<SaleHistoryItemRow> GetSaleItems(int saleId)
+    {
+        var list = new List<SaleHistoryItemRow>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT p.ProductName, si.Quantity, si.UnitPrice, si.LineTotal
+            FROM dbo.SaleItems si
+            INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
+            WHERE si.SaleId = @Id;
+            """;
+        cmd.Parameters.AddWithValue("@Id", saleId);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new SaleHistoryItemRow
+            {
+                ProductName = reader.GetString(0),
+                Quantity = reader.GetDecimal(1),
+                UnitPrice = reader.GetDecimal(2),
+                LineTotal = reader.GetDecimal(3)
+            });
+        }
+        return list;
+    }
+
+    public SaleHistoryRow? GetSale(int saleId) =>
+        GetHistory().FirstOrDefault(s => s.SaleId == saleId);
 }

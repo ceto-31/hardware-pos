@@ -5,29 +5,37 @@ namespace HardwarePOS.Data;
 
 public class ProductRepository
 {
-    public List<Product> GetAll(string? search = null, bool includeArchived = false)
+    public List<Product> GetAll(
+        string? search = null,
+        bool includeArchived = false,
+        int? categoryId = null)
     {
         var list = new List<Product>();
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode, p.UnitOfMeasure,
-                   p.CostPrice, p.SellingPrice, p.StockQty, p.ReorderLevel,
-                   p.CategoryId, c.CategoryName, p.SupplierId, s.CompanyName, p.IsArchived
+            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+                   ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
+                   p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
+            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
             WHERE (@IncludeArchived = 1 OR p.IsArchived = 0)
+              AND (@CategoryId IS NULL OR p.CategoryId = @CategoryId)
               AND (
                     @Search IS NULL OR @Search = N''
+                    OR p.ProductCode LIKE N'%' + @Search + N'%'
                     OR p.ProductName LIKE N'%' + @Search + N'%'
                     OR p.Barcode LIKE N'%' + @Search + N'%'
                     OR p.ProductDetails LIKE N'%' + @Search + N'%'
                   )
             ORDER BY p.ProductName;
             """;
-        cmd.Parameters.AddWithValue("@IncludeArchived", includeArchived ? 1 : 0);
+        cmd.Parameters.AddWithValue("@IncludeArchived", includeArchived);
+        cmd.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
 
         using var reader = cmd.ExecuteReader();
@@ -42,12 +50,14 @@ public class ProductRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode, p.UnitOfMeasure,
-                   p.CostPrice, p.SellingPrice, p.StockQty, p.ReorderLevel,
-                   p.CategoryId, c.CategoryName, p.SupplierId, s.CompanyName, p.IsArchived
+            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+                   ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
+                   p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
+            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
             WHERE p.ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
@@ -61,12 +71,14 @@ public class ProductRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode, p.UnitOfMeasure,
-                   p.CostPrice, p.SellingPrice, p.StockQty, p.ReorderLevel,
-                   p.CategoryId, c.CategoryName, p.SupplierId, s.CompanyName, p.IsArchived
+            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+                   ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
+                   p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
+            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
             WHERE p.Barcode = @Barcode AND p.IsArchived = 0;
             """;
         cmd.Parameters.AddWithValue("@Barcode", barcode);
@@ -88,10 +100,12 @@ public class ProductRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     INSERT INTO dbo.Products
-                        (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice,
-                         StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+                        (ProductCode, ProductName, ProductDetails, Barcode, UnitId, UnitOfMeasure,
+                         CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
                     VALUES
-                        (@Name, @Details, @Barcode, @Uom, @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0);
+                        (@ProductCode, @Name, @Details, @Barcode, @UnitId,
+                         ISNULL((SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId), N'Piece'),
+                         @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 AddParams(cmd, product);
@@ -131,10 +145,14 @@ public class ProductRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             UPDATE dbo.Products SET
+                ProductCode = @ProductCode,
                 ProductName = @Name,
                 ProductDetails = @Details,
                 Barcode = @Barcode,
-                UnitOfMeasure = @Uom,
+                UnitId = @UnitId,
+                UnitOfMeasure = ISNULL(
+                    (SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId),
+                    N'Piece'),
                 CostPrice = @Cost,
                 SellingPrice = @Sell,
                 ReorderLevel = @Reorder,
@@ -197,10 +215,15 @@ public class ProductRepository
 
     private static void AddParams(SqlCommand cmd, Product product)
     {
+        cmd.Parameters.AddWithValue(
+            "@ProductCode",
+            string.IsNullOrWhiteSpace(product.ProductCode) ? DBNull.Value : product.ProductCode.Trim());
         cmd.Parameters.AddWithValue("@Name", product.ProductName);
         cmd.Parameters.AddWithValue("@Details", (object?)product.ProductDetails ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@Barcode", string.IsNullOrWhiteSpace(product.Barcode) ? DBNull.Value : product.Barcode);
-        cmd.Parameters.AddWithValue("@Uom", product.UnitOfMeasure);
+        cmd.Parameters.AddWithValue(
+            "@Barcode",
+            string.IsNullOrWhiteSpace(product.Barcode) ? DBNull.Value : product.Barcode);
+        cmd.Parameters.AddWithValue("@UnitId", (object?)product.UnitId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Cost", product.CostPrice);
         cmd.Parameters.AddWithValue("@Sell", product.SellingPrice);
         cmd.Parameters.AddWithValue("@Stock", product.StockQty);
@@ -224,6 +247,8 @@ public class ProductRepository
         CategoryName = reader.IsDBNull(10) ? null : reader.GetString(10),
         SupplierId = reader.IsDBNull(11) ? null : reader.GetInt32(11),
         SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
-        IsArchived = reader.GetBoolean(13)
+        IsArchived = reader.GetBoolean(13),
+        ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15)
     };
 }

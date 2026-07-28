@@ -5,6 +5,10 @@ public class DashboardSummary
     public decimal TodaySales { get; set; }
     public int TodayTransactions { get; set; }
     public decimal TotalRevenue { get; set; }
+    public int TotalProducts { get; set; }
+    public int TotalSuppliers { get; set; }
+    public int LowStockCount { get; set; }
+    public int OutOfStockCount { get; set; }
 }
 
 public class SalesPoint

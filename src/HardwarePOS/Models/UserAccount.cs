@@ -8,4 +8,9 @@ public class UserAccount
     public int RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+
+    public bool IsProtected =>
+        string.Equals(Username, "admin", StringComparison.OrdinalIgnoreCase);
+
+    public string StatusLabel => IsActive ? "Active" : "Inactive";
 }

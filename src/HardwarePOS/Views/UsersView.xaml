@@ -1,0 +1,94 @@
+<UserControl x:Class="HardwarePOS.Views.UsersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.4*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+            <DockPanel>
+                <TextBox DockPanel.Dock="Top" Margin="0,0,0,8" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="110"/>
+                        <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*"/>
+                        <DataGridTextColumn Header="Role" Binding="{Binding RoleName}" Width="90"/>
+                        <DataGridTemplateColumn Header="Status" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Actions" Width="72">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="Protected" Foreground="{StaticResource MutedBrush}" FontSize="12" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <StackPanel Orientation="Horizontal">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
+                                                    ContentTemplate="{StaticResource EditIconContent}"
+                                                    Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                            <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Deactivate"
+                                                    ContentTemplate="{StaticResource DeactivateIconContent}"
+                                                    Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="{Binding FormTitle}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Username" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsNewUser}"/>
+                    <TextBlock Text="Full Name" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Role" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox ItemsSource="{Binding Roles}" DisplayMemberPath="RoleName" SelectedValuePath="RoleId" SelectedValue="{Binding RoleId}"/>
+                    <CheckBox Content="Active" IsChecked="{Binding IsActive}" Margin="0,8,0,0"/>
+                    <TextBlock Text="Password" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                    <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Favorite color" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                    <TextBox Text="{Binding SecurityColor, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Favorite number" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding SecurityNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Hobby" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding SecurityHobby, UpdateSourceTrigger=PropertyChanged}"/>
+                    <WrapPanel Margin="0,12,0,0">
+                        <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}"/>
+                        <Button Content="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"/>
+                        <Button Content="Edit" Style="{StaticResource SecondaryButton}" Command="{Binding EditCommand}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

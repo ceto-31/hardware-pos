@@ -1,0 +1,102 @@
+<UserControl x:Class="HardwarePOS.Views.ArchivesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <TabControl Style="{StaticResource ModernTabControl}"
+                ItemContainerStyle="{StaticResource ModernTabItem}"
+                UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <TabItem Header="Archived Products">
+            <Border Style="{StaticResource CardBorder}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Margin="0,0,6,0" Text="{Binding ProductSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="1" Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                ContentTemplate="{StaticResource RestoreIconContent}" Margin="0,0,2,0"
+                                Command="{Binding RestoreProductCommand}"/>
+                        <Button Grid.Column="2" Style="{StaticResource GridIconButtonDanger}" ToolTip="Permanent Delete"
+                                ContentTemplate="{StaticResource DeleteIconContent}"
+                                Command="{Binding PermanentDeleteProductCommand}"/>
+                    </Grid>
+                    <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding ArchivedProducts}" SelectedItem="{Binding SelectedProduct}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="90"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding ProductName}" Width="*"/>
+                            <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="80">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                </DataGridTextColumn.HeaderStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="72">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                                    ContentTemplate="{StaticResource RestoreIconContent}"
+                                                    Command="{Binding DataContext.RestoreProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
+                                                    ContentTemplate="{StaticResource DeleteIconContent}"
+                                                    Command="{Binding DataContext.PermanentDeleteProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </TabItem>
+        <TabItem Header="Archived Suppliers">
+            <Border Style="{StaticResource CardBorder}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Margin="0,0,6,0" Text="{Binding SupplierSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="1" Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                ContentTemplate="{StaticResource RestoreIconContent}" Margin="0,0,2,0"
+                                Command="{Binding RestoreSupplierCommand}"/>
+                        <Button Grid.Column="2" Style="{StaticResource GridIconButtonDanger}" ToolTip="Permanent Delete"
+                                ContentTemplate="{StaticResource DeleteIconContent}"
+                                Command="{Binding PermanentDeleteSupplierCommand}"/>
+                    </Grid>
+                    <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding ArchivedSuppliers}" SelectedItem="{Binding SelectedSupplier}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Company" Binding="{Binding CompanyName}" Width="*"/>
+                            <DataGridTextColumn Header="Contact" Binding="{Binding ContactPerson}" Width="140"/>
+                            <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="120"/>
+                            <DataGridTemplateColumn Header="Actions" Width="72">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                                    ContentTemplate="{StaticResource RestoreIconContent}"
+                                                    Command="{Binding DataContext.RestoreSupplierCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
+                                                    ContentTemplate="{StaticResource DeleteIconContent}"
+                                                    Command="{Binding DataContext.PermanentDeleteSupplierCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </TabItem>
+    </TabControl>
+</UserControl>

@@ -1,0 +1,25 @@
+<UserControl x:Class="HardwarePOS.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Style="{StaticResource CardBorder}">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                <ComboBox Width="200" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding ReportType}" Margin="2"/>
+                <ComboBox Width="90" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}" Margin="2"/>
+                <Button Content="Generate" Style="{StaticResource PrimaryButton}" Command="{Binding GenerateCommand}"/>
+                <Button Content="Export CSV" Style="{StaticResource SecondaryButton}" Command="{Binding ExportCsvCommand}"/>
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Top" Text="No data for this report." HorizontalAlignment="Center" Margin="0,20"
+                       Foreground="{StaticResource MutedBrush}"
+                       Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"/>
+            <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Rows}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Column 1" Binding="{Binding Col1}" Width="*"/>
+                    <DataGridTextColumn Header="Column 2" Binding="{Binding Col2}" Width="*"/>
+                    <DataGridTextColumn Header="Column 3" Binding="{Binding Col3}" Width="*"/>
+                    <DataGridTextColumn Header="Column 4" Binding="{Binding Col4}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Border>
+</UserControl>

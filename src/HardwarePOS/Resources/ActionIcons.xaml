@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <DataTemplate x:Key="EditIconContent">
+        <Viewbox Width="14" Height="14" Stretch="Uniform">
+            <Path Data="{StaticResource IconEdit}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        </Viewbox>
+    </DataTemplate>
+
+    <DataTemplate x:Key="DeleteIconContent">
+        <Viewbox Width="14" Height="14" Stretch="Uniform">
+            <Path Data="{StaticResource IconDelete}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        </Viewbox>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ArchiveIconContent">
+        <Viewbox Width="14" Height="14" Stretch="Uniform">
+            <Path Data="{StaticResource IconArchive}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        </Viewbox>
+    </DataTemplate>
+
+    <DataTemplate x:Key="RestoreIconContent">
+        <Viewbox Width="14" Height="14" Stretch="Uniform">
+            <Path Data="{StaticResource IconRestore}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        </Viewbox>
+    </DataTemplate>
+
+    <DataTemplate x:Key="DeactivateIconContent">
+        <Viewbox Width="14" Height="14" Stretch="Uniform">
+            <Path Data="{StaticResource IconDeactivate}"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        </Viewbox>
+    </DataTemplate>
+
+</ResourceDictionary>

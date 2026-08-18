@@ -23,4 +23,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\4kv-logo.png" />
+  </ItemGroup>
+
 </Project>

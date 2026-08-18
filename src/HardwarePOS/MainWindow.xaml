@@ -20,8 +20,13 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Margin="16,24,16,16">
-                        <TextBlock Text="4KV Hardware" Foreground="White" FontSize="20" FontWeight="Bold"/>
-                        <TextBlock Text="Point of Sale &amp; Inventory" Foreground="#94A3B8" FontSize="11" Margin="0,6,0,0"/>
+                        <Image Source="/Assets/4kv-logo.png"
+                               Width="198"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"
+                               SnapsToDevicePixels="True"/>
+                        <TextBlock Text="Point of Sale &amp; Inventory" Foreground="#94A3B8" FontSize="11"/>
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">

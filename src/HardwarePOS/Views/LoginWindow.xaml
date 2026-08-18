@@ -34,15 +34,14 @@
             <Border Padding="32" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1"
                     SnapsToDevicePixels="True" UseLayoutRounding="True">
                 <StackPanel>
-                    <Border Width="72" Height="72" CornerRadius="8" Background="{StaticResource PrimaryBrush}"
-                            HorizontalAlignment="Center" Margin="0,0,0,16" SnapsToDevicePixels="True">
-                        <TextBlock Text="4KV" Foreground="White" FontSize="22" FontWeight="Bold"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="4KV Hardware" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
-                               HorizontalAlignment="Center"/>
+                    <Image Source="/Assets/4kv-logo.png"
+                           Height="120"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4"
+                           SnapsToDevicePixels="True"/>
                     <TextBlock Text="Point of Sale &amp; Inventory" Foreground="{StaticResource MutedBrush}"
-                               HorizontalAlignment="Center" Margin="0,4,0,28"/>
+                               HorizontalAlignment="Center" Margin="0,0,0,16"/>
 
                     <TextBlock Text="Username" Style="{StaticResource FieldLabel}"/>
                     <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>

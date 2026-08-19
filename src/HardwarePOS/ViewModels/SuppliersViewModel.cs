@@ -25,6 +25,7 @@ public partial class SuppliersViewModel : ObservableObject
     [ObservableProperty] private bool _isActive = true;
     [ObservableProperty] private string _formTitle = "Add Supplier";
     [ObservableProperty] private bool _hasRows;
+    [ObservableProperty] private bool _isFormOpen;
 
     [RelayCommand]
     public void Load() => Search();
@@ -43,20 +44,31 @@ public partial class SuppliersViewModel : ObservableObject
     {
         ClearForm();
         FormTitle = "Add Supplier";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
-    private void Edit()
+    private void CloseForm()
     {
-        if (SelectedItem is null) return;
-        EditingId = SelectedItem.SupplierId;
-        CompanyName = SelectedItem.CompanyName;
-        ContactPerson = SelectedItem.ContactPerson ?? string.Empty;
-        Phone = SelectedItem.Phone ?? string.Empty;
-        Email = SelectedItem.Email ?? string.Empty;
-        Address = SelectedItem.Address ?? string.Empty;
-        IsActive = SelectedItem.IsActive;
+        ClearForm();
+        IsFormOpen = false;
+    }
+
+    [RelayCommand]
+    private void Edit(Supplier? supplier)
+    {
+        var item = supplier ?? SelectedItem;
+        if (item is null) return;
+        SelectedItem = item;
+        EditingId = item.SupplierId;
+        CompanyName = item.CompanyName;
+        ContactPerson = item.ContactPerson ?? string.Empty;
+        Phone = item.Phone ?? string.Empty;
+        Email = item.Email ?? string.Empty;
+        Address = item.Address ?? string.Empty;
+        IsActive = item.IsActive;
         FormTitle = "Edit Supplier";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
@@ -93,6 +105,7 @@ public partial class SuppliersViewModel : ObservableObject
             }
 
             ClearForm();
+            IsFormOpen = false;
             Search();
         }
         catch (Exception ex)
@@ -102,22 +115,26 @@ public partial class SuppliersViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Archive()
+    private void Archive(Supplier? supplier)
     {
-        if (SelectedItem is null) return;
-        if (!DialogService.Confirm($"Archive '{SelectedItem.CompanyName}'?", "Suppliers")) return;
-        _suppliers.Archive(SelectedItem.SupplierId, true);
-        _activity.Log("Supplier", $"Archived supplier '{SelectedItem.CompanyName}'");
+        var item = supplier ?? SelectedItem;
+        if (item is null) return;
+        if (!DialogService.Confirm($"Archive '{item.CompanyName}'?", "Suppliers")) return;
+        _suppliers.Archive(item.SupplierId, true);
+        _activity.Log("Supplier", $"Archived supplier '{item.CompanyName}'");
+        if (EditingId == item.SupplierId) CloseForm();
         Search();
     }
 
     [RelayCommand]
-    private void Delete()
+    private void Delete(Supplier? supplier)
     {
-        if (SelectedItem is null) return;
-        if (!DialogService.Confirm($"Delete '{SelectedItem.CompanyName}'?", "Suppliers")) return;
+        var item = supplier ?? SelectedItem;
+        if (item is null) return;
+        if (!DialogService.Confirm($"Delete '{item.CompanyName}'?", "Suppliers")) return;
 
-        _suppliers.Delete(SelectedItem.SupplierId);
+        _suppliers.Delete(item.SupplierId);
+        if (EditingId == item.SupplierId) CloseForm();
         Search();
     }
 

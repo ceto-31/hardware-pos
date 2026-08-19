@@ -43,8 +43,14 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string? _imagePath;
     [ObservableProperty] private ImageSource? _previewImage;
     [ObservableProperty] private string _formTitle = "Add Product";
+    [ObservableProperty] private bool _isFormOpen;
     public bool IsNewProduct => EditingId == 0;
     public bool HasPhoto => PreviewImage is not null;
+
+    public decimal ProfitAmount => SellingPrice - CostPrice;
+    public decimal MarkupPercent => CostPrice > 0 ? (SellingPrice - CostPrice) / CostPrice * 100 : 0;
+    public string ProfitSummary => $"Profit {ProfitAmount:N2}  ·  Markup {MarkupPercent:N1}%";
+    public string ProfitTone => ProfitAmount > 0 ? "Positive" : ProfitAmount < 0 ? "Negative" : "Neutral";
 
     private string? _pendingImageFile;
     private bool _clearImage;
@@ -54,6 +60,16 @@ public partial class ProductsViewModel : ObservableObject
     partial void OnShowArchivedChanged(bool value) => Search();
     partial void OnFilterCategoryIdChanged(int? value) => Search();
     partial void OnSearchTextChanged(string value) => Search();
+    partial void OnCostPriceChanged(decimal value) => NotifyPricing();
+    partial void OnSellingPriceChanged(decimal value) => NotifyPricing();
+
+    private void NotifyPricing()
+    {
+        OnPropertyChanged(nameof(ProfitAmount));
+        OnPropertyChanged(nameof(MarkupPercent));
+        OnPropertyChanged(nameof(ProfitSummary));
+        OnPropertyChanged(nameof(ProfitTone));
+    }
 
     [RelayCommand]
     public void Load()
@@ -84,29 +100,40 @@ public partial class ProductsViewModel : ObservableObject
     {
         ClearForm();
         FormTitle = "Add Product";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
-    private void Edit()
+    private void CloseForm()
     {
-        if (SelectedItem is null) return;
-        EditingId = SelectedItem.ProductId;
-        ProductCode = SelectedItem.ProductCode;
-        ProductName = SelectedItem.ProductName;
-        ProductDetails = SelectedItem.ProductDetails ?? string.Empty;
-        Barcode = SelectedItem.Barcode ?? string.Empty;
-        UnitId = SelectedItem.UnitId;
-        CostPrice = SelectedItem.CostPrice;
-        SellingPrice = SelectedItem.SellingPrice;
-        StockQty = SelectedItem.StockQty;
-        ReorderLevel = SelectedItem.ReorderLevel;
-        CategoryId = SelectedItem.CategoryId;
-        SupplierId = SelectedItem.SupplierId;
-        ImagePath = SelectedItem.ImagePath;
-        PreviewImage = ProductImageStore.Load(SelectedItem.ImagePath);
+        ClearForm();
+        IsFormOpen = false;
+    }
+
+    [RelayCommand]
+    private void Edit(Product? product)
+    {
+        var item = product ?? SelectedItem;
+        if (item is null) return;
+        SelectedItem = item;
+        EditingId = item.ProductId;
+        ProductCode = item.ProductCode;
+        ProductName = item.ProductName;
+        ProductDetails = item.ProductDetails ?? string.Empty;
+        Barcode = item.Barcode ?? string.Empty;
+        UnitId = item.UnitId;
+        CostPrice = item.CostPrice;
+        SellingPrice = item.SellingPrice;
+        StockQty = item.StockQty;
+        ReorderLevel = item.ReorderLevel;
+        CategoryId = item.CategoryId;
+        SupplierId = item.SupplierId;
+        ImagePath = item.ImagePath;
+        PreviewImage = ProductImageStore.Load(item.ImagePath);
         _pendingImageFile = null;
         _clearImage = false;
         FormTitle = "Edit Product";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
@@ -164,6 +191,7 @@ public partial class ProductsViewModel : ObservableObject
             }
 
             ClearForm();
+            IsFormOpen = false;
             Search();
         }
         catch (Exception ex)
@@ -173,30 +201,43 @@ public partial class ProductsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Archive()
+    private void Archive(Product? product)
     {
-        if (SelectedItem is null || SelectedItem.IsArchived) return;
-        if (!DialogService.Confirm($"Archive '{SelectedItem.ProductName}'?", "Products")) return;
-        _products.Archive(SelectedItem.ProductId, true);
-        _activity.Log("Product", $"Archived product '{SelectedItem.ProductName}'");
+        var item = product ?? SelectedItem;
+        if (item is null || item.IsArchived) return;
+        if (!DialogService.Confirm($"Archive '{item.ProductName}'?", "Products")) return;
+        _products.Archive(item.ProductId, true);
+        _activity.Log("Product", $"Archived product '{item.ProductName}'");
+        if (EditingId == item.ProductId)
+        {
+            ClearForm();
+            IsFormOpen = false;
+        }
         Search();
     }
 
     [RelayCommand]
-    private void Restore()
+    private void Restore(Product? product)
     {
-        if (SelectedItem is null || !SelectedItem.IsArchived) return;
-        _products.Archive(SelectedItem.ProductId, false);
-        _activity.Log("Product", $"Restored product '{SelectedItem.ProductName}'");
+        var item = product ?? SelectedItem;
+        if (item is null || !item.IsArchived) return;
+        _products.Archive(item.ProductId, false);
+        _activity.Log("Product", $"Restored product '{item.ProductName}'");
         Search();
     }
 
     [RelayCommand]
-    private void Delete()
+    private void Delete(Product? product)
     {
-        if (SelectedItem is null) return;
-        if (!DialogService.Confirm($"Delete '{SelectedItem.ProductName}'?", "Products")) return;
-        _products.Delete(SelectedItem.ProductId);
+        var item = product ?? SelectedItem;
+        if (item is null) return;
+        if (!DialogService.Confirm($"Delete '{item.ProductName}'?", "Products")) return;
+        _products.Delete(item.ProductId);
+        if (EditingId == item.ProductId)
+        {
+            ClearForm();
+            IsFormOpen = false;
+        }
         Search();
     }
 

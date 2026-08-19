@@ -1,40 +1,38 @@
 <UserControl x:Class="HardwarePOS.Views.ProductsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:helpers="clr-namespace:HardwarePOS.Helpers">
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
+             xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+        <Border Style="{StaticResource CardBorder}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                     <TextBox Margin="0,0,0,8"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              helpers:TextBoxHelper.Placeholder="Search products by name, code, or barcode…"/>
-                    <WrapPanel Margin="0,0,0,4">
-                        <ComboBox Width="180" ItemsSource="{Binding FilterCategories}" DisplayMemberPath="CategoryName"
-                                  SelectedValuePath="CategoryId" SelectedValue="{Binding FilterCategoryId}" Margin="0,0,8,4"/>
-                        <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="0,0,12,4"/>
-                        <Button Style="{StaticResource GridIconButton}" ToolTip="Edit" ContentTemplate="{StaticResource EditIconContent}"
-                                Command="{Binding EditCommand}" Margin="0,0,2,4"/>
-                        <Button Style="{StaticResource GridIconButton}" ToolTip="Archive" ContentTemplate="{StaticResource ArchiveIconContent}"
-                                Command="{Binding ArchiveCommand}" Margin="0,0,2,4"/>
-                        <Button Style="{StaticResource GridIconButton}" ToolTip="Restore" ContentTemplate="{StaticResource RestoreIconContent}"
-                                Command="{Binding RestoreCommand}" Margin="0,0,2,4"/>
-                        <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete" ContentTemplate="{StaticResource DeleteIconContent}"
-                                Command="{Binding DeleteCommand}" Margin="0,0,0,4"/>
-                    </WrapPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <WrapPanel VerticalAlignment="Center">
+                            <ComboBox Width="180" ItemsSource="{Binding FilterCategories}" DisplayMemberPath="CategoryName"
+                                      SelectedValuePath="CategoryId" SelectedValue="{Binding FilterCategoryId}" Margin="0,0,8,4"/>
+                            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="0,0,12,4"/>
+                        </WrapPanel>
+                        <Button Grid.Column="1" Content="+ Add New Product" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding NewCommand}" VerticalAlignment="Center" Margin="0,0,0,4"/>
+                    </Grid>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Top" Text="No products found." HorizontalAlignment="Center" Margin="0,16"
                            Foreground="{StaticResource MutedBrush}"
                            Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"/>
                 <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
-                          RowHeight="44">
+                          RowHeight="{x:Static sys:Double.NaN}">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
+                            <Setter Property="MinHeight" Value="44"/>
                             <Setter Property="Background" Value="{Binding StockStatus, Converter={StaticResource StockStatusBrush}}"/>
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -44,11 +42,11 @@
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="" Width="44" CanUserResize="False">
+                        <DataGridTemplateColumn Header="Image" Width="56" MinWidth="56" CanUserResize="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="4"
-                                            ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4">
                                         <Grid>
                                             <Viewbox Width="16" Height="16" Stretch="Uniform">
                                                 <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
@@ -60,14 +58,40 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="90"/>
-                        <DataGridTextColumn Header="Name" Binding="{Binding ProductName}" Width="*"/>
-                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="110"/>
-                        <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="100"/>
-                        <DataGridTextColumn Header="Unit" Binding="{Binding UnitOfMeasure}" Width="70"/>
-                        <DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat=N2}" Width="80"/>
-                        <DataGridTextColumn Header="Sell" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80"/>
-                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70">
+                        <DataGridTemplateColumn Header="Code" Width="90" MinWidth="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ProductCode}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                               Margin="6,4" ToolTip="{Binding ProductCode}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Product Name" Width="1.4*" MinWidth="140">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ProductName}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                               Margin="6,4" ToolTip="{Binding ProductName}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Barcode" Width="130" MinWidth="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Barcode}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                               Margin="6,4" ToolTip="{Binding Barcode}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Category" Width="110" MinWidth="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CategoryName}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                               Margin="6,4" ToolTip="{Binding CategoryName}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Unit" Binding="{Binding UnitOfMeasure}" Width="70" MinWidth="60"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat=N2}" Width="80" MinWidth="70">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                             </DataGridTextColumn.HeaderStyle>
@@ -75,10 +99,52 @@
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Status" Width="90">
+                        <DataGridTextColumn Header="Sell" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80" MinWidth="70">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                            </DataGridTextColumn.HeaderStyle>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70" MinWidth="60">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                            </DataGridTextColumn.HeaderStyle>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="Status" Width="90" MinWidth="80">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Actions" Width="108" MinWidth="108" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
+                                                ContentTemplate="{StaticResource EditIconContent}"
+                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Archive"
+                                                ContentTemplate="{StaticResource ArchiveIconContent}"
+                                                Command="{Binding DataContext.ArchiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsArchived, Converter={StaticResource InverseBoolToVis}}"/>
+                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                                ContentTemplate="{StaticResource RestoreIconContent}"
+                                                Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}"/>
+                                        <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
+                                                ContentTemplate="{StaticResource DeleteIconContent}"
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -87,67 +153,99 @@
             </DockPanel>
         </Border>
 
-        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
-            <ScrollViewer>
-                <StackPanel>
-                    <TextBlock Text="{Binding FormTitle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                    <TextBlock Text="Photo" Style="{StaticResource FieldLabel}"/>
-                    <Button Command="{Binding BrowsePhotoCommand}" Cursor="Hand" HorizontalAlignment="Left"
-                            Background="Transparent" BorderThickness="0" Padding="0" Margin="0,2,0,4"
-                            ToolTip="Click to add or change photo">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <ContentPresenter/>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Border Width="140" Height="140" Background="#F1F5F9" CornerRadius="8"
-                                BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
-                            <Grid>
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                            Visibility="{Binding HasPhoto, Converter={StaticResource InverseBoolToVis}}">
-                                    <Viewbox Width="36" Height="36" Stretch="Uniform" Margin="0,0,0,8">
-                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
-                                    </Viewbox>
-                                    <TextBlock Text="Click to add photo" Foreground="{StaticResource MutedBrush}"
-                                               FontSize="12" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                                <Image Source="{Binding PreviewImage}" Stretch="Uniform" Width="140" Height="140"
-                                       Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
-                            </Grid>
-                        </Border>
-                    </Button>
-                    <Button Content="Remove photo" Style="{StaticResource LinkButton}"
-                            Command="{Binding RemovePhotoCommand}" Foreground="{StaticResource MutedBrush}"
-                            Margin="0,0,0,10" HorizontalAlignment="Left"
-                            Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
-                    <TextBlock Text="Product Code"/>
-                    <TextBox Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Product Name"/>
-                    <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Details"/>
-                    <TextBox Text="{Binding ProductDetails, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
-                    <TextBlock Text="Barcode"/>
-                    <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Unit"/>
-                    <ComboBox ItemsSource="{Binding UnitOptions}" DisplayMemberPath="UnitName" SelectedValuePath="UnitId" SelectedValue="{Binding UnitId}"/>
-                    <TextBlock Text="Cost Price"/>
-                    <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Selling Price"/>
-                    <TextBox Text="{Binding SellingPrice, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Initial Stock"/>
-                    <TextBox Text="{Binding StockQty, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsNewProduct}"/>
-                    <TextBlock Text="Reorder Level"/>
-                    <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Category"/>
-                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId, TargetNullValue=0}"/>
-                    <TextBlock Text="Supplier"/>
-                    <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding SupplierId, TargetNullValue=0}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}"/>
-                        <Button Content="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"/>
-                    </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
+        <views:FormOverlay Title="{Binding FormTitle}"
+                           Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}"
+                           CancelCommand="{Binding CloseFormCommand}"
+                           SaveCommand="{Binding SaveCommand}">
+            <StackPanel>
+                <TextBlock Text="Photo" Style="{StaticResource DialogFieldLabel}"/>
+                <Button Command="{Binding BrowsePhotoCommand}" Cursor="Hand" HorizontalAlignment="Left"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0,2,0,4"
+                        ToolTip="Click to add or change photo">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter/>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Border Width="140" Height="140" Background="#F1F5F9" CornerRadius="8"
+                            BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Visibility="{Binding HasPhoto, Converter={StaticResource InverseBoolToVis}}">
+                                <Viewbox Width="36" Height="36" Stretch="Uniform" Margin="0,0,0,8">
+                                    <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
+                                </Viewbox>
+                                <TextBlock Text="Click to add photo" Foreground="{StaticResource MutedBrush}"
+                                           FontSize="12" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <Image Source="{Binding PreviewImage}" Stretch="Uniform" Width="140" Height="140"
+                                   Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
+                        </Grid>
+                    </Border>
+                </Button>
+                <Button Content="Remove photo" Style="{StaticResource LinkButton}"
+                        Command="{Binding RemovePhotoCommand}" Foreground="{StaticResource MutedBrush}"
+                        Margin="0,0,0,10" HorizontalAlignment="Left"
+                        Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="Product Code" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Product Name" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Details" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding ProductDetails, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
+                <TextBlock Text="Barcode" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Unit" Style="{StaticResource DialogFieldLabel}"/>
+                <ComboBox ItemsSource="{Binding UnitOptions}" DisplayMemberPath="UnitName" SelectedValuePath="UnitId" SelectedValue="{Binding UnitId}"/>
+                <TextBlock Text="Cost Price" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Selling Price" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding SellingPrice, UpdateSourceTrigger=PropertyChanged}"/>
+                <Border CornerRadius="6" Padding="8,6" Margin="0,4,0,8" HorizontalAlignment="Stretch">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ProfitTone}" Value="Positive">
+                                    <Setter Property="Background" Value="#F0FDF4"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ProfitTone}" Value="Negative">
+                                    <Setter Property="Background" Value="#FEF2F2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding ProfitSummary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ProfitTone}" Value="Positive">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ProfitTone}" Value="Negative">
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+                <TextBlock Text="Initial Stock" Style="{StaticResource DialogFieldLabel}"
+                           Visibility="{Binding IsNewProduct, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="Current Stock" Style="{StaticResource DialogFieldLabel}"
+                           Visibility="{Binding IsNewProduct, Converter={StaticResource InverseBoolToVis}}"/>
+                <TextBox Text="{Binding StockQty, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsNewProduct}"/>
+                <TextBlock Text="Adjust stock from Inventory (Stock In / Stock Out)."
+                           Foreground="{StaticResource MutedBrush}" FontSize="13" TextWrapping="Wrap" Margin="0,2,0,8"
+                           Visibility="{Binding IsNewProduct, Converter={StaticResource InverseBoolToVis}}"/>
+                <TextBlock Text="Reorder Level" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
+                <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId, TargetNullValue=0}"/>
+                <TextBlock Text="Supplier" Style="{StaticResource DialogFieldLabel}"/>
+                <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding SupplierId, TargetNullValue=0}"/>
+            </StackPanel>
+        </views:FormOverlay>
     </Grid>
 </UserControl>

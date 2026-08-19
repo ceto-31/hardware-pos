@@ -28,11 +28,15 @@ public partial class UsersViewModel : ObservableObject
     [ObservableProperty] private string _formTitle = "Add User";
     [ObservableProperty] private bool _hasRows;
     [ObservableProperty] private bool _isNewUser = true;
+    [ObservableProperty] private bool _isFormOpen;
 
     [RelayCommand]
     public void Load()
     {
-        Roles = new ObservableCollection<RoleOption>(_repo.GetRoles().Select(r => new RoleOption(r.RoleId, r.RoleName)));
+        Roles = new ObservableCollection<RoleOption>(
+            _repo.GetRoles()
+                .Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase))
+                .Select(r => new RoleOption(r.RoleId, r.RoleName)));
         Items = new ObservableCollection<UserAccount>(_repo.GetAll(SearchText));
         HasRows = Items.Count > 0;
         if (RoleId == 0 && Roles.Count > 0) RoleId = Roles[0].RoleId;
@@ -56,25 +60,41 @@ public partial class UsersViewModel : ObservableObject
         IsActive = true;
         if (Roles.Count > 0) RoleId = Roles[0].RoleId;
         FormTitle = "Add User";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
-    private void Edit()
+    private void CloseForm()
     {
-        if (SelectedItem is null) return;
-        if (SelectedItem.IsProtected)
+        EditingId = 0;
+        IsNewUser = true;
+        Username = FullName = Password = SecurityColor = SecurityNumber = SecurityHobby = string.Empty;
+        IsActive = true;
+        if (Roles.Count > 0) RoleId = Roles[0].RoleId;
+        FormTitle = "Add User";
+        IsFormOpen = false;
+    }
+
+    [RelayCommand]
+    private void Edit(UserAccount? user)
+    {
+        var item = user ?? SelectedItem;
+        if (item is null) return;
+        SelectedItem = item;
+        if (item.IsProtected)
         {
             DialogService.ShowWarning("The built-in admin account is protected and cannot be edited.", "Users");
             return;
         }
-        EditingId = SelectedItem.UserId;
+        EditingId = item.UserId;
         IsNewUser = false;
-        Username = SelectedItem.Username;
-        FullName = SelectedItem.FullName;
-        RoleId = SelectedItem.RoleId;
-        IsActive = SelectedItem.IsActive;
+        Username = item.Username;
+        FullName = item.FullName;
+        RoleId = item.RoleId;
+        IsActive = item.IsActive;
         Password = SecurityColor = SecurityNumber = SecurityHobby = string.Empty;
         FormTitle = "Edit User";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
@@ -100,6 +120,7 @@ public partial class UsersViewModel : ObservableObject
                     DialogService.ShowWarning("Password and all security answers are required for new users.", "Users");
                     return;
                 }
+                if (Roles.Count > 0) RoleId = Roles[0].RoleId;
                 _repo.Insert(Username, FullName, RoleId, Password, SecurityColor, SecurityNumber, SecurityHobby);
                 _activity.Log("User", $"Added user '{Username.Trim()}'");
             }
@@ -112,7 +133,7 @@ public partial class UsersViewModel : ObservableObject
                     string.IsNullOrWhiteSpace(SecurityHobby) ? null : SecurityHobby);
                 _activity.Log("User", $"Updated user '{Username}'");
             }
-            New();
+            CloseForm();
             Load();
         }
         catch (Exception ex)
@@ -122,19 +143,21 @@ public partial class UsersViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Deactivate()
+    private void Deactivate(UserAccount? user)
     {
-        if (SelectedItem is null) return;
-        if (SelectedItem.IsProtected)
+        var item = user ?? SelectedItem;
+        if (item is null) return;
+        if (item.IsProtected)
         {
             DialogService.ShowWarning("The built-in admin account is protected and cannot be deactivated.", "Users");
             return;
         }
-        if (!DialogService.Confirm($"Deactivate '{SelectedItem.Username}'?", "Users")) return;
+        if (!DialogService.Confirm($"Deactivate '{item.Username}'?", "Users")) return;
         try
         {
-            _repo.Deactivate(SelectedItem.UserId);
-            _activity.Log("User", $"Deactivated user '{SelectedItem.Username}'");
+            _repo.Deactivate(item.UserId);
+            _activity.Log("User", $"Deactivated user '{item.Username}'");
+            if (EditingId == item.UserId) CloseForm();
             Load();
         }
         catch (Exception ex)

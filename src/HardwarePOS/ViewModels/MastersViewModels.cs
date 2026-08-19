@@ -20,6 +20,7 @@ public partial class CategoriesViewModel : ObservableObject
     [ObservableProperty] private string _formTitle = "Add Category";
     [ObservableProperty] private string _emptyMessage = "No categories found.";
     [ObservableProperty] private bool _hasRows;
+    [ObservableProperty] private bool _isFormOpen;
 
     [RelayCommand]
     public void Load()
@@ -39,15 +40,28 @@ public partial class CategoriesViewModel : ObservableObject
         EditingId = 0;
         CategoryName = string.Empty;
         FormTitle = "Add Category";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
-    private void Edit()
+    private void CloseForm()
     {
-        if (SelectedItem is null) return;
-        EditingId = SelectedItem.CategoryId;
-        CategoryName = SelectedItem.CategoryName;
+        EditingId = 0;
+        CategoryName = string.Empty;
+        FormTitle = "Add Category";
+        IsFormOpen = false;
+    }
+
+    [RelayCommand]
+    private void Edit(Category? category)
+    {
+        var item = category ?? SelectedItem;
+        if (item is null) return;
+        SelectedItem = item;
+        EditingId = item.CategoryId;
+        CategoryName = item.CategoryName;
         FormTitle = "Edit Category";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
@@ -70,7 +84,7 @@ public partial class CategoriesViewModel : ObservableObject
                 _repo.Update(EditingId, CategoryName);
                 _activity.Log("Category", $"Updated category '{CategoryName.Trim()}'");
             }
-            New();
+            CloseForm();
             Load();
         }
         catch (Exception ex)
@@ -80,14 +94,16 @@ public partial class CategoriesViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Delete()
+    private void Delete(Category? category)
     {
-        if (SelectedItem is null) return;
-        if (!DialogService.Confirm($"Delete '{SelectedItem.CategoryName}'?", "Categories")) return;
+        var item = category ?? SelectedItem;
+        if (item is null) return;
+        if (!DialogService.Confirm($"Delete '{item.CategoryName}'?", "Categories")) return;
         try
         {
-            _repo.Delete(SelectedItem.CategoryId);
-            _activity.Log("Category", $"Deleted category '{SelectedItem.CategoryName}'");
+            _repo.Delete(item.CategoryId);
+            _activity.Log("Category", $"Deleted category '{item.CategoryName}'");
+            if (EditingId == item.CategoryId) CloseForm();
             Load();
         }
         catch (Exception ex)
@@ -110,6 +126,7 @@ public partial class UnitsViewModel : ObservableObject
     [ObservableProperty] private bool _isActive = true;
     [ObservableProperty] private string _formTitle = "Add Unit";
     [ObservableProperty] private bool _hasRows;
+    [ObservableProperty] private bool _isFormOpen;
 
     [RelayCommand]
     public void Load()
@@ -130,16 +147,30 @@ public partial class UnitsViewModel : ObservableObject
         UnitName = string.Empty;
         IsActive = true;
         FormTitle = "Add Unit";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
-    private void Edit()
+    private void CloseForm()
     {
-        if (SelectedItem is null) return;
-        EditingId = SelectedItem.UnitId;
-        UnitName = SelectedItem.UnitName;
-        IsActive = SelectedItem.IsActive;
+        EditingId = 0;
+        UnitName = string.Empty;
+        IsActive = true;
+        FormTitle = "Add Unit";
+        IsFormOpen = false;
+    }
+
+    [RelayCommand]
+    private void Edit(UnitOfMeasureItem? unit)
+    {
+        var item = unit ?? SelectedItem;
+        if (item is null) return;
+        SelectedItem = item;
+        EditingId = item.UnitId;
+        UnitName = item.UnitName;
+        IsActive = item.IsActive;
         FormTitle = "Edit Unit";
+        IsFormOpen = true;
     }
 
     [RelayCommand]
@@ -162,7 +193,7 @@ public partial class UnitsViewModel : ObservableObject
                 _repo.Update(EditingId, UnitName, IsActive);
                 _activity.Log("Unit", $"Updated unit '{UnitName.Trim()}'");
             }
-            New();
+            CloseForm();
             Load();
         }
         catch (Exception ex)
@@ -172,14 +203,16 @@ public partial class UnitsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Delete()
+    private void Delete(UnitOfMeasureItem? unit)
     {
-        if (SelectedItem is null) return;
-        if (!DialogService.Confirm($"Delete '{SelectedItem.UnitName}'?", "Units")) return;
+        var item = unit ?? SelectedItem;
+        if (item is null) return;
+        if (!DialogService.Confirm($"Delete '{item.UnitName}'?", "Units")) return;
         try
         {
-            _repo.Delete(SelectedItem.UnitId);
-            _activity.Log("Unit", $"Deleted unit '{SelectedItem.UnitName}'");
+            _repo.Delete(item.UnitId);
+            _activity.Log("Unit", $"Deleted unit '{item.UnitName}'");
+            if (EditingId == item.UnitId) CloseForm();
             Load();
         }
         catch (Exception ex)

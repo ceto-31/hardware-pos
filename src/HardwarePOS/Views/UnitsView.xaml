@@ -1,17 +1,22 @@
 <UserControl x:Class="HardwarePOS.Views.UnitsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:helpers="clr-namespace:HardwarePOS.Helpers">
+             xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
+             xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+        <Border Style="{StaticResource CardBorder}">
             <DockPanel>
-                <TextBox DockPanel.Dock="Top" Margin="0,0,0,8"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         helpers:TextBoxHelper.Placeholder="Search units…"/>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Margin="0,0,6,0"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             helpers:TextBoxHelper.Placeholder="Search units…"/>
+                    <Button Grid.Column="1" Content="+ Add Unit" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding NewCommand}"/>
+                </Grid>
                 <TextBlock DockPanel.Dock="Top" Text="No units found." Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"
                            Foreground="{StaticResource MutedBrush}" Margin="0,20" HorizontalAlignment="Center"/>
                 <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
@@ -28,10 +33,12 @@
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
                                                 ContentTemplate="{StaticResource EditIconContent}"
-                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
                                         <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
                                                 ContentTemplate="{StaticResource DeleteIconContent}"
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -40,19 +47,15 @@
                 </DataGrid>
             </DockPanel>
         </Border>
-        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+        <views:FormOverlay Title="{Binding FormTitle}"
+                           Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}"
+                           CancelCommand="{Binding CloseFormCommand}"
+                           SaveCommand="{Binding SaveCommand}">
             <StackPanel>
-                <TextBlock Text="{Binding FormTitle}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <TextBlock Text="Unit Name" Style="{StaticResource FieldLabel}"/>
+                <TextBlock Text="Unit Name" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding UnitName, UpdateSourceTrigger=PropertyChanged}"/>
                 <CheckBox Content="Active" IsChecked="{Binding IsActive}" Margin="0,8,0,0"/>
-                <WrapPanel Margin="0,12,0,0">
-                    <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}"/>
-                    <Button Content="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"/>
-                    <Button Content="Edit" Style="{StaticResource SecondaryButton}" Command="{Binding EditCommand}"/>
-                    <Button Content="Delete" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}"/>
-                </WrapPanel>
             </StackPanel>
-        </Border>
+        </views:FormOverlay>
     </Grid>
 </UserControl>

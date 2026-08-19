@@ -18,7 +18,35 @@ public class DashboardRepository
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Suppliers WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty > 0 AND StockQty <= ReorderLevel), 0),
-                ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty <= 0), 0);
+                ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty <= 0), 0),
+                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
+                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
+                ISNULL((
+                    SELECT SUM(si.Quantity)
+                    FROM dbo.SaleItems si
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    WHERE CAST(s.SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)
+                ), 0),
+                ISNULL((
+                    SELECT SUM(si.Quantity)
+                    FROM dbo.SaleItems si
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    WHERE CAST(s.SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)
+                ), 0),
+                ISNULL((
+                    SELECT SUM((si.UnitPrice - p.CostPrice) * si.Quantity)
+                    FROM dbo.SaleItems si
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
+                    WHERE CAST(s.SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)
+                ), 0),
+                ISNULL((
+                    SELECT SUM((si.UnitPrice - p.CostPrice) * si.Quantity)
+                    FROM dbo.SaleItems si
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
+                    WHERE CAST(s.SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)
+                ), 0);
             """;
         using var reader = cmd.ExecuteReader();
         reader.Read();
@@ -30,7 +58,13 @@ public class DashboardRepository
             TotalProducts = reader.GetInt32(3),
             TotalSuppliers = reader.GetInt32(4),
             LowStockCount = reader.GetInt32(5),
-            OutOfStockCount = reader.GetInt32(6)
+            OutOfStockCount = reader.GetInt32(6),
+            YesterdaySales = reader.GetDecimal(7),
+            YesterdayTransactions = reader.GetInt32(8),
+            TodayItemsSold = reader.GetDecimal(9),
+            YesterdayItemsSold = reader.GetDecimal(10),
+            TodayGrossProfit = reader.GetDecimal(11),
+            YesterdayGrossProfit = reader.GetDecimal(12)
         };
     }
 
@@ -124,20 +158,49 @@ public class DashboardRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT TOP (@Take) p.ProductName, SUM(si.Quantity), SUM(si.LineTotal)
+            SELECT TOP (@Take) p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath,
+                   SUM(si.Quantity), SUM(si.LineTotal)
             FROM dbo.SaleItems si
             INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
-            GROUP BY p.ProductName
+            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
+            GROUP BY p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath
             ORDER BY SUM(si.LineTotal) DESC;
             """;
         cmd.Parameters.AddWithValue("@Take", take);
         using var reader = cmd.ExecuteReader();
+        var rank = 1;
         while (reader.Read())
             list.Add(new TopProductRow
             {
+                Rank = rank++,
                 ProductName = reader.GetString(0),
-                QtySold = reader.GetDecimal(1),
-                Revenue = reader.GetDecimal(2)
+                UnitOfMeasure = reader.GetString(1),
+                ImagePath = reader.IsDBNull(2) ? null : reader.GetString(2),
+                QtySold = reader.GetDecimal(3),
+                Revenue = reader.GetDecimal(4)
+            });
+        return list;
+    }
+
+    public List<RecentSaleRow> GetRecentSales(int take = 8)
+    {
+        var list = new List<RecentSaleRow>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT TOP (@Take) s.InvoiceNo, s.SaleDate, s.TotalDue
+            FROM dbo.Sales s
+            ORDER BY s.SaleDate DESC;
+            """;
+        cmd.Parameters.AddWithValue("@Take", take);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            list.Add(new RecentSaleRow
+            {
+                InvoiceNo = reader.GetString(0),
+                SaleDate = reader.GetDateTime(1),
+                TotalDue = reader.GetDecimal(2)
             });
         return list;
     }

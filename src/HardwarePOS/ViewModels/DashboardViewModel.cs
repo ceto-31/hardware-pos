@@ -14,111 +14,123 @@ namespace HardwarePOS.ViewModels;
 public partial class DashboardViewModel : ObservableObject
 {
     private readonly DashboardRepository _dashboard = new();
-    private readonly ActivityRepository _activity = new();
     private readonly System.Windows.Threading.DispatcherTimer _clock;
 
     [ObservableProperty] private string _welcomeMessage = string.Empty;
     [ObservableProperty] private string _userDisplay = string.Empty;
     [ObservableProperty] private string _currentDateTime = string.Empty;
+
     [ObservableProperty] private decimal _todaySales;
     [ObservableProperty] private int _todayTransactions;
+    [ObservableProperty] private decimal _todayItemsSold;
+    [ObservableProperty] private decimal _todayGrossProfit;
     [ObservableProperty] private decimal _totalRevenue;
     [ObservableProperty] private int _totalProducts;
     [ObservableProperty] private int _totalSuppliers;
     [ObservableProperty] private int _lowStockCount;
     [ObservableProperty] private int _outOfStockCount;
 
-    [ObservableProperty] private ObservableCollection<int> _yearOptions = new();
-    [ObservableProperty] private int _selectedYear = DateTime.Now.Year;
+    [ObservableProperty] private ObservableCollection<string> _chartRangeOptions = new() { "Daily", "Weekly", "Monthly", "Yearly" };
+    [ObservableProperty] private string _selectedChartRange = "Daily";
 
-    [ObservableProperty] private ISeries[] _dailySeries = Array.Empty<ISeries>();
-    [ObservableProperty] private ISeries[] _weeklySeries = Array.Empty<ISeries>();
-    [ObservableProperty] private ISeries[] _monthlySeries = Array.Empty<ISeries>();
-    [ObservableProperty] private ISeries[] _yearlySeries = Array.Empty<ISeries>();
-    [ObservableProperty] private Axis[] _dailyXAxes = Array.Empty<Axis>();
-    [ObservableProperty] private Axis[] _weeklyXAxes = Array.Empty<Axis>();
-    [ObservableProperty] private Axis[] _monthlyXAxes = Array.Empty<Axis>();
-    [ObservableProperty] private Axis[] _yearlyXAxes = Array.Empty<Axis>();
+    [ObservableProperty] private ISeries[] _overviewSeries = Array.Empty<ISeries>();
+    [ObservableProperty] private Axis[] _overviewXAxes = Array.Empty<Axis>();
     [ObservableProperty] private Axis[] _yAxes =
     [
-        new Axis { Labeler = v => $"₱{v:N0}", SeparatorsPaint = new SolidColorPaint(SKColors.LightGray) }
+        new Axis { Labeler = v => $"₱{v:N0}", SeparatorsPaint = new SolidColorPaint(new SKColor(226, 232, 240)), TextSize = 11 }
     ];
+    [ObservableProperty] private ISeries[] _paymentSeries = Array.Empty<ISeries>();
 
     [ObservableProperty] private ObservableCollection<TopProductRow> _topProducts = new();
-    [ObservableProperty] private ObservableCollection<CategorySalesRow> _categorySales = new();
-    [ObservableProperty] private ObservableCollection<InventoryLedgerEntry> _recentMoves = new();
-    [ObservableProperty] private ObservableCollection<ActivityItem> _activities = new();
     [ObservableProperty] private ObservableCollection<Product> _inventoryAlerts = new();
+    [ObservableProperty] private ObservableCollection<RecentSaleRow> _recentSales = new();
 
     public DashboardViewModel()
     {
         _clock = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _clock.Tick += (_, _) => CurrentDateTime = DateTime.Now.ToString("dddd, MMMM dd, yyyy  hh:mm:ss tt");
+        _clock.Tick += (_, _) => CurrentDateTime = DateTime.Now.ToString("dddd, MMMM dd, yyyy");
         _clock.Start();
-        CurrentDateTime = DateTime.Now.ToString("dddd, MMMM dd, yyyy  hh:mm:ss tt");
+        CurrentDateTime = DateTime.Now.ToString("dddd, MMMM dd, yyyy");
     }
 
-    partial void OnSelectedYearChanged(int value) => ReloadCharts();
+    partial void OnSelectedChartRangeChanged(string value) => ReloadCharts();
 
     [RelayCommand]
     public void Load()
     {
         var user = SessionManager.CurrentUser;
-        WelcomeMessage = $"Welcome back, {user?.FullName ?? "User"}!";
-        UserDisplay = $"{user?.FullName} ({user?.RoleName})";
+        WelcomeMessage = user?.FullName ?? "User";
+        UserDisplay = user?.RoleName ?? string.Empty;
 
         var summary = _dashboard.GetSummary();
         TodaySales = summary.TodaySales;
         TodayTransactions = summary.TodayTransactions;
+        TodayItemsSold = summary.TodayItemsSold;
+        TodayGrossProfit = summary.TodayGrossProfit;
         TotalRevenue = summary.TotalRevenue;
         TotalProducts = summary.TotalProducts;
         TotalSuppliers = summary.TotalSuppliers;
         LowStockCount = summary.LowStockCount;
         OutOfStockCount = summary.OutOfStockCount;
 
-        YearOptions = new ObservableCollection<int>(_dashboard.GetAvailableYears());
-        if (!YearOptions.Contains(SelectedYear) && YearOptions.Count > 0)
-            SelectedYear = YearOptions[0];
-
         ReloadCharts();
-        TopProducts = new ObservableCollection<TopProductRow>(_dashboard.GetTopProducts());
-        CategorySales = new ObservableCollection<CategorySalesRow>(_dashboard.GetSalesByCategory());
-        RecentMoves = new ObservableCollection<InventoryLedgerEntry>(_dashboard.GetRecentStockMoves());
-        InventoryAlerts = new ObservableCollection<Product>(_dashboard.GetInventoryAlerts());
-        Activities = new ObservableCollection<ActivityItem>(
-            _activity.GetRecent().Select(a => new ActivityItem
-            {
-                ActivityType = a.Type,
-                Description = a.Description,
-                UserName = a.User,
-                CreatedAt = a.At
-            }));
+        BuildPaymentDonut();
+        TopProducts = new ObservableCollection<TopProductRow>(_dashboard.GetTopProducts(6));
+        InventoryAlerts = new ObservableCollection<Product>(_dashboard.GetInventoryAlerts().Take(6));
+        RecentSales = new ObservableCollection<RecentSaleRow>(_dashboard.GetRecentSales(8));
     }
 
     private void ReloadCharts()
     {
-        (DailySeries, DailyXAxes) = BuildLine(_dashboard.GetDailySales(SelectedYear), "Daily", "#1565C0");
-        (WeeklySeries, WeeklyXAxes) = BuildLine(_dashboard.GetWeeklySales(SelectedYear), "Weekly", "#2E7D32");
-        (MonthlySeries, MonthlyXAxes) = BuildLine(_dashboard.GetMonthlySales(SelectedYear), "Monthly", "#E65100");
-        (YearlySeries, YearlyXAxes) = BuildLine(_dashboard.GetYearlySales(), "Yearly", "#6A1B9A");
+        var year = DateTime.Now.Year;
+        var range = string.IsNullOrWhiteSpace(SelectedChartRange) ? "Daily" : SelectedChartRange;
+        var points = range switch
+        {
+            "Weekly" => _dashboard.GetWeeklySales(year),
+            "Monthly" => _dashboard.GetMonthlySales(year),
+            "Yearly" => _dashboard.GetYearlySales(),
+            _ => _dashboard.GetDailySales(year)
+        };
+        (OverviewSeries, OverviewXAxes) = BuildLine(points, "Sales");
     }
 
-    private static (ISeries[] series, Axis[] axes) BuildLine(List<SalesPoint> points, string title, string color)
+    private void BuildPaymentDonut()
+    {
+        var cash = Math.Max((double)TodaySales, 0);
+        PaymentSeries =
+        [
+            new PieSeries<double>
+            {
+                Name = "Cash",
+                Values = [cash > 0 ? cash : 0.0001],
+                InnerRadius = 70,
+                Fill = new SolidColorPaint(SKColor.Parse("#2563EB")),
+                Stroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 3 },
+                DataLabelsPaint = null
+            }
+        ];
+    }
+
+    private static (ISeries[] series, Axis[] axes) BuildLine(List<SalesPoint> points, string title)
     {
         var values = points.Select(p => (double)p.Amount).ToArray();
         var labels = points.Select(p => p.Label).ToArray();
+        var line = SKColor.Parse("#2563EB");
         ISeries[] series =
         [
             new LineSeries<double>
             {
                 Name = title,
                 Values = values,
-                Fill = null,
-                GeometrySize = 6,
-                Stroke = new SolidColorPaint(SKColor.Parse(color)) { StrokeThickness = 2 }
+                Fill = new SolidColorPaint(line.WithAlpha(40)),
+                GeometrySize = 8,
+                GeometryStroke = new SolidColorPaint(line) { StrokeThickness = 2 },
+                GeometryFill = new SolidColorPaint(SKColors.White),
+                Stroke = new SolidColorPaint(line) { StrokeThickness = 2.5f },
+                LineSmoothness = 0.35
             }
         ];
-        Axis[] axes = [new Axis { Labels = labels, LabelsRotation = 15, TextSize = 11 }];
+        Axis[] axes = [new Axis { Labels = labels, LabelsRotation = 15, TextSize = 11, Padding = new LiveChartsCore.Drawing.Padding(4) }];
         return (series, axes);
     }
 }

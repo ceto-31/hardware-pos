@@ -31,6 +31,8 @@ public class Product
         "LowStock" => "Low Stock",
         _ => "Active"
     };
+
+    public string AlertBadge => StockQty <= 0 ? "Critical" : "Low";
 }
 
 public class Supplier

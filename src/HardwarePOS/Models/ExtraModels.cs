@@ -22,9 +22,20 @@ public class ActivityItem
 
 public class TopProductRow
 {
+    public int Rank { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string UnitOfMeasure { get; set; } = "Piece";
+    public string? ImagePath { get; set; }
     public decimal QtySold { get; set; }
     public decimal Revenue { get; set; }
+    public string QtyLabel => $"{QtySold:N0} {UnitOfMeasure}";
+}
+
+public class RecentSaleRow
+{
+    public string InvoiceNo { get; set; } = string.Empty;
+    public DateTime SaleDate { get; set; }
+    public decimal TotalDue { get; set; }
 }
 
 public class CategorySalesRow

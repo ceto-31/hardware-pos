@@ -208,7 +208,7 @@ public class DashboardRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -236,7 +236,8 @@ public class DashboardRepository
                 SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
                 IsArchived = reader.GetBoolean(13),
                 ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-                UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15)
+                UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+                ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null
             });
         }
         return list;

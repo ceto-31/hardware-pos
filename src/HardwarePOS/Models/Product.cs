@@ -18,6 +18,7 @@ public class Product
     public int? SupplierId { get; set; }
     public string? SupplierName { get; set; }
     public bool IsArchived { get; set; }
+    public string? ImagePath { get; set; }
     public bool IsSelected { get; set; }
 
     public string StockStatus =>

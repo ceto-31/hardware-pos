@@ -18,7 +18,7 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -53,7 +53,7 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -74,7 +74,7 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -157,7 +157,8 @@ public class ProductRepository
                 SellingPrice = @Sell,
                 ReorderLevel = @Reorder,
                 CategoryId = @CategoryId,
-                SupplierId = @SupplierId
+                SupplierId = @SupplierId,
+                ImagePath = @ImagePath
             WHERE ProductId = @Id;
             """;
         AddParams(cmd, product);
@@ -191,6 +192,18 @@ public class ProductRepository
                 DELETE FROM dbo.Products WHERE ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void UpdateImagePath(int productId, string? imagePath)
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE dbo.Products SET ImagePath = @ImagePath WHERE ProductId = @Id;";
+        cmd.Parameters.AddWithValue("@Id", productId);
+        cmd.Parameters.AddWithValue("@ImagePath",
+            string.IsNullOrWhiteSpace(imagePath) ? DBNull.Value : imagePath);
         cmd.ExecuteNonQuery();
     }
 
@@ -230,6 +243,8 @@ public class ProductRepository
         cmd.Parameters.AddWithValue("@Reorder", product.ReorderLevel);
         cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@SupplierId", (object?)product.SupplierId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ImagePath",
+            string.IsNullOrWhiteSpace(product.ImagePath) ? DBNull.Value : product.ImagePath);
     }
 
     private static Product Map(SqlDataReader reader) => new()
@@ -249,6 +264,7 @@ public class ProductRepository
         SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
         IsArchived = reader.GetBoolean(13),
         ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15)
+        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null
     };
 }

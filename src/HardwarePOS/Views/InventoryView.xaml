@@ -31,7 +31,7 @@
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Reorder At" Binding="{Binding ReorderLevel, StringFormat=N0}" Width="90">
+                            <DataGridTextColumn Header="Reorder At" Binding="{Binding ReorderLevel, StringFormat=N0}" Width="120" MinWidth="120">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                                 </DataGridTextColumn.HeaderStyle>
@@ -39,7 +39,7 @@
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTemplateColumn Header="Status" Width="90">
+                            <DataGridTemplateColumn Header="Status" Width="110" MinWidth="110">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>

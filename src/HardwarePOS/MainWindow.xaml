@@ -24,13 +24,11 @@
                                Width="198"
                                Stretch="Uniform"
                                HorizontalAlignment="Center"
-                               Margin="0,0,0,4"
                                SnapsToDevicePixels="True"/>
-                        <TextBlock Text="Point of Sale &amp; Inventory" Foreground="#94A3B8" FontSize="11"/>
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
-                        <TextBlock Text="{Binding UserLabel}" Foreground="#94A3B8" Margin="10,0,10,10" TextWrapping="Wrap" FontSize="12"/>
+                        <TextBlock Text="{Binding UserLabel}" Foreground="#94A3B8" Margin="10,0,10,10" TextWrapping="Wrap" FontSize="14"/>
                         <Button Content="Logout" Style="{StaticResource NavButton}" Command="{Binding LogoutCommand}"/>
                     </StackPanel>
 
@@ -38,7 +36,7 @@
                         <Button Content="Dashboard" Tag="Dashboard" Style="{StaticResource NavButton}" Command="{Binding NavigateDashboardCommand}"/>
                         <Button Content="Point of Sale" Tag="Pos" Style="{StaticResource NavButton}" Command="{Binding NavigatePosCommand}"/>
 
-                        <TextBlock Text="MASTER FILES" Foreground="#64748B" FontSize="11" Margin="16,14,8,4"
+                        <TextBlock Text="MASTER FILES" Foreground="#64748B" FontSize="12" Margin="16,14,8,4"
                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Categories" Tag="Categories" Style="{StaticResource NavButton}" Command="{Binding NavigateCategoriesCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
@@ -49,7 +47,7 @@
                         <Button Content="Users" Tag="Users" Style="{StaticResource NavButton}" Command="{Binding NavigateUsersCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
 
-                        <TextBlock Text="OPERATIONS" Foreground="#64748B" FontSize="11" Margin="16,14,8,4"
+                        <TextBlock Text="OPERATIONS" Foreground="#64748B" FontSize="12" Margin="16,14,8,4"
                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Products" Tag="Products" Style="{StaticResource NavButton}" Command="{Binding NavigateProductsCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
@@ -66,7 +64,7 @@
 
         <DockPanel Grid.Column="1">
             <Border DockPanel.Dock="Top" Background="White" Padding="18,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-                <TextBlock Text="{Binding HeaderTitle}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                <TextBlock Text="{Binding HeaderTitle}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
             </Border>
             <ContentControl Content="{Binding CurrentPage}" Margin="8"/>
         </DockPanel>

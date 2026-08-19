@@ -90,6 +90,7 @@ BEGIN
         ReorderLevel   DECIMAL(18,3) NOT NULL CONSTRAINT DF_Products_Reorder DEFAULT (10),
         CategoryId     INT NULL,
         SupplierId     INT NULL,
+        ImagePath      NVARCHAR(260) NULL,
         IsArchived     BIT NOT NULL CONSTRAINT DF_Products_IsArchived DEFAULT (0),
         CreatedAt      DATETIME2(0) NOT NULL CONSTRAINT DF_Products_CreatedAt DEFAULT (SYSUTCDATETIME()),
         CONSTRAINT FK_Products_Categories FOREIGN KEY (CategoryId) REFERENCES dbo.Categories (CategoryId),

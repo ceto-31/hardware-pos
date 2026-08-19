@@ -80,6 +80,11 @@ BEGIN
 END
 GO
 
+/* ---------- Products: optional photo filename ---------- */
+IF COL_LENGTH('dbo.Products', 'ImagePath') IS NULL
+    ALTER TABLE dbo.Products ADD ImagePath NVARCHAR(260) NULL;
+GO
+
 /* ---------- Suppliers: soft archive ---------- */
 IF COL_LENGTH('dbo.Suppliers', 'IsArchived') IS NULL
 BEGIN

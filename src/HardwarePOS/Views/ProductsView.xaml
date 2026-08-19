@@ -31,7 +31,8 @@
                 <TextBlock DockPanel.Dock="Top" Text="No products found." HorizontalAlignment="Center" Margin="0,16"
                            Foreground="{StaticResource MutedBrush}"
                            Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"/>
-                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
+                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
+                          RowHeight="44">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Background" Value="{Binding StockStatus, Converter={StaticResource StockStatusBrush}}"/>
@@ -43,6 +44,22 @@
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="" Width="44" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="4"
+                                            ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Grid>
+                                            <Viewbox Width="16" Height="16" Stretch="Uniform">
+                                                <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
+                                            </Viewbox>
+                                            <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
+                                                   Stretch="Uniform" Width="36" Height="36"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="90"/>
                         <DataGridTextColumn Header="Name" Binding="{Binding ProductName}" Width="*"/>
                         <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="110"/>
@@ -74,6 +91,35 @@
             <ScrollViewer>
                 <StackPanel>
                     <TextBlock Text="{Binding FormTitle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Photo" Style="{StaticResource FieldLabel}"/>
+                    <Button Command="{Binding BrowsePhotoCommand}" Cursor="Hand" HorizontalAlignment="Left"
+                            Background="Transparent" BorderThickness="0" Padding="0" Margin="0,2,0,4"
+                            ToolTip="Click to add or change photo">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Border Width="140" Height="140" Background="#F1F5F9" CornerRadius="8"
+                                BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+                            <Grid>
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                            Visibility="{Binding HasPhoto, Converter={StaticResource InverseBoolToVis}}">
+                                    <Viewbox Width="36" Height="36" Stretch="Uniform" Margin="0,0,0,8">
+                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
+                                    </Viewbox>
+                                    <TextBlock Text="Click to add photo" Foreground="{StaticResource MutedBrush}"
+                                               FontSize="12" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <Image Source="{Binding PreviewImage}" Stretch="Uniform" Width="140" Height="140"
+                                       Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
+                            </Grid>
+                        </Border>
+                    </Button>
+                    <Button Content="Remove photo" Style="{StaticResource LinkButton}"
+                            Command="{Binding RemovePhotoCommand}" Foreground="{StaticResource MutedBrush}"
+                            Margin="0,0,0,10" HorizontalAlignment="Left"
+                            Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}"/>
                     <TextBlock Text="Product Code"/>
                     <TextBox Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text="Product Name"/>
@@ -93,9 +139,9 @@
                     <TextBlock Text="Reorder Level"/>
                     <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text="Category"/>
-                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId}"/>
+                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId, TargetNullValue=0}"/>
                     <TextBlock Text="Supplier"/>
-                    <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding SupplierId}"/>
+                    <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding SupplierId, TargetNullValue=0}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}"/>
                         <Button Content="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"/>

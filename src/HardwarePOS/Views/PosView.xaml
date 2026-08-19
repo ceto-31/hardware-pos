@@ -45,8 +45,25 @@
                                   Style="{StaticResource ModernDataGrid}"
                                   ItemsSource="{Binding ProductList}"
                                   SelectedItem="{Binding SelectedProduct}"
+                                  RowHeight="48"
                                   PreviewMouseLeftButtonUp="ProductGrid_OnPreviewMouseLeftButtonUp">
                             <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="" Width="48" CanUserResize="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Width="40" Height="40" Background="#F1F5F9" CornerRadius="4"
+                                                    ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Viewbox Width="18" Height="18" Stretch="Uniform">
+                                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
+                                                    </Viewbox>
+                                                    <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
+                                                           Stretch="Uniform" Width="40" Height="40"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="80"/>
                                 <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
                                 <DataGridTextColumn Header="Price" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80"/>

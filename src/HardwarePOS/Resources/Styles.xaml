@@ -12,6 +12,7 @@
     <conv:StockStatusToBrushConverter x:Key="StockStatusBrush"/>
     <conv:StatusToBadgeBrushConverter x:Key="StatusTextBrush"/>
     <conv:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
+    <conv:ProductImageConverter x:Key="ProductImage"/>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="#2563EB"/>
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#1D4ED8"/>
@@ -35,6 +36,7 @@
     <Geometry x:Key="IconRestore">M12.5,8c-2.65,0-5.05,0.99-6.9,2.6L2,7v9h9l-3.62-3.62c1.39-1.16,3.16-1.88,5.12-1.88c3.54,0,6.55,2.31,7.6,5.5l2.37-0.78C21.08,11.03,17.15,8,12.5,8z</Geometry>
     <Geometry x:Key="IconDeactivate">M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M4,12c0-4.42,3.58-8,8-8c1.85,0,3.55,0.63,4.9,1.69L5.69,16.9C4.63,15.55,4,13.85,4,12z M12,20c-1.85,0-3.55-0.63-4.9-1.69L18.31,7.1C19.37,8.45,20,10.15,20,12C20,16.42,16.42,20,12,20z</Geometry>
     <Geometry x:Key="IconCheck">M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z</Geometry>
+    <Geometry x:Key="IconCamera">M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M20,4H16.83L15.5,2.67C15.13,2.24 14.56,2 14,2H10C9.44,2 8.87,2.24 8.5,2.67L7.17,4H4C2.9,4 2,4.9 2,6V18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.9 21.1,4 20,4M20,18H4V6H8.05L9.88,4H14.12L15.95,6H20V18Z</Geometry>
 
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>

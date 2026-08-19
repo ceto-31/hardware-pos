@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
+using HardwarePOS.Helpers;
 using HardwarePOS.Models;
 using HardwarePOS.Services;
+using Microsoft.Win32;
 
 namespace HardwarePOS.ViewModels;
 
@@ -37,10 +40,17 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private decimal _reorderLevel = 10;
     [ObservableProperty] private int? _categoryId;
     [ObservableProperty] private int? _supplierId;
+    [ObservableProperty] private string? _imagePath;
+    [ObservableProperty] private ImageSource? _previewImage;
     [ObservableProperty] private string _formTitle = "Add Product";
     public bool IsNewProduct => EditingId == 0;
+    public bool HasPhoto => PreviewImage is not null;
+
+    private string? _pendingImageFile;
+    private bool _clearImage;
 
     partial void OnEditingIdChanged(int value) => OnPropertyChanged(nameof(IsNewProduct));
+    partial void OnPreviewImageChanged(ImageSource? value) => OnPropertyChanged(nameof(HasPhoto));
     partial void OnShowArchivedChanged(bool value) => Search();
     partial void OnFilterCategoryIdChanged(int? value) => Search();
     partial void OnSearchTextChanged(string value) => Search();
@@ -48,9 +58,12 @@ public partial class ProductsViewModel : ObservableObject
     [RelayCommand]
     public void Load()
     {
-        SupplierOptions = new ObservableCollection<Supplier>(_suppliers.GetAll(activeOnly: true));
-        CategoryOptions = new ObservableCollection<Category>(_products.GetCategories());
+        var suppliers = _suppliers.GetAll(activeOnly: true);
+        SupplierOptions = new ObservableCollection<Supplier>(
+            new[] { new Supplier { SupplierId = 0, CompanyName = "Select supplier…" } }.Concat(suppliers));
         var cats = _products.GetCategories();
+        CategoryOptions = new ObservableCollection<Category>(
+            new[] { new Category { CategoryId = 0, CategoryName = "Select category…" } }.Concat(cats));
         FilterCategories = new ObservableCollection<Category>(
             new[] { new Category { CategoryId = 0, CategoryName = "All Categories" } }.Concat(cats));
         UnitOptions = new ObservableCollection<UnitOfMeasureItem>(_units.GetAll(activeOnly: true));
@@ -89,6 +102,10 @@ public partial class ProductsViewModel : ObservableObject
         ReorderLevel = SelectedItem.ReorderLevel;
         CategoryId = SelectedItem.CategoryId;
         SupplierId = SelectedItem.SupplierId;
+        ImagePath = SelectedItem.ImagePath;
+        PreviewImage = ProductImageStore.Load(SelectedItem.ImagePath);
+        _pendingImageFile = null;
+        _clearImage = false;
         FormTitle = "Edit Product";
     }
 
@@ -117,19 +134,33 @@ public partial class ProductsViewModel : ObservableObject
                 SellingPrice = SellingPrice,
                 StockQty = StockQty,
                 ReorderLevel = ReorderLevel,
-                CategoryId = CategoryId,
-                SupplierId = SupplierId
+                CategoryId = CategoryId is null or 0 ? null : CategoryId,
+                SupplierId = SupplierId is null or 0 ? null : SupplierId,
+                ImagePath = ImagePath
             };
 
+            int productId;
             if (EditingId == 0)
             {
-                _products.Insert(product);
+                productId = _products.Insert(product);
                 _activity.Log("Product", $"Added product '{product.ProductName}'");
             }
             else
             {
+                productId = EditingId;
                 _products.Update(product);
                 _activity.Log("Product", $"Updated product '{product.ProductName}'");
+            }
+
+            if (_clearImage)
+            {
+                ProductImageStore.Delete(productId);
+                _products.UpdateImagePath(productId, null);
+            }
+            else if (!string.IsNullOrWhiteSpace(_pendingImageFile))
+            {
+                var fileName = ProductImageStore.Save(productId, _pendingImageFile);
+                _products.UpdateImagePath(productId, fileName);
             }
 
             ClearForm();
@@ -169,6 +200,30 @@ public partial class ProductsViewModel : ObservableObject
         Search();
     }
 
+    [RelayCommand]
+    private void BrowsePhoto()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Image files|*.jpg;*.jpeg;*.png|JPEG|*.jpg;*.jpeg|PNG|*.png",
+            Title = "Select product photo"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        _pendingImageFile = dialog.FileName;
+        _clearImage = false;
+        PreviewImage = ProductImageStore.LoadFromFile(dialog.FileName);
+    }
+
+    [RelayCommand]
+    private void RemovePhoto()
+    {
+        _pendingImageFile = null;
+        _clearImage = true;
+        ImagePath = null;
+        PreviewImage = null;
+    }
+
     private void ClearForm()
     {
         EditingId = 0;
@@ -178,6 +233,10 @@ public partial class ProductsViewModel : ObservableObject
         ReorderLevel = 10;
         CategoryId = null;
         SupplierId = null;
+        ImagePath = null;
+        PreviewImage = null;
+        _pendingImageFile = null;
+        _clearImage = false;
         FormTitle = "Add Product";
     }
 }

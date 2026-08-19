@@ -56,7 +56,7 @@ In SSMS, connect to `.\SQLEXPRESS` (Windows Authentication) and run scripts **in
 2. `Database/02_CreateTables.sql`
 3. `Database/03_SeedData.sql`
 4. `Database/04_BackfillOpeningLedger.sql` *(optional on a fresh seed; safe to re-run)*
-5. `Database/05_UpgradeSchema.sql` *(required for Units, ProductCode, security questions, ActivityLog, supplier archive)*
+5. `Database/05_UpgradeSchema.sql` *(required for Units, ProductCode, security questions, ActivityLog, supplier archive, product photos)*
 
 Or from PowerShell (from the project root):
 
@@ -189,6 +189,16 @@ A ZIP of the project folder does **not** include your SQL database. To bring old
 
 If you skip backup/restore, just run the seed scripts for demo data.
 
+### Moving product photos
+
+Product photos are **not** in GitHub or the SQL `.bak`. They live in:
+
+`%LocalAppData%\4KVHardware\ProductImages`
+
+Example: `C:\Users\<you>\AppData\Local\4KVHardware\ProductImages`
+
+Copy that folder to the same path on the new PC so thumbnails still appear.
+
 ## Database setup (reference)
 
 Same scripts as in the transfer steps above. Always run in order: `01` → `02` → `03` → (`04` if needed).
@@ -204,7 +214,7 @@ Useful tables: `Users`, `Products`, `Suppliers`, `Sales`, `SaleItems`, `StockIns
 
 ## Modules
 
-- Login, Dashboard, Products, Suppliers, Inventory, POS (12% VAT, receipt print)
+- Login, Dashboard, Products (with photos), Suppliers, Inventory, POS (12% VAT, receipt print)
 - Admin-only: Products, Suppliers, Inventory
 - Cashier: Dashboard + POS
 
@@ -218,3 +228,4 @@ Useful tables: `Users`, `Products`, `Suppliers`, `Sales`, `SaleItems`, `StockIns
 | Build errors after clone/extract | Open Visual Studio → restore NuGet packages → rebuild |
 | ZIP extract looks incomplete | Confirm `HardwarePOS.slnx`, `Database\`, and `src\` are present |
 | Old data not on new PC | ZIP/clone gives **code only**. Sales/products live in the local SQL DB. Back up/restore a `.bak` in SSMS, or re-seed with the SQL scripts (demo data only) |
+| Product photos missing | Copy `%LocalAppData%\4KVHardware\ProductImages` from the old PC. Re-run `Database/05_UpgradeSchema.sql` if Save photo fails |

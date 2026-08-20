@@ -42,6 +42,8 @@
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Units" Tag="Units" Style="{StaticResource NavButton}" Command="{Binding NavigateUnitsCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Products" Tag="Products" Style="{StaticResource NavButton}" Command="{Binding NavigateProductsCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Suppliers" Tag="Suppliers" Style="{StaticResource NavButton}" Command="{Binding NavigateSuppliersCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Users" Tag="Users" Style="{StaticResource NavButton}" Command="{Binding NavigateUsersCommand}"
@@ -49,8 +51,6 @@
 
                         <TextBlock Text="OPERATIONS" Foreground="#64748B" FontSize="12" Margin="16,14,8,4"
                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                        <Button Content="Products" Tag="Products" Style="{StaticResource NavButton}" Command="{Binding NavigateProductsCommand}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Inventory" Tag="Inventory" Style="{StaticResource NavButton}" Command="{Binding NavigateInventoryCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Archives" Tag="Archives" Style="{StaticResource NavButton}" Command="{Binding NavigateArchivesCommand}"

@@ -10,7 +10,7 @@
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                     <TextBox Margin="0,0,0,8"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             helpers:TextBoxHelper.Placeholder="Search products by name, code, or barcode…"/>
+                             helpers:TextBoxHelper.Placeholder="Search products by name or code…"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -71,14 +71,6 @@
                                 <DataTemplate>
                                     <TextBlock Text="{Binding ProductName}" TextWrapping="Wrap" VerticalAlignment="Center"
                                                Margin="6,4" ToolTip="{Binding ProductName}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Barcode" Width="130" MinWidth="120">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Barcode}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                               Margin="6,4" ToolTip="{Binding Barcode}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

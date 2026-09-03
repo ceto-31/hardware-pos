@@ -33,11 +33,13 @@ public class ReceiptService
         var scroll = new ScrollViewer
         {
             Content = receipt,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             Background = PageBgBrush,
-            Padding = new Thickness(16, 12, 16, 8)
+            Padding = new Thickness(16, 12, 16, 8),
+            Focusable = false
         };
+        scroll.SetValue(FrameworkElement.FocusVisualStyleProperty, null);
 
         var printBtn = CreatePrintButton(invoiceNo, receipt);
 
@@ -129,6 +131,9 @@ public class ReceiptService
             Background = Brushes.White,
             Padding = new Thickness(16),
             CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(0),
+            SnapsToDevicePixels = true,
+            UseLayoutRounding = true,
             Child = root
         };
 

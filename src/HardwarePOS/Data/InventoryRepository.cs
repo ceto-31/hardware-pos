@@ -6,7 +6,7 @@ namespace HardwarePOS.Data;
 public class InventoryRepository
 {
     public void StockIn(int supplierId, int productId, decimal quantity,
-        DateTime dateReceived, string? remarks, int? createdBy)
+        DateTime dateReceived, DateTime? expirationDate, string? remarks, int? createdBy)
     {
         using var conn = DbConnectionFactory.Create();
         conn.Open();
@@ -40,7 +40,11 @@ public class InventoryRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     UPDATE dbo.Products WITH (ROWLOCK)
-                    SET StockQty = StockQty + @Qty
+                    SET StockQty = StockQty + @Qty,
+                        ExpirationDate = CASE
+                            WHEN @ExpirationDate IS NULL THEN ExpirationDate
+                            ELSE @ExpirationDate
+                        END
                     WHERE ProductId = @ProductId AND IsArchived = 0;
                     IF @@ROWCOUNT = 0
                         THROW 50001, 'Product not found or archived.', 1;
@@ -48,6 +52,8 @@ public class InventoryRepository
                     """;
                 cmd.Parameters.AddWithValue("@Qty", quantity);
                 cmd.Parameters.AddWithValue("@ProductId", productId);
+                cmd.Parameters.AddWithValue("@ExpirationDate",
+                    expirationDate.HasValue ? expirationDate.Value.Date : DBNull.Value);
                 newBalance = (decimal)cmd.ExecuteScalar()!;
             }
 

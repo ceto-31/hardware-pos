@@ -26,7 +26,7 @@ public partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<Supplier> _supplierOptions = new();
     [ObservableProperty] private ObservableCollection<string> _stockOutReasons = new()
     {
-        "Damaged", "ReturnedToSupplier", "InternalUse"
+        "Damaged", "ReturnedToSupplier", "InternalUse", "Expired"
     };
 
     // Stock In
@@ -35,6 +35,7 @@ public partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private int? _inProductId;
     [ObservableProperty] private decimal _inQuantity = 1;
     [ObservableProperty] private DateTime _inDate = DateTime.Today;
+    [ObservableProperty] private DateTime? _inExpirationDate;
     [ObservableProperty] private string _inRemarks = string.Empty;
 
     // Stock Out
@@ -104,20 +105,45 @@ public partial class InventoryViewModel : ObservableObject
     {
         IEnumerable<Product> items = _monitoringSource;
 
-        if (FilterLowStock || FilterOutOfStock || FilterExpiringSoon)
-        {
-            items = _monitoringSource.Where(p =>
-                (FilterLowStock && p.StockStatus == "LowStock") ||
-                (FilterOutOfStock && p.StockStatus == "OutOfStock") ||
-                (FilterExpiringSoon && p.ExpirationAlertStatus is "Expired" or "ExpiringSoon"));
-        }
+        if (FilterLowStock)
+            items = _monitoringSource.Where(p => p.StockStatus == "LowStock");
+        else if (FilterOutOfStock)
+            items = _monitoringSource.Where(p => p.StockStatus == "OutOfStock");
+        else if (FilterExpiringSoon)
+            items = _monitoringSource.Where(p => p.ExpirationAlertStatus is "Expired" or "ExpiringSoon");
 
         InventoryItems = new ObservableCollection<Product>(items);
     }
 
-    partial void OnFilterLowStockChanged(bool value) => ApplyMonitoringFilter();
-    partial void OnFilterOutOfStockChanged(bool value) => ApplyMonitoringFilter();
-    partial void OnFilterExpiringSoonChanged(bool value) => ApplyMonitoringFilter();
+    partial void OnFilterLowStockChanged(bool value)
+    {
+        if (value)
+        {
+            if (FilterOutOfStock) FilterOutOfStock = false;
+            if (FilterExpiringSoon) FilterExpiringSoon = false;
+        }
+        ApplyMonitoringFilter();
+    }
+
+    partial void OnFilterOutOfStockChanged(bool value)
+    {
+        if (value)
+        {
+            if (FilterLowStock) FilterLowStock = false;
+            if (FilterExpiringSoon) FilterExpiringSoon = false;
+        }
+        ApplyMonitoringFilter();
+    }
+
+    partial void OnFilterExpiringSoonChanged(bool value)
+    {
+        if (value)
+        {
+            if (FilterLowStock) FilterLowStock = false;
+            if (FilterOutOfStock) FilterOutOfStock = false;
+        }
+        ApplyMonitoringFilter();
+    }
 
     [RelayCommand]
     private void RefreshHistory()
@@ -141,11 +167,13 @@ public partial class InventoryViewModel : ObservableObject
                 InProductId.Value,
                 InQuantity,
                 InDate,
+                InExpirationDate?.Date,
                 string.IsNullOrWhiteSpace(InRemarks) ? null : InRemarks.Trim(),
                 SessionManager.CurrentUser?.UserId);
 
             InQuantity = 1;
             InRemarks = string.Empty;
+            InExpirationDate = null;
             InDate = DateTime.Today;
             ApplyInProductFilter();
             RefreshMonitoring();
@@ -157,6 +185,9 @@ public partial class InventoryViewModel : ObservableObject
             DialogService.ShowError(ex.Message, "Stock In");
         }
     }
+
+    [RelayCommand]
+    private void ClearInExpirationDate() => InExpirationDate = null;
 
     [RelayCommand]
     private void SaveStockOut()

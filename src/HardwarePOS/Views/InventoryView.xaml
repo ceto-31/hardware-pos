@@ -95,7 +95,6 @@
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
-                            <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120"/>
                             <DataGridTextColumn Header="UOM" Binding="{Binding UnitOfMeasure}" Width="80"/>
                             <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="90">
                                 <DataGridTextColumn.HeaderStyle>
@@ -151,6 +150,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
@@ -181,6 +181,23 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                            <TextBlock Text="Expiry Date (optional)" Style="{StaticResource DialogFieldLabel}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <DatePicker Grid.Column="0" SelectedDate="{Binding InExpirationDate}"/>
+                                <Button Grid.Column="1" Content="Clear" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding ClearInExpirationDateCommand}"
+                                        VerticalAlignment="Bottom"/>
+                            </Grid>
+                            <TextBlock Text="Leave blank for products with no expiration."
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
                             <TextBlock Text="Remarks" Style="{StaticResource DialogFieldLabel}"/>
                             <TextBox Text="{Binding InRemarks, UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="120" VerticalAlignment="Stretch"

@@ -44,7 +44,7 @@ public class SalesRepository
                     throw new InvalidOperationException($"Insufficient stock for '{item.ProductName}'. Available: {stock}.");
             }
 
-            var invoiceNo = $"INV-{DateTime.Now:yyyyMMddHHmmssfff}-{cashierId}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
+            var invoiceNo = GenerateInvoiceNo(conn, tx);
             int saleId;
             using (var cmd = conn.CreateCommand())
             {
@@ -128,6 +128,25 @@ public class SalesRepository
             tx.Rollback();
             throw;
         }
+    }
+
+    private static string GenerateInvoiceNo(SqlConnection conn, SqlTransaction tx)
+    {
+        var datePrefix = DateTime.Now.ToString("yyyyMMdd");
+        int sequence;
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                SELECT ISNULL(MAX(TRY_CAST(RIGHT(InvoiceNo, 4) AS INT)), 0) + 1
+                FROM dbo.Sales WITH (UPDLOCK, HOLDLOCK)
+                WHERE InvoiceNo LIKE @Prefix + N'-%';
+                """;
+            cmd.Parameters.AddWithValue("@Prefix", $"INV-{datePrefix}");
+            sequence = Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        return $"INV-{datePrefix}-{sequence:D4}";
     }
 
     public List<SaleHistoryRow> GetHistory(string? search = null, int? year = null)

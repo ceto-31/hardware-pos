@@ -28,7 +28,7 @@
                 </Grid>
             </Border>
 
-            <UniformGrid Columns="4">
+            <UniformGrid Columns="4" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                 <Border Style="{StaticResource CardBorder}">
                     <DockPanel LastChildFill="True">
                         <Border Style="{StaticResource DashboardKpiIcon}" Background="#DBEAFE" DockPanel.Dock="Left">
@@ -85,7 +85,36 @@
                 </Border>
             </UniformGrid>
 
-            <Grid>
+            <UniformGrid Columns="2" Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}">
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel LastChildFill="True">
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEF3C7" DockPanel.Dock="Left">
+                            <Viewbox Width="22" Height="22">
+                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource WarningBrush}"/>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="LOW STOCK ITEMS"/>
+                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding LowStockCount}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel LastChildFill="True">
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEE2E2" DockPanel.Dock="Left">
+                            <Viewbox Width="22" Height="22">
+                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource DangerBrush}"/>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="OUT OF STOCK"/>
+                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding OutOfStockCount}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </UniformGrid>
+
+            <Grid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
@@ -163,13 +192,14 @@
                 </Border>
             </Grid>
 
-            <UniformGrid Columns="3">
+            <UniformGrid Columns="{Binding BottomPanelColumns}">
                 <Border Style="{StaticResource CardBorder}" MinHeight="260">
                     <DockPanel LastChildFill="True">
                         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
                             <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Low Stock Alert"/>
                             <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
-                                    Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         </Grid>
                         <Grid>
                             <TextBlock Text="All stock levels look healthy" VerticalAlignment="Center">
@@ -242,7 +272,8 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260">
+                <Border Style="{StaticResource CardBorder}" MinHeight="260"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                     <DockPanel LastChildFill="True">
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource DashboardSectionTitle}"
                                    Text="Recent Transactions" Margin="0,0,0,10"/>
@@ -287,7 +318,8 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260">
+                <Border Style="{StaticResource CardBorder}" MinHeight="260"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                     <DockPanel LastChildFill="True">
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource DashboardSectionTitle}"
                                    Text="Sales by Payment Method" Margin="0,0,0,4"/>

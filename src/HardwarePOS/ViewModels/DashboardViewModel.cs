@@ -19,6 +19,8 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string _welcomeMessage = string.Empty;
     [ObservableProperty] private string _userDisplay = string.Empty;
     [ObservableProperty] private string _currentDateTime = string.Empty;
+    [ObservableProperty] private bool _isAdmin;
+    [ObservableProperty] private int _bottomPanelColumns = 3;
 
     [ObservableProperty] private decimal _todaySales;
     [ObservableProperty] private int _todayTransactions;
@@ -61,6 +63,8 @@ public partial class DashboardViewModel : ObservableObject
         var user = SessionManager.CurrentUser;
         WelcomeMessage = user?.FullName ?? "User";
         UserDisplay = user?.RoleName ?? string.Empty;
+        IsAdmin = SessionManager.IsAdmin;
+        BottomPanelColumns = IsAdmin ? 3 : 1;
 
         var summary = _dashboard.GetSummary();
         TodaySales = summary.TodaySales;

@@ -124,14 +124,9 @@ public partial class LoginViewModel : ObservableObject
             var (colorOk, numberOk, hobbyOk) = _users.VerifySecurityAnswers(
                 ForgotUsername.Trim(), SecurityColor, SecurityNumber, SecurityHobby);
 
-            var errors = new List<string>();
-            if (!colorOk) errors.Add("Favorite color is incorrect");
-            if (!numberOk) errors.Add("Favorite number is incorrect");
-            if (!hobbyOk) errors.Add("Hobby is incorrect");
-
-            if (errors.Count > 0)
+            if (!colorOk || !numberOk || !hobbyOk)
             {
-                ForgotError = string.Join(Environment.NewLine, errors);
+                ForgotError = "One or more answers are incorrect.";
                 DialogService.ShowWarning(ForgotError, "Security Questions");
                 return;
             }

@@ -1,6 +1,57 @@
 <UserControl x:Class="HardwarePOS.Views.InventoryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="StockFilterToggle" TargetType="ToggleButton">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="LowStockFilterToggle" TargetType="ToggleButton" BasedOn="{StaticResource StockFilterToggle}">
+            <Setter Property="Background" Value="#FEF9C3"/>
+            <Setter Property="Foreground" Value="#CA8A04"/>
+            <Setter Property="BorderBrush" Value="#FDE047"/>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#FEF08A"/>
+                    <Setter Property="BorderBrush" Value="#CA8A04"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OutOfStockFilterToggle" TargetType="ToggleButton" BasedOn="{StaticResource StockFilterToggle}">
+            <Setter Property="Background" Value="#FEE2E2"/>
+            <Setter Property="Foreground" Value="#DC2626"/>
+            <Setter Property="BorderBrush" Value="#FCA5A5"/>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#FECACA"/>
+                    <Setter Property="BorderBrush" Value="#DC2626"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
     <TabControl Style="{StaticResource ModernTabControl}"
                 ItemContainerStyle="{StaticResource ModernTabItem}"
                 UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -10,8 +61,10 @@
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Content="Refresh" Style="{StaticResource PrimaryButton}" Command="{Binding RefreshMonitoringCommand}"/>
-                        <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource MutedBrush}"
-                                   Text="Yellow = Low stock  |  Red = Out of stock"/>
+                        <ToggleButton Content="Low Stock" Style="{StaticResource LowStockFilterToggle}"
+                                      IsChecked="{Binding FilterLowStock}"/>
+                        <ToggleButton Content="Out of Stock" Style="{StaticResource OutOfStockFilterToggle}"
+                                      IsChecked="{Binding FilterOutOfStock}"/>
                     </StackPanel>
                     <DataGrid ItemsSource="{Binding InventoryItems}">
                         <DataGrid.RowStyle>
@@ -56,16 +109,17 @@
             <Border Style="{StaticResource CardBorder}" MaxWidth="520" HorizontalAlignment="Left">
                 <StackPanel>
                     <TextBlock Text="Receive stock from supplier" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Text="Category"/>
+                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
+                              SelectedValuePath="CategoryId" SelectedValue="{Binding InCategoryId}"/>
                     <TextBlock Text="Supplier"/>
                     <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName"
                               SelectedValuePath="SupplierId" SelectedValue="{Binding InSupplierId}"/>
                     <TextBlock Text="Product"/>
-                    <ComboBox ItemsSource="{Binding ProductOptions}" DisplayMemberPath="ProductName"
+                    <ComboBox ItemsSource="{Binding InProductOptions}" DisplayMemberPath="ProductName"
                               SelectedValuePath="ProductId" SelectedValue="{Binding InProductId}"/>
                     <TextBlock Text="Quantity"/>
                     <TextBox Text="{Binding InQuantity, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Cost"/>
-                    <TextBox Text="{Binding InCost, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text="Date Received"/>
                     <DatePicker SelectedDate="{Binding InDate}"/>
                     <TextBlock Text="Remarks"/>
@@ -79,8 +133,11 @@
             <Border Style="{StaticResource CardBorder}" MaxWidth="520" HorizontalAlignment="Left">
                 <StackPanel>
                     <TextBlock Text="Issue / adjust stock out" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Text="Category"/>
+                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
+                              SelectedValuePath="CategoryId" SelectedValue="{Binding OutCategoryId}"/>
                     <TextBlock Text="Product"/>
-                    <ComboBox ItemsSource="{Binding ProductOptions}" DisplayMemberPath="ProductName"
+                    <ComboBox ItemsSource="{Binding OutProductOptions}" DisplayMemberPath="ProductName"
                               SelectedValuePath="ProductId" SelectedValue="{Binding OutProductId}"/>
                     <TextBlock Text="Quantity"/>
                     <TextBox Text="{Binding OutQuantity, UpdateSourceTrigger=PropertyChanged}"/>

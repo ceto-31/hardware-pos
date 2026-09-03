@@ -5,7 +5,7 @@ namespace HardwarePOS.Data;
 
 public class InventoryRepository
 {
-    public void StockIn(int supplierId, int productId, decimal quantity, decimal cost,
+    public void StockIn(int supplierId, int productId, decimal quantity,
         DateTime dateReceived, string? remarks, int? createdBy)
     {
         using var conn = DbConnectionFactory.Create();
@@ -22,13 +22,12 @@ public class InventoryRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     INSERT INTO dbo.StockIns (SupplierId, ProductId, Quantity, Cost, DateReceived, Remarks, CreatedBy)
-                    VALUES (@SupplierId, @ProductId, @Qty, @Cost, @Date, @Remarks, @CreatedBy);
+                    VALUES (@SupplierId, @ProductId, @Qty, 0, @Date, @Remarks, @CreatedBy);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 cmd.Parameters.AddWithValue("@SupplierId", supplierId);
                 cmd.Parameters.AddWithValue("@ProductId", productId);
                 cmd.Parameters.AddWithValue("@Qty", quantity);
-                cmd.Parameters.AddWithValue("@Cost", cost);
                 cmd.Parameters.AddWithValue("@Date", dateReceived.Date);
                 cmd.Parameters.AddWithValue("@Remarks", (object?)remarks ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CreatedBy", (object?)createdBy ?? DBNull.Value);
@@ -41,15 +40,13 @@ public class InventoryRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     UPDATE dbo.Products WITH (ROWLOCK)
-                    SET StockQty = StockQty + @Qty,
-                        CostPrice = CASE WHEN @Cost > 0 THEN @Cost ELSE CostPrice END
+                    SET StockQty = StockQty + @Qty
                     WHERE ProductId = @ProductId AND IsArchived = 0;
                     IF @@ROWCOUNT = 0
                         THROW 50001, 'Product not found or archived.', 1;
                     SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
                     """;
                 cmd.Parameters.AddWithValue("@Qty", quantity);
-                cmd.Parameters.AddWithValue("@Cost", cost);
                 cmd.Parameters.AddWithValue("@ProductId", productId);
                 newBalance = (decimal)cmd.ExecuteScalar()!;
             }

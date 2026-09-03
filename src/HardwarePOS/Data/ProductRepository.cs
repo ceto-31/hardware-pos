@@ -18,7 +18,8 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -53,7 +54,8 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -74,7 +76,8 @@ public class ProductRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -101,11 +104,13 @@ public class ProductRepository
                 cmd.CommandText = """
                     INSERT INTO dbo.Products
                         (ProductCode, ProductName, ProductDetails, Barcode, UnitId, UnitOfMeasure,
-                         CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+                         CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived,
+                         ExpirationDate, SalePrice, SaleStartDate, SaleEndDate)
                     VALUES
                         (@ProductCode, @Name, @Details, @Barcode, @UnitId,
                          ISNULL((SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId), N'Piece'),
-                         @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0);
+                         @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0,
+                         @ExpirationDate, @SalePrice, @SaleStartDate, @SaleEndDate);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 AddParams(cmd, product);
@@ -158,7 +163,11 @@ public class ProductRepository
                 ReorderLevel = @Reorder,
                 CategoryId = @CategoryId,
                 SupplierId = @SupplierId,
-                ImagePath = @ImagePath
+                ImagePath = @ImagePath,
+                ExpirationDate = @ExpirationDate,
+                SalePrice = @SalePrice,
+                SaleStartDate = @SaleStartDate,
+                SaleEndDate = @SaleEndDate
             WHERE ProductId = @Id;
             """;
         AddParams(cmd, product);
@@ -245,7 +254,20 @@ public class ProductRepository
         cmd.Parameters.AddWithValue("@SupplierId", (object?)product.SupplierId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@ImagePath",
             string.IsNullOrWhiteSpace(product.ImagePath) ? DBNull.Value : product.ImagePath);
+        cmd.Parameters.AddWithValue("@ExpirationDate",
+            product.ExpirationDate.HasValue ? product.ExpirationDate.Value.Date : DBNull.Value);
+        cmd.Parameters.AddWithValue("@SalePrice", (object?)product.SalePrice ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@SaleStartDate",
+            product.SaleStartDate.HasValue ? product.SaleStartDate.Value.Date : DBNull.Value);
+        cmd.Parameters.AddWithValue("@SaleEndDate",
+            product.SaleEndDate.HasValue ? product.SaleEndDate.Value.Date : DBNull.Value);
     }
+
+    private static DateTime? ReadOptionalDate(SqlDataReader reader, int index) =>
+        reader.FieldCount > index && !reader.IsDBNull(index) ? reader.GetDateTime(index).Date : null;
+
+    private static decimal? ReadOptionalDecimal(SqlDataReader reader, int index) =>
+        reader.FieldCount > index && !reader.IsDBNull(index) ? reader.GetDecimal(index) : null;
 
     private static Product Map(SqlDataReader reader) => new()
     {
@@ -265,6 +287,10 @@ public class ProductRepository
         IsArchived = reader.GetBoolean(13),
         ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
         UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
-        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null
+        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null,
+        ExpirationDate = ReadOptionalDate(reader, 17),
+        SalePrice = ReadOptionalDecimal(reader, 18),
+        SaleStartDate = ReadOptionalDate(reader, 19),
+        SaleEndDate = ReadOptionalDate(reader, 20)
     };
 }

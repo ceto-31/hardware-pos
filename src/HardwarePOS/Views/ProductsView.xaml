@@ -99,14 +99,27 @@
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Sell" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80" MinWidth="70">
-                            <DataGridTextColumn.HeaderStyle>
+                        <DataGridTemplateColumn Header="Sell" Width="90" MinWidth="80">
+                            <DataGridTemplateColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
-                            </DataGridTextColumn.HeaderStyle>
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="6,4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SellingPrice, StringFormat=N2}"
+                                                   TextDecorations="Strikethrough"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   Visibility="{Binding IsOnSale, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock Text="{Binding EffectivePrice, StringFormat=N2}"
+                                                   Style="{StaticResource GridNumericCell}"/>
+                                        <TextBlock Text="SALE" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource SuccessBrush}"
+                                                   HorizontalAlignment="Right"
+                                                   Visibility="{Binding IsOnSale, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70" MinWidth="60">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
@@ -122,7 +135,8 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Actions" Width="108" MinWidth="108" CanUserResize="False">
+                        <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="110" MinWidth="100"/>
+                        <DataGridTemplateColumn Header="Actions" Width="80" MinWidth="80" CanUserResize="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -140,10 +154,6 @@
                                                 Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}"/>
-                                        <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
-                                                ContentTemplate="{StaticResource DeleteIconContent}"
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -201,6 +211,16 @@
                 <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="Selling Price" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding SellingPrice, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Sale Price (optional)" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Sale Start" Style="{StaticResource DialogFieldLabel}"/>
+                <DatePicker SelectedDate="{Binding SaleStartDate}"/>
+                <TextBlock Text="Sale End" Style="{StaticResource DialogFieldLabel}"/>
+                <DatePicker SelectedDate="{Binding SaleEndDate}"/>
+                <Button Content="Clear sale" Style="{StaticResource LinkButton}"
+                        Command="{Binding ClearSaleCommand}" Foreground="{StaticResource MutedBrush}"
+                        Margin="0,0,0,10" HorizontalAlignment="Left"
+                        Visibility="{Binding HasSaleFields, Converter={StaticResource BoolToVis}}"/>
                 <Border CornerRadius="6" Padding="8,6" Margin="0,4,0,8" HorizontalAlignment="Stretch">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -241,6 +261,12 @@
                            Visibility="{Binding IsNewProduct, Converter={StaticResource InverseBoolToVis}}"/>
                 <TextBlock Text="Reorder Level" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Expiration Date (optional)" Style="{StaticResource DialogFieldLabel}"/>
+                <DatePicker SelectedDate="{Binding ExpirationDate}"/>
+                <Button Content="Clear expiration date" Style="{StaticResource LinkButton}"
+                        Command="{Binding ClearExpirationDateCommand}" Foreground="{StaticResource MutedBrush}"
+                        Margin="0,0,0,10" HorizontalAlignment="Left"
+                        Visibility="{Binding HasExpirationDate, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
                 <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId, TargetNullValue=0}"/>
                 <TextBlock Text="Supplier" Style="{StaticResource DialogFieldLabel}"/>

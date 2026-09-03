@@ -1,3 +1,5 @@
+using HardwarePOS.Helpers;
+
 namespace HardwarePOS.Models;
 
 public class Product
@@ -19,7 +21,36 @@ public class Product
     public string? SupplierName { get; set; }
     public bool IsArchived { get; set; }
     public string? ImagePath { get; set; }
+    public DateTime? ExpirationDate { get; set; }
+    public decimal? SalePrice { get; set; }
+    public DateTime? SaleStartDate { get; set; }
+    public DateTime? SaleEndDate { get; set; }
     public bool IsSelected { get; set; }
+
+    public bool IsOnSale =>
+        SalePrice is > 0
+        && SaleStartDate is DateTime start
+        && SaleEndDate is DateTime end
+        && DateTime.Today >= start.Date
+        && DateTime.Today <= end.Date;
+
+    public decimal EffectivePrice => IsOnSale ? SalePrice!.Value : SellingPrice;
+
+    public string? ExpirationAlertStatus =>
+        ExpirationDate is null ? null :
+        ExpirationDate.Value.Date < DateTime.Today ? "Expired" :
+        ExpirationDate.Value.Date <= DateTime.Today.AddDays(InventoryAlertConstants.ExpiringSoonDays)
+            ? "ExpiringSoon" : null;
+
+    public string ExpirationBadge => ExpirationAlertStatus switch
+    {
+        "Expired" => "Expired",
+        "ExpiringSoon" => "Expiring",
+        _ => string.Empty
+    };
+
+    public string ExpirationDisplay =>
+        ExpirationDate?.ToString("MMM dd, yyyy") ?? "—";
 
     public string StockStatus =>
         StockQty <= 0 ? "OutOfStock" :

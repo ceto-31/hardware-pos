@@ -17,13 +17,19 @@ public static class DialogService
     public static bool Confirm(string message, string title = "Confirm")
         => Show(title, message, true, "#2563EB");
 
-    private static bool Show(string title, string message, bool isConfirm, string accent)
+    public static Window? GetVisibleOwner()
     {
         var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                     ?? Application.Current?.MainWindow;
+        return owner is { IsLoaded: true, IsVisible: true } ? owner : null;
+    }
+
+    private static bool Show(string title, string message, bool isConfirm, string accent)
+    {
+        var owner = GetVisibleOwner();
 
         var dialog = new DialogWindow(title, message, isConfirm, accent);
-        if (owner is not null && owner.IsLoaded)
+        if (owner is not null)
             dialog.Owner = owner;
 
         // Full-screen dim overlay feel: stretch to owner size when possible

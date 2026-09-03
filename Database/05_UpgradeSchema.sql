@@ -85,6 +85,20 @@ IF COL_LENGTH('dbo.Products', 'ImagePath') IS NULL
     ALTER TABLE dbo.Products ADD ImagePath NVARCHAR(260) NULL;
 GO
 
+/* ---------- Products: optional expiration date ---------- */
+IF COL_LENGTH('dbo.Products', 'ExpirationDate') IS NULL
+    ALTER TABLE dbo.Products ADD ExpirationDate DATE NULL;
+GO
+
+/* ---------- Products: date-ranged sale pricing ---------- */
+IF COL_LENGTH('dbo.Products', 'SalePrice') IS NULL
+    ALTER TABLE dbo.Products ADD SalePrice DECIMAL(18,2) NULL;
+IF COL_LENGTH('dbo.Products', 'SaleStartDate') IS NULL
+    ALTER TABLE dbo.Products ADD SaleStartDate DATE NULL;
+IF COL_LENGTH('dbo.Products', 'SaleEndDate') IS NULL
+    ALTER TABLE dbo.Products ADD SaleEndDate DATE NULL;
+GO
+
 /* ---------- Suppliers: soft archive ---------- */
 IF COL_LENGTH('dbo.Suppliers', 'IsArchived') IS NULL
 BEGIN

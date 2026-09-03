@@ -31,6 +31,7 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private int _totalSuppliers;
     [ObservableProperty] private int _lowStockCount;
     [ObservableProperty] private int _outOfStockCount;
+    [ObservableProperty] private int _expiringSoonCount;
 
     [ObservableProperty] private ObservableCollection<string> _chartRangeOptions = new() { "Daily", "Weekly", "Monthly", "Yearly" };
     [ObservableProperty] private string _selectedChartRange = "Daily";
@@ -45,6 +46,7 @@ public partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty] private ObservableCollection<TopProductRow> _topProducts = new();
     [ObservableProperty] private ObservableCollection<Product> _inventoryAlerts = new();
+    [ObservableProperty] private ObservableCollection<Product> _expirationAlerts = new();
     [ObservableProperty] private ObservableCollection<RecentSaleRow> _recentSales = new();
 
     public DashboardViewModel()
@@ -64,7 +66,7 @@ public partial class DashboardViewModel : ObservableObject
         WelcomeMessage = user?.FullName ?? "User";
         UserDisplay = user?.RoleName ?? string.Empty;
         IsAdmin = SessionManager.IsAdmin;
-        BottomPanelColumns = IsAdmin ? 3 : 1;
+        BottomPanelColumns = IsAdmin ? 4 : 2;
 
         var summary = _dashboard.GetSummary();
         TodaySales = summary.TodaySales;
@@ -76,11 +78,13 @@ public partial class DashboardViewModel : ObservableObject
         TotalSuppliers = summary.TotalSuppliers;
         LowStockCount = summary.LowStockCount;
         OutOfStockCount = summary.OutOfStockCount;
+        ExpiringSoonCount = summary.ExpiringSoonCount;
 
         ReloadCharts();
         BuildPaymentDonut();
         TopProducts = new ObservableCollection<TopProductRow>(_dashboard.GetTopProducts(6));
         InventoryAlerts = new ObservableCollection<Product>(_dashboard.GetInventoryAlerts().Take(6));
+        ExpirationAlerts = new ObservableCollection<Product>(_dashboard.GetExpirationAlerts().Take(6));
         RecentSales = new ObservableCollection<RecentSaleRow>(_dashboard.GetRecentSales(8));
     }
 

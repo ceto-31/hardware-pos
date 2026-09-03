@@ -10,7 +10,7 @@
                 <ComboBox Width="200" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding ReportType}" Margin="2"/>
                 <ComboBox Width="90" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}" Margin="2"/>
                 <Button Content="Generate" Style="{StaticResource PrimaryButton}" Command="{Binding GenerateCommand}"/>
-                <Button Content="Export CSV" Style="{StaticResource SecondaryButton}" Command="{Binding ExportCsvCommand}"/>
+                <Button Content="Export PDF" Style="{StaticResource SecondaryButton}" Command="{Binding ExportPdfCommand}"/>
             </StackPanel>
             <TextBlock DockPanel.Dock="Top" Text="No data for this report." HorizontalAlignment="Center" Margin="0,20"
                        Foreground="{StaticResource MutedBrush}"

@@ -35,6 +35,7 @@ public partial class LoginWindow : Window
     {
         var main = new MainWindow();
         main.Show();
+        Application.Current.MainWindow = main;
         Close();
     }
 }

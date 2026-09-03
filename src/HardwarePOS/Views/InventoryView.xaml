@@ -51,6 +51,17 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="ExpiringSoonFilterToggle" TargetType="ToggleButton" BasedOn="{StaticResource StockFilterToggle}">
+            <Setter Property="Background" Value="#FFEDD5"/>
+            <Setter Property="Foreground" Value="#EA580C"/>
+            <Setter Property="BorderBrush" Value="#FDBA74"/>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#FED7AA"/>
+                    <Setter Property="BorderBrush" Value="#EA580C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <TabControl Style="{StaticResource ModernTabControl}"
                 ItemContainerStyle="{StaticResource ModernTabItem}"
@@ -65,11 +76,21 @@
                                       IsChecked="{Binding FilterLowStock}"/>
                         <ToggleButton Content="Out of Stock" Style="{StaticResource OutOfStockFilterToggle}"
                                       IsChecked="{Binding FilterOutOfStock}"/>
+                        <ToggleButton Content="Expiring Soon" Style="{StaticResource ExpiringSoonFilterToggle}"
+                                      IsChecked="{Binding FilterExpiringSoon}"/>
                     </StackPanel>
                     <DataGrid ItemsSource="{Binding InventoryItems}">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
                                 <Setter Property="Background" Value="{Binding StockStatus, Converter={StaticResource StockStatusBrush}}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ExpirationAlertStatus}" Value="ExpiringSoon">
+                                        <Setter Property="Background" Value="#FFEDD5"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ExpirationAlertStatus}" Value="Expired">
+                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
@@ -99,6 +120,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="110" MinWidth="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -106,49 +128,129 @@
         </TabItem>
 
         <TabItem Header="Stock In">
-            <Border Style="{StaticResource CardBorder}" MaxWidth="520" HorizontalAlignment="Left">
-                <StackPanel>
-                    <TextBlock Text="Receive stock from supplier" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <TextBlock Text="Category"/>
-                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
-                              SelectedValuePath="CategoryId" SelectedValue="{Binding InCategoryId}"/>
-                    <TextBlock Text="Supplier"/>
-                    <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName"
-                              SelectedValuePath="SupplierId" SelectedValue="{Binding InSupplierId}"/>
-                    <TextBlock Text="Product"/>
-                    <ComboBox ItemsSource="{Binding InProductOptions}" DisplayMemberPath="ProductName"
-                              SelectedValuePath="ProductId" SelectedValue="{Binding InProductId}"/>
-                    <TextBlock Text="Quantity"/>
-                    <TextBox Text="{Binding InQuantity, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Date Received"/>
-                    <DatePicker SelectedDate="{Binding InDate}"/>
-                    <TextBlock Text="Remarks"/>
-                    <TextBox Text="{Binding InRemarks, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True"/>
-                    <Button Content="Save Stock In" Style="{StaticResource PrimaryButton}" Command="{Binding SaveStockInCommand}" Margin="0,16,0,0" HorizontalAlignment="Left"/>
-                </StackPanel>
+            <Border Style="{StaticResource CardBorder}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock Text="Receive stock from supplier" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="Select a category to filter products." Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Border DockPanel.Dock="Bottom" Padding="0,16,0,0" Margin="0,12,0,0"
+                            BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+                        <Button Content="Save Stock In" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SaveStockInCommand}" HorizontalAlignment="Right"
+                                MinWidth="140" Padding="18,8"/>
+                    </Border>
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
+                                      SelectedValuePath="CategoryId" SelectedValue="{Binding InCategoryId}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="Supplier" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName"
+                                      SelectedValuePath="SupplierId" SelectedValue="{Binding InSupplierId}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                            <TextBlock Text="Product" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding InProductOptions}" DisplayMemberPath="ProductName"
+                                      SelectedValuePath="ProductId" SelectedValue="{Binding InProductId}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,0,0">
+                            <TextBlock Text="Quantity" Style="{StaticResource DialogFieldLabel}"/>
+                            <TextBox Text="{Binding InQuantity, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,4,0,0">
+                            <TextBlock Text="Date Received" Style="{StaticResource DialogFieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding InDate}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                            <TextBlock Text="Remarks" Style="{StaticResource DialogFieldLabel}"/>
+                            <TextBox Text="{Binding InRemarks, UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="120" VerticalAlignment="Stretch"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
             </Border>
         </TabItem>
 
         <TabItem Header="Stock Out">
-            <Border Style="{StaticResource CardBorder}" MaxWidth="520" HorizontalAlignment="Left">
-                <StackPanel>
-                    <TextBlock Text="Issue / adjust stock out" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <TextBlock Text="Category"/>
-                    <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
-                              SelectedValuePath="CategoryId" SelectedValue="{Binding OutCategoryId}"/>
-                    <TextBlock Text="Product"/>
-                    <ComboBox ItemsSource="{Binding OutProductOptions}" DisplayMemberPath="ProductName"
-                              SelectedValuePath="ProductId" SelectedValue="{Binding OutProductId}"/>
-                    <TextBlock Text="Quantity"/>
-                    <TextBox Text="{Binding OutQuantity, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Reason"/>
-                    <ComboBox ItemsSource="{Binding StockOutReasons}" SelectedItem="{Binding OutReason}"/>
-                    <TextBlock Text="Date"/>
-                    <DatePicker SelectedDate="{Binding OutDate}"/>
-                    <TextBlock Text="Remarks"/>
-                    <TextBox Text="{Binding OutRemarks, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True"/>
-                    <Button Content="Save Stock Out" Style="{StaticResource PrimaryButton}" Command="{Binding SaveStockOutCommand}" Margin="0,16,0,0" HorizontalAlignment="Left"/>
-                </StackPanel>
+            <Border Style="{StaticResource CardBorder}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock Text="Issue / adjust stock out" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="Select a category to filter products." Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Border DockPanel.Dock="Bottom" Padding="0,16,0,0" Margin="0,12,0,0"
+                            BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+                        <Button Content="Save Stock Out" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SaveStockOutCommand}" HorizontalAlignment="Right"
+                                MinWidth="140" Padding="18,8"/>
+                    </Border>
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
+                                      SelectedValuePath="CategoryId" SelectedValue="{Binding OutCategoryId}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="Reason" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding StockOutReasons}" SelectedItem="{Binding OutReason}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                            <TextBlock Text="Product" Style="{StaticResource DialogFieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding OutProductOptions}" DisplayMemberPath="ProductName"
+                                      SelectedValuePath="ProductId" SelectedValue="{Binding OutProductId}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,0,0">
+                            <TextBlock Text="Quantity" Style="{StaticResource DialogFieldLabel}"/>
+                            <TextBox Text="{Binding OutQuantity, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,4,0,0">
+                            <TextBlock Text="Date" Style="{StaticResource DialogFieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding OutDate}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                            <TextBlock Text="Remarks" Style="{StaticResource DialogFieldLabel}"/>
+                            <TextBox Text="{Binding OutRemarks, UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="120" VerticalAlignment="Stretch"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
             </Border>
         </TabItem>
 

@@ -9,6 +9,7 @@ public class DashboardSummary
     public int TotalSuppliers { get; set; }
     public int LowStockCount { get; set; }
     public int OutOfStockCount { get; set; }
+    public int ExpiringSoonCount { get; set; }
     public decimal YesterdaySales { get; set; }
     public int YesterdayTransactions { get; set; }
     public decimal TodayItemsSold { get; set; }

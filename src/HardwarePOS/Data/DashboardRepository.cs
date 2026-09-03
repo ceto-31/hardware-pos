@@ -1,4 +1,5 @@
 using HardwarePOS.Models;
+using HardwarePOS.Helpers;
 using Microsoft.Data.SqlClient;
 
 namespace HardwarePOS.Data;
@@ -46,8 +47,16 @@ public class DashboardRepository
                     INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
                     INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
                     WHERE CAST(s.SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)
+                ), 0),
+                ISNULL((
+                    SELECT COUNT(*)
+                    FROM dbo.Products
+                    WHERE IsArchived = 0
+                      AND ExpirationDate IS NOT NULL
+                      AND CAST(ExpirationDate AS DATE) <= DATEADD(DAY, @ExpiringSoonDays, CAST(SYSDATETIME() AS DATE))
                 ), 0);
             """;
+        cmd.Parameters.AddWithValue("@ExpiringSoonDays", InventoryAlertConstants.ExpiringSoonDays);
         using var reader = cmd.ExecuteReader();
         reader.Read();
         return new DashboardSummary
@@ -64,7 +73,8 @@ public class DashboardRepository
             TodayItemsSold = reader.GetDecimal(9),
             YesterdayItemsSold = reader.GetDecimal(10),
             TodayGrossProfit = reader.GetDecimal(11),
-            YesterdayGrossProfit = reader.GetDecimal(12)
+            YesterdayGrossProfit = reader.GetDecimal(12),
+            ExpiringSoonCount = reader.GetInt32(13)
         };
     }
 
@@ -271,7 +281,7 @@ public class DashboardRepository
             SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -281,30 +291,59 @@ public class DashboardRepository
             """;
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
-        {
-            list.Add(new Product
-            {
-                ProductId = reader.GetInt32(0),
-                ProductName = reader.GetString(1),
-                ProductDetails = reader.IsDBNull(2) ? null : reader.GetString(2),
-                Barcode = reader.IsDBNull(3) ? null : reader.GetString(3),
-                UnitOfMeasure = reader.GetString(4),
-                CostPrice = reader.GetDecimal(5),
-                SellingPrice = reader.GetDecimal(6),
-                StockQty = reader.GetDecimal(7),
-                ReorderLevel = reader.GetDecimal(8),
-                CategoryId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
-                CategoryName = reader.IsDBNull(10) ? null : reader.GetString(10),
-                SupplierId = reader.IsDBNull(11) ? null : reader.GetInt32(11),
-                SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
-                IsArchived = reader.GetBoolean(13),
-                ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-                UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
-                ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null
-            });
-        }
+            list.Add(MapAlertProduct(reader));
         return list;
     }
+
+    public List<Product> GetExpirationAlerts()
+    {
+        var list = new List<Product>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+                   ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
+                   p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
+                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate
+            FROM dbo.Products p
+            LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
+            LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
+            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
+            WHERE p.IsArchived = 0
+              AND p.ExpirationDate IS NOT NULL
+              AND CAST(p.ExpirationDate AS DATE) <= DATEADD(DAY, @Days, CAST(SYSDATETIME() AS DATE))
+            ORDER BY CASE WHEN CAST(p.ExpirationDate AS DATE) < CAST(SYSDATETIME() AS DATE) THEN 0 ELSE 1 END,
+                     p.ExpirationDate;
+            """;
+        cmd.Parameters.AddWithValue("@Days", InventoryAlertConstants.ExpiringSoonDays);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            list.Add(MapAlertProduct(reader));
+        return list;
+    }
+
+    private static Product MapAlertProduct(SqlDataReader reader) => new()
+    {
+        ProductId = reader.GetInt32(0),
+        ProductName = reader.GetString(1),
+        ProductDetails = reader.IsDBNull(2) ? null : reader.GetString(2),
+        Barcode = reader.IsDBNull(3) ? null : reader.GetString(3),
+        UnitOfMeasure = reader.GetString(4),
+        CostPrice = reader.GetDecimal(5),
+        SellingPrice = reader.GetDecimal(6),
+        StockQty = reader.GetDecimal(7),
+        ReorderLevel = reader.GetDecimal(8),
+        CategoryId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
+        CategoryName = reader.IsDBNull(10) ? null : reader.GetString(10),
+        SupplierId = reader.IsDBNull(11) ? null : reader.GetInt32(11),
+        SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
+        IsArchived = reader.GetBoolean(13),
+        ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null,
+        ExpirationDate = reader.FieldCount > 17 && !reader.IsDBNull(17) ? reader.GetDateTime(17).Date : null
+    };
 
     private static List<SalesPoint> QueryPoints(string sql, (string, object) p1, (string, object) p2, Func<DateTime, string> labeler)
     {

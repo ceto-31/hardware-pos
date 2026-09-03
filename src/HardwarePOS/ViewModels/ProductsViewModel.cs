@@ -36,8 +36,12 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private int? _unitId;
     [ObservableProperty] private decimal _costPrice;
     [ObservableProperty] private decimal _sellingPrice;
+    [ObservableProperty] private decimal _salePrice;
+    [ObservableProperty] private DateTime? _saleStartDate;
+    [ObservableProperty] private DateTime? _saleEndDate;
     [ObservableProperty] private decimal _stockQty;
     [ObservableProperty] private decimal _reorderLevel = 10;
+    [ObservableProperty] private DateTime? _expirationDate;
     [ObservableProperty] private int? _categoryId;
     [ObservableProperty] private int? _supplierId;
     [ObservableProperty] private string? _imagePath;
@@ -46,6 +50,8 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private bool _isFormOpen;
     public bool IsNewProduct => EditingId == 0;
     public bool HasPhoto => PreviewImage is not null;
+    public bool HasExpirationDate => ExpirationDate.HasValue;
+    public bool HasSaleFields => SalePrice > 0 || SaleStartDate.HasValue || SaleEndDate.HasValue;
 
     public decimal ProfitAmount => SellingPrice - CostPrice;
     public decimal MarkupPercent => CostPrice > 0 ? (SellingPrice - CostPrice) / CostPrice * 100 : 0;
@@ -57,6 +63,10 @@ public partial class ProductsViewModel : ObservableObject
 
     partial void OnEditingIdChanged(int value) => OnPropertyChanged(nameof(IsNewProduct));
     partial void OnPreviewImageChanged(ImageSource? value) => OnPropertyChanged(nameof(HasPhoto));
+    partial void OnExpirationDateChanged(DateTime? value) => OnPropertyChanged(nameof(HasExpirationDate));
+    partial void OnSalePriceChanged(decimal value) => OnPropertyChanged(nameof(HasSaleFields));
+    partial void OnSaleStartDateChanged(DateTime? value) => OnPropertyChanged(nameof(HasSaleFields));
+    partial void OnSaleEndDateChanged(DateTime? value) => OnPropertyChanged(nameof(HasSaleFields));
     partial void OnShowArchivedChanged(bool value) => Search();
     partial void OnFilterCategoryIdChanged(int? value) => Search();
     partial void OnSearchTextChanged(string value) => Search();
@@ -124,8 +134,12 @@ public partial class ProductsViewModel : ObservableObject
         UnitId = item.UnitId;
         CostPrice = item.CostPrice;
         SellingPrice = item.SellingPrice;
+        SalePrice = item.SalePrice ?? 0;
+        SaleStartDate = item.SaleStartDate;
+        SaleEndDate = item.SaleEndDate;
         StockQty = item.StockQty;
         ReorderLevel = item.ReorderLevel;
+        ExpirationDate = item.ExpirationDate;
         CategoryId = item.CategoryId;
         SupplierId = item.SupplierId;
         ImagePath = item.ImagePath;
@@ -145,6 +159,32 @@ public partial class ProductsViewModel : ObservableObject
             return;
         }
 
+        decimal? salePrice = null;
+        DateTime? saleStart = null;
+        DateTime? saleEnd = null;
+        if (SalePrice > 0)
+        {
+            if (SalePrice >= SellingPrice)
+            {
+                DialogService.ShowWarning("Sale price must be less than the selling price.", "Products");
+                return;
+            }
+            if (SaleStartDate is null || SaleEndDate is null)
+            {
+                DialogService.ShowWarning("Sale start and end dates are required when a sale price is set.", "Products");
+                return;
+            }
+            if (SaleEndDate.Value.Date < SaleStartDate.Value.Date)
+            {
+                DialogService.ShowWarning("Sale end date cannot be earlier than the start date.", "Products");
+                return;
+            }
+
+            salePrice = SalePrice;
+            saleStart = SaleStartDate.Value.Date;
+            saleEnd = SaleEndDate.Value.Date;
+        }
+
         try
         {
             var unitName = UnitOptions.FirstOrDefault(u => u.UnitId == UnitId)?.UnitName ?? "Piece";
@@ -159,8 +199,12 @@ public partial class ProductsViewModel : ObservableObject
                 UnitOfMeasure = unitName,
                 CostPrice = CostPrice,
                 SellingPrice = SellingPrice,
+                SalePrice = salePrice,
+                SaleStartDate = saleStart,
+                SaleEndDate = saleEnd,
                 StockQty = StockQty,
                 ReorderLevel = ReorderLevel,
+                ExpirationDate = ExpirationDate?.Date,
                 CategoryId = CategoryId is null or 0 ? null : CategoryId,
                 SupplierId = SupplierId is null or 0 ? null : SupplierId,
                 ImagePath = ImagePath
@@ -227,18 +271,14 @@ public partial class ProductsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Delete(Product? product)
+    private void ClearExpirationDate() => ExpirationDate = null;
+
+    [RelayCommand]
+    private void ClearSale()
     {
-        var item = product ?? SelectedItem;
-        if (item is null) return;
-        if (!DialogService.Confirm($"Delete '{item.ProductName}'?", "Products")) return;
-        _products.Delete(item.ProductId);
-        if (EditingId == item.ProductId)
-        {
-            ClearForm();
-            IsFormOpen = false;
-        }
-        Search();
+        SalePrice = 0;
+        SaleStartDate = null;
+        SaleEndDate = null;
     }
 
     [RelayCommand]
@@ -270,8 +310,10 @@ public partial class ProductsViewModel : ObservableObject
         EditingId = 0;
         ProductCode = ProductName = ProductDetails = Barcode = string.Empty;
         UnitId = UnitOptions.FirstOrDefault()?.UnitId;
-        CostPrice = SellingPrice = StockQty = 0;
+        CostPrice = SellingPrice = SalePrice = StockQty = 0;
+        SaleStartDate = SaleEndDate = null;
         ReorderLevel = 10;
+        ExpirationDate = null;
         CategoryId = null;
         SupplierId = null;
         ImagePath = null;

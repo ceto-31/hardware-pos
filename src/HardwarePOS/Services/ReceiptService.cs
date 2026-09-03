@@ -52,15 +52,19 @@ public class ReceiptService
         panel.Children.Add(printBtn);
         panel.Children.Add(viewer);
 
+        var owner = DialogService.GetVisibleOwner();
         var window = new Window
         {
             Title = $"Receipt Preview — {invoiceNo}",
             Width = 480,
             Height = 640,
             Content = panel,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Owner = Application.Current.MainWindow
+            WindowStartupLocation = owner is not null
+                ? WindowStartupLocation.CenterOwner
+                : WindowStartupLocation.CenterScreen
         };
+        if (owner is not null)
+            window.Owner = owner;
         window.ShowDialog();
     }
 
@@ -115,17 +119,12 @@ public class ReceiptService
         doc.Blocks.Add(new Paragraph(new Run($"Date: {DateTime.Now:yyyy-MM-dd HH:mm}")));
         doc.Blocks.Add(new Paragraph(new Run($"Cashier: {cashierName}")));
         doc.Blocks.Add(new Paragraph(new Run(new string('-', 40))));
-
-        foreach (var item in items)
-        {
-            doc.Blocks.Add(new Paragraph(new Run($"{item.ProductName}")));
-            doc.Blocks.Add(new Paragraph(new Run($"  {item.Quantity} x {item.UnitPrice:N2} = {item.LineTotal:N2}")));
-        }
-
+        doc.Blocks.Add(BuildLineItemsTable(items));
         doc.Blocks.Add(new Paragraph(new Run(new string('-', 40))));
         doc.Blocks.Add(new Paragraph(new Run($"Subtotal:   ₱{subtotal:N2}")));
         doc.Blocks.Add(new Paragraph(new Run($"VAT:        ₱{taxAmount:N2}")));
-        doc.Blocks.Add(new Paragraph(new Run($"Discount:   ₱{discountAmount:N2}")));
+        if (discountAmount > 0)
+            doc.Blocks.Add(new Paragraph(new Run($"Discount:   ₱{discountAmount:N2}")));
         doc.Blocks.Add(new Paragraph(new Run($"TOTAL DUE:  ₱{totalDue:N2}")) { FontWeight = FontWeights.Bold });
         doc.Blocks.Add(new Paragraph(new Run($"Cash:       ₱{cashTendered:N2}")));
         doc.Blocks.Add(new Paragraph(new Run($"Change:     ₱{changeAmount:N2}")));
@@ -133,4 +132,57 @@ public class ReceiptService
         doc.Blocks.Add(new Paragraph(new Run(footerText)) { TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0) });
         return doc;
     }
+
+    private static Table BuildLineItemsTable(IReadOnlyList<CartItem> items)
+    {
+        var table = new Table
+        {
+            CellSpacing = 0,
+            Margin = new Thickness(0, 4, 0, 4)
+        };
+
+        table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+        table.Columns.Add(new TableColumn { Width = new GridLength(45) });
+        table.Columns.Add(new TableColumn { Width = new GridLength(65) });
+        table.Columns.Add(new TableColumn { Width = new GridLength(65) });
+
+        var rowGroup = new TableRowGroup();
+        table.RowGroups.Add(rowGroup);
+
+        var headerRow = new TableRow();
+        AddTableCell(headerRow, "Item", TextAlignment.Left, bold: true);
+        AddTableCell(headerRow, "Qty", TextAlignment.Right, bold: true);
+        AddTableCell(headerRow, "Price", TextAlignment.Right, bold: true);
+        AddTableCell(headerRow, "Total", TextAlignment.Right, bold: true);
+        rowGroup.Rows.Add(headerRow);
+
+        foreach (var item in items)
+        {
+            var row = new TableRow();
+            AddTableCell(row, item.ProductName, TextAlignment.Left);
+            AddTableCell(row, FormatQuantity(item.Quantity), TextAlignment.Right);
+            AddTableCell(row, $"₱{item.UnitPrice:N2}", TextAlignment.Right);
+            AddTableCell(row, $"₱{item.LineTotal:N2}", TextAlignment.Right);
+            rowGroup.Rows.Add(row);
+        }
+
+        return table;
+    }
+
+    private static void AddTableCell(TableRow row, string text, TextAlignment align, bool bold = false)
+    {
+        var paragraph = new Paragraph(new Run(text))
+        {
+            TextAlignment = align,
+            Margin = new Thickness(0),
+            Padding = new Thickness(2, 1, 2, 1)
+        };
+        if (bold)
+            paragraph.FontWeight = FontWeights.Bold;
+
+        row.Cells.Add(new TableCell(paragraph));
+    }
+
+    private static string FormatQuantity(decimal quantity) =>
+        quantity == decimal.Truncate(quantity) ? quantity.ToString("N0") : quantity.ToString("N2");
 }

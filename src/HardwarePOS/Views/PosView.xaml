@@ -66,7 +66,18 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="80"/>
                                 <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
-                                <DataGridTextColumn Header="Price" Binding="{Binding SellingPrice, StringFormat=N2}" Width="80"/>
+                                <DataGridTemplateColumn Header="Price" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding EffectivePrice, StringFormat=N2}"/>
+                                                <TextBlock Text="SALE" FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource SuccessBrush}"
+                                                           Visibility="{Binding IsOnSale, Converter={StaticResource BoolToVis}}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -89,7 +100,6 @@
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="26"/>
-                                        <RowDefinition Height="30"/>
                                         <RowDefinition Height="26"/>
                                         <RowDefinition Height="26"/>
                                     </Grid.RowDefinitions>
@@ -99,17 +109,13 @@
                                                Text="{Binding Subtotal, StringFormat=₱{0:N2}}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
 
-                                    <TextBlock Grid.Row="1" Text="Discount" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource NumericInput}"
-                                             Text="{Binding DiscountAmount, UpdateSourceTrigger=PropertyChanged}"/>
-
-                                    <TextBlock Grid.Row="2" Text="{Binding TaxRate, StringFormat=VAT ({0:P0})}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1"
+                                    <TextBlock Grid.Row="1" Text="{Binding TaxRate, StringFormat=VAT ({0:P0})}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1"
                                                Text="{Binding TaxAmount, StringFormat=₱{0:N2}}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
 
-                                    <TextBlock Grid.Row="3" Text="Total Due" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="1"
+                                    <TextBlock Grid.Row="2" Text="Total Due" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1"
                                                Text="{Binding TotalDue, StringFormat=₱{0:N2}}"
                                                FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>

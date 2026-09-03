@@ -85,7 +85,7 @@
                 </Border>
             </UniformGrid>
 
-            <UniformGrid Columns="2" Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}">
+            <UniformGrid Columns="3" Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}">
                 <Border Style="{StaticResource CardBorder}">
                     <DockPanel LastChildFill="True">
                         <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEF3C7" DockPanel.Dock="Left">
@@ -109,6 +109,19 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="OUT OF STOCK"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding OutOfStockCount}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <DockPanel LastChildFill="True">
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5" DockPanel.Dock="Left">
+                            <Viewbox Width="22" Height="22">
+                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource AccentBrush}"/>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="EXPIRING SOON"/>
+                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding ExpiringSoonCount}"/>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -257,6 +270,82 @@
                                                             <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding AlertBadge}" Value="Critical">
+                                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" MinHeight="260">
+                    <DockPanel LastChildFill="True">
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Expiring Soon"/>
+                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                                    Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="No products expiring soon" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ExpirationAlerts.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding ExpirationAlerts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="6"
+                                                    ClipToBounds="True" VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Viewbox Width="14" Height="14">
+                                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
+                                                    </Viewbox>
+                                                    <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
+                                                           Stretch="UniformToFill"/>
+                                                </Grid>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0">
+                                                <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding ExpirationDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="2" CornerRadius="999" Padding="8,3" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#FFEDD5"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
+                                                                <Setter Property="Background" Value="#FEE2E2"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding ExpirationBadge}" FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
                                                                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>

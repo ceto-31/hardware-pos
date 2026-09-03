@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Text;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
@@ -127,7 +126,7 @@ public partial class ReportsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ExportCsv()
+    private void ExportPdf()
     {
         if (Rows.Count == 0)
         {
@@ -137,27 +136,48 @@ public partial class ReportsViewModel : ObservableObject
 
         var dialog = new SaveFileDialog
         {
-            Filter = "CSV files (*.csv)|*.csv",
-            FileName = $"4KV_{ReportType.Replace(' ', '_')}_{SelectedYear}.csv"
+            Filter = "PDF files (*.pdf)|*.pdf",
+            FileName = $"4KV_{ReportType.Replace(' ', '_')}_{SelectedYear}.pdf"
         };
         if (dialog.ShowDialog() != true) return;
 
-        var sb = new StringBuilder();
         var headers = new List<string> { Col1Header, Col2Header };
         if (ShowCol3) headers.Add(Col3Header);
         if (ShowCol4) headers.Add(Col4Header);
-        sb.AppendLine(string.Join(",", headers.Select(h => $"\"{h}\"")));
 
-        foreach (var r in Rows)
+        try
         {
-            var values = new List<string> { r.Col1, r.Col2 };
-            if (ShowCol3) values.Add(r.Col3);
-            if (ShowCol4) values.Add(r.Col4);
-            sb.AppendLine(string.Join(",", values.Select(v => $"\"{v}\"")));
+            ReportPdfExporter.Export(
+                dialog.FileName,
+                ReportType,
+                SelectedYear,
+                headers,
+                Rows.ToList(),
+                BuildSummaryLine());
+            DialogService.ShowInfo("PDF exported.", "Reports");
         }
-        File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
-        DialogService.ShowInfo("CSV exported.", "Reports");
+        catch (Exception ex)
+        {
+            DialogService.ShowError(ex.Message, "Reports");
+        }
     }
+
+    private string? BuildSummaryLine()
+    {
+        return ReportType switch
+        {
+            "Daily Sales" or "Weekly Sales" or "Monthly Sales" or "Yearly Sales" =>
+                $"Total: ₱{Rows.Sum(r => ParseDecimal(r.Col2)):N2}",
+            "Stock In History" or "Stock Out History" =>
+                $"Total quantity: {Rows.Sum(r => ParseDecimal(r.Col3)):N0}",
+            "All Sales Transactions" =>
+                $"Total due: ₱{Rows.Sum(r => ParseDecimal(r.Col4)):N2}",
+            _ => null
+        };
+    }
+
+    private static decimal ParseDecimal(string value) =>
+        decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out var result) ? result : 0m;
 
     private void ApplyColumnLayout()
     {
@@ -361,12 +381,4 @@ public partial class ReportsViewModel : ObservableObject
         HasChart = false;
         ChartTitle = string.Empty;
     }
-}
-
-public class ReportRow
-{
-    public string Col1 { get; set; } = string.Empty;
-    public string Col2 { get; set; } = string.Empty;
-    public string Col3 { get; set; } = string.Empty;
-    public string Col4 { get; set; } = string.Empty;
 }

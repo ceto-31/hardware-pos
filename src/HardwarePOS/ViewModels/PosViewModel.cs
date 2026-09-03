@@ -25,7 +25,6 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private decimal _subtotal;
     [ObservableProperty] private decimal _taxRate = 0.12m;
     [ObservableProperty] private decimal _taxAmount;
-    [ObservableProperty] private decimal _discountAmount;
     [ObservableProperty] private decimal _totalDue;
     [ObservableProperty] private decimal _cashTendered;
     [ObservableProperty] private decimal _changeAmount;
@@ -112,7 +111,7 @@ public partial class PosViewModel : ObservableObject
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
                 UnitOfMeasure = product.UnitOfMeasure,
-                UnitPrice = product.SellingPrice,
+                UnitPrice = product.EffectivePrice,
                 Quantity = 1,
                 AvailableStock = product.StockQty
             };
@@ -139,23 +138,18 @@ public partial class PosViewModel : ObservableObject
     private void ClearCart()
     {
         Cart.Clear();
-        DiscountAmount = 0;
         CashTendered = 0;
         Recalculate();
     }
 
-    partial void OnDiscountAmountChanged(decimal value) => Recalculate();
     partial void OnCashTenderedChanged(decimal value) => Recalculate();
     partial void OnTaxRateChanged(decimal value) => Recalculate();
 
     private void Recalculate()
     {
         Subtotal = Cart.Sum(c => c.LineTotal);
-        if (DiscountAmount < 0) DiscountAmount = 0;
-        if (DiscountAmount > Subtotal) DiscountAmount = Subtotal;
-        var taxable = Math.Max(0, Subtotal - DiscountAmount);
-        TaxAmount = Math.Round(taxable * TaxRate, 2);
-        TotalDue = Math.Round(taxable + TaxAmount, 2);
+        TaxAmount = Math.Round(Subtotal * TaxRate, 2);
+        TotalDue = Math.Round(Subtotal + TaxAmount, 2);
         ChangeAmount = Math.Max(0, CashTendered - TotalDue);
     }
 
@@ -263,29 +257,35 @@ public partial class PosViewModel : ObservableObject
                 cartSnapshot,
                 Subtotal,
                 TaxAmount,
-                DiscountAmount,
+                0,
                 TotalDue,
                 CashTendered,
                 ChangeAmount);
 
             _activity.Log("Sale", $"Completed sale {invoiceNo} totaling ₱{TotalDue:N2}", user.UserId);
 
-            var preview = DialogService.Confirm($"Sale completed.\nInvoice: {invoiceNo}\n\nPreview / print receipt?", "POS");
-
-            if (preview)
+            try
             {
-                _receipts.PreviewReceipt(
-                    _settings.GetStoreName(),
-                    invoiceNo,
-                    user.FullName,
-                    cartSnapshot,
-                    Subtotal,
-                    TaxAmount,
-                    DiscountAmount,
-                    TotalDue,
-                    CashTendered,
-                    ChangeAmount,
-                    _settings.GetReceiptFooter());
+                var preview = DialogService.Confirm($"Sale completed.\nInvoice: {invoiceNo}\n\nPreview / print receipt?", "POS");
+                if (preview)
+                {
+                    _receipts.PreviewReceipt(
+                        _settings.GetStoreName(),
+                        invoiceNo,
+                        user.FullName,
+                        cartSnapshot,
+                        Subtotal,
+                        TaxAmount,
+                        0,
+                        TotalDue,
+                        CashTendered,
+                        ChangeAmount,
+                        _settings.GetReceiptFooter());
+                }
+            }
+            catch (Exception ex)
+            {
+                DialogService.ShowError(ex.Message, "POS");
             }
 
             ClearCart();

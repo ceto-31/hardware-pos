@@ -18,6 +18,7 @@ public partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<Product> _inventoryItems = new();
     [ObservableProperty] private bool _filterLowStock;
     [ObservableProperty] private bool _filterOutOfStock;
+    [ObservableProperty] private bool _filterExpiringSoon;
     [ObservableProperty] private ObservableCollection<InventoryLedgerEntry> _history = new();
     [ObservableProperty] private ObservableCollection<Category> _categoryOptions = new();
     [ObservableProperty] private ObservableCollection<Product> _inProductOptions = new();
@@ -103,11 +104,12 @@ public partial class InventoryViewModel : ObservableObject
     {
         IEnumerable<Product> items = _monitoringSource;
 
-        if (FilterLowStock || FilterOutOfStock)
+        if (FilterLowStock || FilterOutOfStock || FilterExpiringSoon)
         {
             items = _monitoringSource.Where(p =>
                 (FilterLowStock && p.StockStatus == "LowStock") ||
-                (FilterOutOfStock && p.StockStatus == "OutOfStock"));
+                (FilterOutOfStock && p.StockStatus == "OutOfStock") ||
+                (FilterExpiringSoon && p.ExpirationAlertStatus is "Expired" or "ExpiringSoon"));
         }
 
         InventoryItems = new ObservableCollection<Product>(items);
@@ -115,6 +117,7 @@ public partial class InventoryViewModel : ObservableObject
 
     partial void OnFilterLowStockChanged(bool value) => ApplyMonitoringFilter();
     partial void OnFilterOutOfStockChanged(bool value) => ApplyMonitoringFilter();
+    partial void OnFilterExpiringSoonChanged(bool value) => ApplyMonitoringFilter();
 
     [RelayCommand]
     private void RefreshHistory()

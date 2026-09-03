@@ -17,28 +17,11 @@
                 <Border Grid.Column="0" Style="{StaticResource CardBorder}">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <TextBlock Text="Barcode Scan" Style="{StaticResource FieldLabel}"/>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Margin="0,0,6,0"
-                                         Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
-                                         helpers:TextBoxHelper.Placeholder="Scan or type barcode…">
-                                    <TextBox.InputBindings>
-                                        <KeyBinding Key="Return" Command="{Binding ScanBarcodeCommand}"/>
-                                    </TextBox.InputBindings>
-                                </TextBox>
-                                <Button Grid.Column="1" Content="Add" MinWidth="68"
-                                        Style="{StaticResource PrimaryButton}" Command="{Binding ScanBarcodeCommand}"/>
-                            </Grid>
-
                             <TextBlock Text="Search Products" Style="{StaticResource FieldLabel}"/>
                             <TextBlock Text="Click a product row to add it to the cart."
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     helpers:TextBoxHelper.Placeholder="Search by name, code, or barcode…"/>
+                                     helpers:TextBoxHelper.Placeholder="Search by name or code…"/>
                         </StackPanel>
 
                         <DataGrid x:Name="ProductGrid"

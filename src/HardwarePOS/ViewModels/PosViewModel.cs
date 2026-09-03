@@ -19,7 +19,6 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<CartItem> _cart = new();
     [ObservableProperty] private Product? _selectedProduct;
     [ObservableProperty] private CartItem? _selectedCartItem;
-    [ObservableProperty] private string _barcodeInput = string.Empty;
     [ObservableProperty] private string _searchText = string.Empty;
 
     [ObservableProperty] private decimal _subtotal;
@@ -58,22 +57,6 @@ public partial class PosViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value) => SearchProducts();
     partial void OnHistorySearchChanged(string value) => LoadHistory();
-
-    [RelayCommand]
-    private void ScanBarcode()
-    {
-        if (string.IsNullOrWhiteSpace(BarcodeInput)) return;
-        var product = _products.GetByBarcode(BarcodeInput.Trim());
-        if (product is null)
-        {
-            DialogService.ShowWarning("Barcode not found.", "POS");
-            BarcodeInput = string.Empty;
-            return;
-        }
-
-        AddProductToCart(product);
-        BarcodeInput = string.Empty;
-    }
 
     [RelayCommand]
     private void AddSelected()
@@ -266,22 +249,18 @@ public partial class PosViewModel : ObservableObject
 
             try
             {
-                var preview = DialogService.Confirm($"Sale completed.\nInvoice: {invoiceNo}\n\nPreview / print receipt?", "POS");
-                if (preview)
-                {
-                    _receipts.PreviewReceipt(
-                        _settings.GetStoreName(),
-                        invoiceNo,
-                        user.FullName,
-                        cartSnapshot,
-                        Subtotal,
-                        TaxAmount,
-                        0,
-                        TotalDue,
-                        CashTendered,
-                        ChangeAmount,
-                        _settings.GetReceiptFooter());
-                }
+                _receipts.PreviewReceipt(
+                    _settings.GetStoreName(),
+                    invoiceNo,
+                    user.FullName,
+                    cartSnapshot,
+                    Subtotal,
+                    TaxAmount,
+                    0,
+                    TotalDue,
+                    CashTendered,
+                    ChangeAmount,
+                    _settings.GetReceiptFooter());
             }
             catch (Exception ex)
             {

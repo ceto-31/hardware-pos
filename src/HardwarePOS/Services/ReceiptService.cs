@@ -41,20 +41,12 @@ public class ReceiptService
         };
         scroll.SetValue(FrameworkElement.FocusVisualStyleProperty, null);
 
-        var printBtn = CreatePrintButton(invoiceNo, receipt);
-
-        var panel = new DockPanel { Background = PageBgBrush };
-        DockPanel.SetDock(printBtn, Dock.Bottom);
-        panel.Children.Add(scroll);
-        panel.Children.Add(printBtn);
-
         var owner = DialogService.GetVisibleOwner();
         var window = new Window
         {
             Title = $"Receipt Preview — {invoiceNo}",
             Width = 400,
             Height = 640,
-            Content = panel,
             Background = PageBgBrush,
             WindowStartupLocation = owner is not null
                 ? WindowStartupLocation.CenterOwner
@@ -62,6 +54,13 @@ public class ReceiptService
         };
         if (owner is not null)
             window.Owner = owner;
+
+        var buttonBar = CreateActionButtons(invoiceNo, receipt, window.Close);
+        var panel = new DockPanel { Background = PageBgBrush };
+        DockPanel.SetDock(buttonBar, Dock.Bottom);
+        panel.Children.Add(scroll);
+        panel.Children.Add(buttonBar);
+        window.Content = panel;
         window.ShowDialog();
     }
 
@@ -86,28 +85,54 @@ public class ReceiptService
             printDialog.PrintVisual(receipt, $"Receipt {invoiceNo}");
     }
 
-    private static Button CreatePrintButton(string invoiceNo, UIElement receipt)
+    private static UIElement CreateActionButtons(string invoiceNo, UIElement receipt, Action close)
     {
-        var printBtn = new Button
+        var closeBtn = new Button
         {
-            Content = "Print",
-            Margin = new Thickness(16, 8, 16, 16),
+            Content = "Close",
             Padding = new Thickness(16, 10, 16, 10),
-            Background = PrimaryBrush,
-            Foreground = Brushes.White,
-            BorderThickness = new Thickness(0),
             FontWeight = FontWeights.SemiBold,
             FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Cursor = System.Windows.Input.Cursors.Hand
         };
+        if (Application.Current.TryFindResource("SecondaryButton") is Style secondaryStyle)
+            closeBtn.Style = secondaryStyle;
+        closeBtn.Click += (_, _) => close();
+
+        var printBtn = new Button
+        {
+            Content = "Print",
+            Padding = new Thickness(16, 10, 16, 10),
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 14,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+        if (Application.Current.TryFindResource("PrimaryButton") is Style primaryStyle)
+            printBtn.Style = primaryStyle;
+        else
+        {
+            printBtn.Background = PrimaryBrush;
+            printBtn.Foreground = Brushes.White;
+            printBtn.BorderThickness = new Thickness(0);
+        }
         printBtn.Click += (_, _) =>
         {
             var printDialog = new PrintDialog();
             if (printDialog.ShowDialog() == true)
                 printDialog.PrintVisual(receipt, $"Receipt {invoiceNo}");
         };
-        return printBtn;
+
+        var grid = new Grid { Margin = new Thickness(16, 8, 16, 16) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(closeBtn, 0);
+        Grid.SetColumn(printBtn, 2);
+        grid.Children.Add(closeBtn);
+        grid.Children.Add(printBtn);
+        return grid;
     }
 
     private static UIElement BuildReceiptVisual(

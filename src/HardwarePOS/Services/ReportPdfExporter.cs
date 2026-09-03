@@ -95,10 +95,14 @@ public static class ReportPdfExporter
 
                             foreach (var value in values)
                             {
-                                var cell = table.Cell().BorderBottom(1).BorderColor("#E2E8F0").Padding(8);
-                                if (zebra)
-                                    cell.Background(ZebraFill);
-                                cell.Text(value);
+                                table.Cell().Element(cell =>
+                                {
+                                    cell.Background(zebra ? ZebraFill : Colors.White)
+                                        .BorderBottom(1)
+                                        .BorderColor("#E2E8F0")
+                                        .Padding(8)
+                                        .Text(value);
+                                });
                             }
                         }
                     });

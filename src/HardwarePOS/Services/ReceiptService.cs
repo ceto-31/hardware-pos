@@ -21,14 +21,15 @@ public class ReceiptService
         IReadOnlyList<CartItem> items,
         decimal subtotal,
         decimal taxAmount,
-        decimal discountAmount,
+        decimal itemDiscountAmount,
+        decimal storeDiscountAmount,
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
         string? footer = null)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            discountAmount, totalDue, cashTendered, changeAmount, footer);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer);
 
         var scroll = new ScrollViewer
         {
@@ -71,14 +72,15 @@ public class ReceiptService
         IReadOnlyList<CartItem> items,
         decimal subtotal,
         decimal taxAmount,
-        decimal discountAmount,
+        decimal itemDiscountAmount,
+        decimal storeDiscountAmount,
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
         string? footer = null)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            discountAmount, totalDue, cashTendered, changeAmount, footer);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer);
 
         var printDialog = new PrintDialog();
         if (printDialog.ShowDialog() == true)
@@ -142,7 +144,8 @@ public class ReceiptService
         IReadOnlyList<CartItem> items,
         decimal subtotal,
         decimal taxAmount,
-        decimal discountAmount,
+        decimal itemDiscountAmount,
+        decimal storeDiscountAmount,
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
@@ -172,7 +175,7 @@ public class ReceiptService
         root.Children.Add(BuildItemsGrid(items));
         root.Children.Add(MakeRule());
 
-        root.Children.Add(BuildTotalsStack(subtotal, taxAmount, discountAmount, totalDue, cashTendered, changeAmount));
+        root.Children.Add(BuildTotalsStack(subtotal, taxAmount, itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount));
         root.Children.Add(MakeFooter(footer));
 
         return card;
@@ -290,24 +293,51 @@ public class ReceiptService
     private static UIElement BuildTotalsStack(
         decimal subtotal,
         decimal taxAmount,
-        decimal discountAmount,
+        decimal itemDiscountAmount,
+        decimal storeDiscountAmount,
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount)
     {
         var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
 
-        panel.Children.Add(MakeTotalRow("Subtotal", subtotal));
-        panel.Children.Add(MakeTotalRow("VAT", taxAmount));
-        if (discountAmount > 0)
-            panel.Children.Add(MakeTotalRow("Discount", discountAmount));
+        var displaySubtotal = itemDiscountAmount > 0 ? subtotal + itemDiscountAmount : subtotal;
+        panel.Children.Add(MakeTotalRow("Subtotal", displaySubtotal));
 
+        if (itemDiscountAmount > 0)
+            panel.Children.Add(MakeDiscountRow("Item Discounts", itemDiscountAmount));
+
+        if (storeDiscountAmount > 0)
+            panel.Children.Add(MakeDiscountRow("Store Discount", storeDiscountAmount));
+
+        panel.Children.Add(MakeTotalRow("VAT", taxAmount));
         panel.Children.Add(MakeRule(margin: new Thickness(0, 6, 0, 6)));
         panel.Children.Add(MakeTotalRow("TOTAL DUE", totalDue, bold: true));
         panel.Children.Add(MakeTotalRow("Cash", cashTendered));
         panel.Children.Add(MakeTotalRow("Change", changeAmount));
 
         return panel;
+    }
+
+    private static Grid MakeDiscountRow(string label, decimal amount)
+    {
+        var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+
+        var labelBlock = new TextBlock { Text = label, Foreground = MutedBrush };
+        var amountBlock = new TextBlock
+        {
+            Text = $"−₱{amount:N2}",
+            TextAlignment = TextAlignment.Right,
+            Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38))
+        };
+
+        Grid.SetColumn(labelBlock, 0);
+        Grid.SetColumn(amountBlock, 1);
+        grid.Children.Add(labelBlock);
+        grid.Children.Add(amountBlock);
+        return grid;
     }
 
     private static Grid MakeTotalRow(string label, decimal amount, bool bold = false)

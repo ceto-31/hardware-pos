@@ -14,6 +14,8 @@ public partial class PosViewModel : ObservableObject
     private readonly SalesRepository _sales = new();
     private readonly SettingsRepository _settings = new();
     private readonly ReceiptService _receipts = new();
+    private readonly DiscountRepository _discounts = new();
+    private List<Discount> _activeDiscountRules = new();
 
     [ObservableProperty] private ObservableCollection<Product> _productList = new();
     [ObservableProperty] private ObservableCollection<CartItem> _cart = new();
@@ -22,6 +24,13 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private string _searchText = string.Empty;
 
     [ObservableProperty] private decimal _subtotal;
+    [ObservableProperty] private decimal _grossSubtotal;
+    [ObservableProperty] private decimal _itemDiscountAmount;
+    [ObservableProperty] private decimal _storeDiscountAmount;
+    [ObservableProperty] private decimal _discountAmount;
+    public bool HasItemDiscount => ItemDiscountAmount > 0;
+    public bool HasStoreDiscount => StoreDiscountAmount > 0;
+    public bool HasAnyDiscount => ItemDiscountAmount > 0 || StoreDiscountAmount > 0;
     [ObservableProperty] private decimal _taxRate = 0.12m;
     [ObservableProperty] private decimal _taxAmount;
     [ObservableProperty] private decimal _totalDue;
@@ -38,6 +47,7 @@ public partial class PosViewModel : ObservableObject
     public void Load()
     {
         TaxRate = _settings.GetTaxRate();
+        _activeDiscountRules = _discounts.GetActiveRulesForPos(DateTime.Today);
         SearchProducts();
         LoadHistory();
         Recalculate();
@@ -94,7 +104,8 @@ public partial class PosViewModel : ObservableObject
                 ProductName = product.ProductName,
                 Barcode = product.Barcode,
                 UnitOfMeasure = product.UnitOfMeasure,
-                UnitPrice = product.EffectivePrice,
+                RegularUnitPrice = product.EffectivePrice,
+                UnitPrice = DiscountPricing.ResolveUnitPrice(product, _activeDiscountRules),
                 Quantity = 1,
                 AvailableStock = product.StockQty
             };
@@ -127,12 +138,28 @@ public partial class PosViewModel : ObservableObject
 
     partial void OnCashTenderedChanged(decimal value) => Recalculate();
     partial void OnTaxRateChanged(decimal value) => Recalculate();
+    partial void OnItemDiscountAmountChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(HasItemDiscount));
+        OnPropertyChanged(nameof(HasAnyDiscount));
+    }
+    partial void OnStoreDiscountAmountChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(HasStoreDiscount));
+        OnPropertyChanged(nameof(HasAnyDiscount));
+    }
+    partial void OnDiscountAmountChanged(decimal value) => OnPropertyChanged(nameof(HasAnyDiscount));
 
     private void Recalculate()
     {
+        GrossSubtotal = Cart.Sum(c => c.RegularLineTotal);
+        ItemDiscountAmount = Cart.Sum(c => c.LineDiscount);
         Subtotal = Cart.Sum(c => c.LineTotal);
-        TaxAmount = Math.Round(Subtotal * TaxRate, 2);
-        TotalDue = Math.Round(Subtotal + TaxAmount, 2);
+        StoreDiscountAmount = DiscountPricing.ComputeStoreWideDiscount(Subtotal, _activeDiscountRules);
+        DiscountAmount = ItemDiscountAmount + StoreDiscountAmount;
+        var taxable = Math.Max(0, Subtotal - StoreDiscountAmount);
+        TaxAmount = Math.Round(taxable * TaxRate, 2);
+        TotalDue = Math.Round(taxable + TaxAmount, 2);
         ChangeAmount = Math.Max(0, CashTendered - TotalDue);
     }
 
@@ -203,6 +230,7 @@ public partial class PosViewModel : ObservableObject
             items,
             SelectedSale.Subtotal,
             SelectedSale.TaxAmount,
+            0,
             SelectedSale.DiscountAmount,
             SelectedSale.TotalDue,
             SelectedSale.CashTendered,
@@ -240,7 +268,7 @@ public partial class PosViewModel : ObservableObject
                 cartSnapshot,
                 Subtotal,
                 TaxAmount,
-                0,
+                DiscountAmount,
                 TotalDue,
                 CashTendered,
                 ChangeAmount);
@@ -256,7 +284,8 @@ public partial class PosViewModel : ObservableObject
                     cartSnapshot,
                     Subtotal,
                     TaxAmount,
-                    0,
+                    ItemDiscountAmount,
+                    StoreDiscountAmount,
                     TotalDue,
                     CashTendered,
                     ChangeAmount,

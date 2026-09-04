@@ -76,33 +76,84 @@
                         <StackPanel DockPanel.Dock="Bottom">
                             <!-- Totals -->
                             <Border Background="#F8FAFC" CornerRadius="6" Padding="10,8" Margin="0,8,0,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="108"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="26"/>
-                                        <RowDefinition Height="26"/>
-                                        <RowDefinition Height="26"/>
-                                    </Grid.RowDefinitions>
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Subtotal" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding GrossSubtotal, StringFormat=₱{0:N2}}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Visibility="{Binding HasItemDiscount, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Subtotal, StringFormat=₱{0:N2}}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Visibility="{Binding HasItemDiscount, Converter={StaticResource InverseBoolToVis}}"/>
+                                    </Grid>
 
-                                    <TextBlock Grid.Row="0" Text="Subtotal" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding Subtotal, StringFormat=₱{0:N2}}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <Grid Margin="0,2,0,2"
+                                          Visibility="{Binding HasItemDiscount, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Item Discounts" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ItemDiscountAmount, StringFormat=−₱{0:N2}}"
+                                                   Foreground="{StaticResource DangerBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
 
-                                    <TextBlock Grid.Row="1" Text="{Binding TaxRate, StringFormat=VAT ({0:P0})}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1"
-                                               Text="{Binding TaxAmount, StringFormat=₱{0:N2}}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <Grid Margin="0,2,0,2"
+                                          Visibility="{Binding HasStoreDiscount, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Store Discount" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding StoreDiscountAmount, StringFormat=−₱{0:N2}}"
+                                                   Foreground="{StaticResource DangerBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
 
-                                    <TextBlock Grid.Row="2" Text="Total Due" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1"
-                                               Text="{Binding TotalDue, StringFormat=₱{0:N2}}"
-                                               FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
+                                    <Grid Margin="0,2,0,2"
+                                          Visibility="{Binding HasItemDiscount, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Net Subtotal" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Subtotal, StringFormat=₱{0:N2}}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,2,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding TaxRate, StringFormat=VAT ({0:P0})}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding TaxAmount, StringFormat=₱{0:N2}}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="108"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Total Due" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding TotalDue, StringFormat=₱{0:N2}}"
+                                                   FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
                             </Border>
 
                             <!-- Payment -->

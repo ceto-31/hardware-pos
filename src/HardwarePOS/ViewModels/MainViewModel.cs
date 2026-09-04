@@ -23,6 +23,7 @@ public partial class MainViewModel : ObservableObject
     public UsersViewModel Users { get; } = new();
     public ArchivesViewModel Archives { get; } = new();
     public ReportsViewModel Reports { get; } = new();
+    public DiscountsViewModel Discounts { get; } = new();
 
     public event Action? LogoutRequested;
 
@@ -54,6 +55,16 @@ public partial class MainViewModel : ObservableObject
         HeaderTitle = "Supplier Management";
         Suppliers.Load();
         CurrentPage = Suppliers;
+    }
+
+    [RelayCommand]
+    private void NavigateDiscounts()
+    {
+        if (!EnsureAdmin()) return;
+        ActiveNav = "Discounts";
+        HeaderTitle = "Discount Management";
+        Discounts.Load();
+        CurrentPage = Discounts;
     }
 
     [RelayCommand]

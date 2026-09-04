@@ -46,6 +46,8 @@
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Suppliers" Tag="Suppliers" Style="{StaticResource NavButton}" Command="{Binding NavigateSuppliersCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Discounts" Tag="Discounts" Style="{StaticResource NavButton}" Command="{Binding NavigateDiscountsCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
                         <Button Content="Users" Tag="Users" Style="{StaticResource NavButton}" Command="{Binding NavigateUsersCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
 

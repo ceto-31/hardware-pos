@@ -657,6 +657,7 @@
     <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><views:DashboardView/></DataTemplate>
     <DataTemplate DataType="{x:Type vm:ProductsViewModel}"><views:ProductsView/></DataTemplate>
     <DataTemplate DataType="{x:Type vm:SuppliersViewModel}"><views:SuppliersView/></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DiscountsViewModel}"><views:DiscountsView/></DataTemplate>
     <DataTemplate DataType="{x:Type vm:InventoryViewModel}"><views:InventoryView/></DataTemplate>
     <DataTemplate DataType="{x:Type vm:PosViewModel}"><views:PosView/></DataTemplate>
     <DataTemplate DataType="{x:Type vm:CategoriesViewModel}"><views:CategoriesView/></DataTemplate>

@@ -48,6 +48,7 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<Product> _inventoryAlerts = new();
     [ObservableProperty] private ObservableCollection<Product> _expirationAlerts = new();
     [ObservableProperty] private ObservableCollection<RecentSaleRow> _recentSales = new();
+    [ObservableProperty] private ObservableCollection<Discount> _scheduledDiscounts = new();
 
     public DashboardViewModel()
     {
@@ -66,7 +67,7 @@ public partial class DashboardViewModel : ObservableObject
         WelcomeMessage = user?.FullName ?? "User";
         UserDisplay = user?.RoleName ?? string.Empty;
         IsAdmin = SessionManager.IsAdmin;
-        BottomPanelColumns = IsAdmin ? 4 : 2;
+        BottomPanelColumns = IsAdmin ? 5 : 2;
 
         var summary = _dashboard.GetSummary();
         TodaySales = summary.TodaySales;
@@ -86,6 +87,9 @@ public partial class DashboardViewModel : ObservableObject
         InventoryAlerts = new ObservableCollection<Product>(_dashboard.GetInventoryAlerts().Take(6));
         ExpirationAlerts = new ObservableCollection<Product>(_dashboard.GetExpirationAlerts().Take(6));
         RecentSales = new ObservableCollection<RecentSaleRow>(_dashboard.GetRecentSales(8));
+        ScheduledDiscounts = IsAdmin
+            ? new ObservableCollection<Discount>(_dashboard.GetScheduledDiscounts(6))
+            : new ObservableCollection<Discount>();
     }
 
     private void ReloadCharts()

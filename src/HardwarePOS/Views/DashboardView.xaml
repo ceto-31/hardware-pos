@@ -364,6 +364,72 @@
                 <Border Style="{StaticResource CardBorder}" MinHeight="260"
                         Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                     <DockPanel LastChildFill="True">
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Active &amp; Scheduled Discounts"/>
+                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                                    Command="{Binding DataContext.NavigateDiscountsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="No active or scheduled discounts" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ScheduledDiscounts.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding ScheduledDiscounts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <TextBlock Text="{Binding DiscountName}" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding SummaryDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                                <TextBlock Text="{Binding ScheduleDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" CornerRadius="999" Padding="8,3" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
+                                                                <Setter Property="Background" Value="#DBEAFE"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
+                                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" MinHeight="260"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+                    <DockPanel LastChildFill="True">
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource DashboardSectionTitle}"
                                    Text="Recent Transactions" Margin="0,0,0,10"/>
                         <Grid>

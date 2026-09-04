@@ -295,6 +295,9 @@ public class DashboardRepository
         return list;
     }
 
+    public List<Discount> GetScheduledDiscounts(int limit = 6) =>
+        new DiscountRepository().GetDashboardDiscounts(limit);
+
     public List<Product> GetExpirationAlerts()
     {
         var list = new List<Product>();

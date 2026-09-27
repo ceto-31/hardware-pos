@@ -18,6 +18,7 @@ public partial class App : Application
         {
             DatabaseSchemaUpdater.EnsureDiscountsSchema();
             DatabaseSchemaUpdater.EnsureVoidSaleSchema();
+            DatabaseSchemaUpdater.EnsureOrderTypeSchema();
             DatabaseSchemaUpdater.EnsureBarcodeRemoved();
         }
         catch (Exception ex)

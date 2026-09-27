@@ -231,7 +231,12 @@ BEGIN
         VoidedBy        INT NULL,
         VoidedAt        DATETIME2(0) NULL,
         VoidReason      NVARCHAR(200) NULL,
+        OrderType       NVARCHAR(20) NOT NULL CONSTRAINT DF_Sales_OrderType DEFAULT (N'Pickup'),
+        CustomerName    NVARCHAR(120) NULL,
+        ContactNumber   NVARCHAR(30) NULL,
+        DeliveryAddress NVARCHAR(300) NULL,
         CONSTRAINT FK_Sales_Users FOREIGN KEY (CashierId) REFERENCES dbo.Users (UserId),
+        CONSTRAINT CK_Sales_OrderType CHECK (OrderType IN (N'Pickup', N'Delivery')),
         CONSTRAINT FK_Sales_VoidedBy FOREIGN KEY (VoidedBy) REFERENCES dbo.Users (UserId),
         CONSTRAINT CK_Sales_Amounts CHECK (Subtotal >= 0 AND TaxAmount >= 0 AND DiscountAmount >= 0 AND TotalDue >= 0)
     );

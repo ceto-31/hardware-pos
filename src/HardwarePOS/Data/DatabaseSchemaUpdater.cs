@@ -155,6 +155,29 @@ public static class DatabaseSchemaUpdater
             """);
     }
 
+    public static void EnsureOrderTypeSchema()
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        Execute(conn, """
+            IF COL_LENGTH('dbo.Sales', 'OrderType') IS NULL
+                ALTER TABLE dbo.Sales ADD OrderType NVARCHAR(20) NOT NULL CONSTRAINT DF_Sales_OrderType DEFAULT (N'Pickup');
+            IF COL_LENGTH('dbo.Sales', 'CustomerName') IS NULL
+                ALTER TABLE dbo.Sales ADD CustomerName NVARCHAR(120) NULL;
+            IF COL_LENGTH('dbo.Sales', 'ContactNumber') IS NULL
+                ALTER TABLE dbo.Sales ADD ContactNumber NVARCHAR(30) NULL;
+            IF COL_LENGTH('dbo.Sales', 'DeliveryAddress') IS NULL
+                ALTER TABLE dbo.Sales ADD DeliveryAddress NVARCHAR(300) NULL;
+            """);
+        Execute(conn, """
+            IF NOT EXISTS (
+                SELECT 1 FROM sys.check_constraints
+                WHERE name = N'CK_Sales_OrderType' AND parent_object_id = OBJECT_ID(N'dbo.Sales')
+            )
+                ALTER TABLE dbo.Sales ADD CONSTRAINT CK_Sales_OrderType CHECK (OrderType IN (N'Pickup', N'Delivery'));
+            """);
+    }
+
     private static void Execute(SqlConnection conn, string sql)
     {
         using var cmd = conn.CreateCommand();

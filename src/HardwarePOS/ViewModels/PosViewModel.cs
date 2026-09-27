@@ -41,6 +41,22 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<SaleHistoryRow> _saleHistory = new();
     [ObservableProperty] private SaleHistoryRow? _selectedSale;
     [ObservableProperty] private string _historySearch = string.Empty;
+    [ObservableProperty] private bool _isDelivery;
+    [ObservableProperty] private string _deliveryCustomerName = string.Empty;
+    [ObservableProperty] private string _deliveryContact = string.Empty;
+    [ObservableProperty] private string _deliveryAddress = string.Empty;
+
+    public bool IsPickup
+    {
+        get => !IsDelivery;
+        set
+        {
+            if (value)
+                IsDelivery = false;
+        }
+    }
+
+    partial void OnIsDeliveryChanged(bool value) => OnPropertyChanged(nameof(IsPickup));
 
     private readonly ActivityRepository _activity = new();
 
@@ -133,6 +149,10 @@ public partial class PosViewModel : ObservableObject
     {
         Cart.Clear();
         CashTendered = 0;
+        IsDelivery = false;
+        DeliveryCustomerName = string.Empty;
+        DeliveryContact = string.Empty;
+        DeliveryAddress = string.Empty;
         Recalculate();
     }
 
@@ -207,15 +227,18 @@ public partial class PosViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void PreviewSelectedReceipt()
+    private void PreviewSelectedReceipt(SaleHistoryRow? sale)
     {
-        if (SelectedSale is null)
+        sale ??= SelectedSale;
+        if (sale is null)
         {
             DialogService.ShowInfo("Select a transaction first.", "POS");
             return;
         }
 
-        var items = _sales.GetSaleItems(SelectedSale.SaleId)
+        SelectedSale = sale;
+
+        var items = _sales.GetSaleItems(sale.SaleId)
             .Select(i => new CartItem
             {
                 ProductName = i.ProductName,
@@ -225,18 +248,37 @@ public partial class PosViewModel : ObservableObject
 
         _receipts.PreviewReceipt(
             _settings.GetStoreName(),
-            SelectedSale.InvoiceNo,
-            SelectedSale.CashierName,
+            sale.InvoiceNo,
+            sale.CashierName,
             items,
-            SelectedSale.Subtotal,
-            SelectedSale.TaxAmount,
+            sale.Subtotal,
+            sale.TaxAmount,
             0,
-            SelectedSale.DiscountAmount,
-            SelectedSale.TotalDue,
-            SelectedSale.CashTendered,
-            SelectedSale.ChangeAmount,
+            sale.DiscountAmount,
+            sale.TotalDue,
+            sale.CashTendered,
+            sale.ChangeAmount,
             _settings.GetReceiptFooter(),
-            SelectedSale.IsVoided);
+            sale.IsVoided,
+            sale.OrderType,
+            sale.CustomerName,
+            sale.ContactNumber,
+            sale.DeliveryAddress);
+    }
+
+    [RelayCommand]
+    private void ViewTransaction(SaleHistoryRow? sale)
+    {
+        sale ??= SelectedSale;
+        if (sale is null)
+        {
+            DialogService.ShowInfo("Select a transaction first.", "POS");
+            return;
+        }
+
+        SelectedSale = sale;
+        var items = _sales.GetSaleItems(sale.SaleId);
+        TransactionDetailsWindow.Show(sale, items);
     }
 
     [RelayCommand]
@@ -296,6 +338,17 @@ public partial class PosViewModel : ObservableObject
             return;
         }
 
+        var customerName = DeliveryCustomerName.Trim();
+        var contactNumber = DeliveryContact.Trim();
+        var deliveryAddress = DeliveryAddress.Trim();
+        if (IsDelivery && (customerName.Length == 0 || contactNumber.Length == 0 || deliveryAddress.Length == 0))
+        {
+            DialogService.ShowWarning("Delivery requires a customer name, contact number, and delivery address.", "POS");
+            return;
+        }
+
+        var orderType = IsDelivery ? "Delivery" : "Pickup";
+
         var user = SessionManager.CurrentUser;
         if (user is null)
         {
@@ -314,9 +367,13 @@ public partial class PosViewModel : ObservableObject
                 DiscountAmount,
                 TotalDue,
                 CashTendered,
-                ChangeAmount);
+                ChangeAmount,
+                orderType,
+                IsDelivery ? customerName : null,
+                IsDelivery ? contactNumber : null,
+                IsDelivery ? deliveryAddress : null);
 
-            _activity.Log("Sale", $"Completed sale {invoiceNo} totaling ₱{TotalDue:N2}", user.UserId);
+            _activity.Log("Sale", $"Completed {orderType.ToLowerInvariant()} sale {invoiceNo} totaling ₱{TotalDue:N2}", user.UserId);
 
             try
             {
@@ -332,7 +389,12 @@ public partial class PosViewModel : ObservableObject
                     TotalDue,
                     CashTendered,
                     ChangeAmount,
-                    _settings.GetReceiptFooter());
+                    _settings.GetReceiptFooter(),
+                    false,
+                    orderType,
+                    IsDelivery ? customerName : null,
+                    IsDelivery ? contactNumber : null,
+                    IsDelivery ? deliveryAddress : null);
             }
             catch (Exception ex)
             {

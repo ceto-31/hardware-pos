@@ -58,6 +58,11 @@ public class SaleHistoryRow
     public decimal ChangeAmount { get; set; }
     public bool IsVoided { get; set; }
     public string? VoidReason { get; set; }
+    public string OrderType { get; set; } = "Pickup";
+    public string? CustomerName { get; set; }
+    public string? ContactNumber { get; set; }
+    public string? DeliveryAddress { get; set; }
+    public bool IsDelivery => OrderType == "Delivery";
 }
 
 public class SaleHistoryItemRow

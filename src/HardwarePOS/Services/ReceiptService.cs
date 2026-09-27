@@ -28,10 +28,15 @@ public class ReceiptService
         decimal cashTendered,
         decimal changeAmount,
         string? footer = null,
-        bool isVoided = false)
+        bool isVoided = false,
+        string orderType = "Pickup",
+        string? customerName = null,
+        string? contactNumber = null,
+        string? deliveryAddress = null)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided,
+            orderType, customerName, contactNumber, deliveryAddress);
 
         var scroll = new ScrollViewer
         {
@@ -80,10 +85,15 @@ public class ReceiptService
         decimal cashTendered,
         decimal changeAmount,
         string? footer = null,
-        bool isVoided = false)
+        bool isVoided = false,
+        string orderType = "Pickup",
+        string? customerName = null,
+        string? contactNumber = null,
+        string? deliveryAddress = null)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided,
+            orderType, customerName, contactNumber, deliveryAddress);
 
         var printDialog = new PrintDialog();
         if (printDialog.ShowDialog() == true)
@@ -153,7 +163,11 @@ public class ReceiptService
         decimal cashTendered,
         decimal changeAmount,
         string? footer,
-        bool isVoided)
+        bool isVoided,
+        string orderType,
+        string? customerName,
+        string? contactNumber,
+        string? deliveryAddress)
     {
         var root = new StackPanel();
 
@@ -176,6 +190,16 @@ public class ReceiptService
         root.Children.Add(MakeMeta("Invoice", invoiceNo));
         root.Children.Add(MakeMeta("Date", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
         root.Children.Add(MakeMeta("Cashier", cashierName));
+        root.Children.Add(MakeMeta("Order", string.IsNullOrWhiteSpace(orderType) ? "Pickup" : orderType));
+        if (string.Equals(orderType, "Delivery", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(customerName))
+                root.Children.Add(MakeMeta("Customer", customerName));
+            if (!string.IsNullOrWhiteSpace(contactNumber))
+                root.Children.Add(MakeMeta("Contact", contactNumber));
+            if (!string.IsNullOrWhiteSpace(deliveryAddress))
+                root.Children.Add(MakeMeta("Address", deliveryAddress));
+        }
         root.Children.Add(MakeRule());
 
         root.Children.Add(BuildItemsGrid(items));

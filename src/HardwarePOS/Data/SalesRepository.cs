@@ -13,7 +13,11 @@ public class SalesRepository
         decimal discountAmount,
         decimal totalDue,
         decimal cashTendered,
-        decimal changeAmount)
+        decimal changeAmount,
+        string orderType,
+        string? customerName,
+        string? contactNumber,
+        string? deliveryAddress)
     {
         if (items.Count == 0)
             throw new InvalidOperationException("Cart is empty.");
@@ -51,9 +55,11 @@ public class SalesRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     INSERT INTO dbo.Sales
-                        (InvoiceNo, SaleDate, CashierId, Subtotal, TaxAmount, DiscountAmount, TotalDue, CashTendered, ChangeAmount)
+                        (InvoiceNo, SaleDate, CashierId, Subtotal, TaxAmount, DiscountAmount, TotalDue, CashTendered, ChangeAmount,
+                         OrderType, CustomerName, ContactNumber, DeliveryAddress)
                     VALUES
-                        (@Invoice, SYSDATETIME(), @Cashier, @Subtotal, @Tax, @Discount, @Total, @Cash, @Change);
+                        (@Invoice, SYSDATETIME(), @Cashier, @Subtotal, @Tax, @Discount, @Total, @Cash, @Change,
+                         @OrderType, @Customer, @Contact, @Address);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 cmd.Parameters.AddWithValue("@Invoice", invoiceNo);
@@ -64,6 +70,10 @@ public class SalesRepository
                 cmd.Parameters.AddWithValue("@Total", totalDue);
                 cmd.Parameters.AddWithValue("@Cash", cashTendered);
                 cmd.Parameters.AddWithValue("@Change", changeAmount);
+                cmd.Parameters.AddWithValue("@OrderType", orderType);
+                cmd.Parameters.AddWithValue("@Customer", (object?)customerName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Contact", (object?)contactNumber ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Address", (object?)deliveryAddress ?? DBNull.Value);
                 saleId = (int)cmd.ExecuteScalar()!;
             }
 
@@ -294,7 +304,7 @@ public class SalesRepository
         cmd.CommandText = """
             SELECT s.SaleId, s.InvoiceNo, s.SaleDate, u.FullName, s.Subtotal, s.TaxAmount,
                    s.DiscountAmount, s.TotalDue, s.CashTendered, s.ChangeAmount,
-                   s.IsVoided, s.VoidReason
+                   s.IsVoided, s.VoidReason, s.OrderType, s.CustomerName, s.ContactNumber, s.DeliveryAddress
             FROM dbo.Sales s
             INNER JOIN dbo.Users u ON u.UserId = s.CashierId
             WHERE (@Year IS NULL OR YEAR(s.SaleDate) = @Year)
@@ -319,7 +329,11 @@ public class SalesRepository
                 CashTendered = reader.GetDecimal(8),
                 ChangeAmount = reader.GetDecimal(9),
                 IsVoided = reader.GetBoolean(10),
-                VoidReason = reader.IsDBNull(11) ? null : reader.GetString(11)
+                VoidReason = reader.IsDBNull(11) ? null : reader.GetString(11),
+                OrderType = reader.IsDBNull(12) ? "Pickup" : reader.GetString(12),
+                CustomerName = reader.IsDBNull(13) ? null : reader.GetString(13),
+                ContactNumber = reader.IsDBNull(14) ? null : reader.GetString(14),
+                DeliveryAddress = reader.IsDBNull(15) ? null : reader.GetString(15)
             });
         }
         return list;

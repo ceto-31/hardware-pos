@@ -162,12 +162,36 @@ public class ProductRepository
         cmd.ExecuteNonQuery();
     }
 
+    public bool HasMovementHistory(int productId)
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT CASE WHEN
+                EXISTS (SELECT 1 FROM dbo.SaleItems WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.StockIns WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.StockOuts WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.InventoryLedger WHERE ProductId = @Id)
+            THEN 1 ELSE 0 END;
+            """;
+        cmd.Parameters.AddWithValue("@Id", productId);
+        return (int)cmd.ExecuteScalar()! == 1;
+    }
+
     public void Delete(int productId)
     {
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
+            IF EXISTS (SELECT 1 FROM dbo.SaleItems WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.StockIns WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.StockOuts WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.InventoryLedger WHERE ProductId = @Id)
+                THROW 50020, 'This product has sales or stock history and cannot be deleted. Archive it instead so historical records stay intact.', 1;
+
+            DELETE FROM dbo.DiscountProducts WHERE ProductId = @Id;
             DELETE FROM dbo.Products WHERE ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);

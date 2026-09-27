@@ -258,6 +258,40 @@ public partial class ProductsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void Delete(Product? product)
+    {
+        var item = product ?? SelectedItem;
+        if (item is null) return;
+        if (_products.HasMovementHistory(item.ProductId))
+        {
+            DialogService.ShowWarning(
+                "This product has sales or stock history and cannot be deleted. Archive it instead so historical records stay intact.",
+                "Products");
+            return;
+        }
+        if (!DialogService.Confirm(
+                $"Permanently delete '{item.ProductName}'? This cannot be undone.",
+                "Products"))
+            return;
+
+        try
+        {
+            _products.Delete(item.ProductId);
+            _activity.Log("Product", $"Permanently deleted product '{item.ProductName}'");
+            if (EditingId == item.ProductId)
+            {
+                ClearForm();
+                IsFormOpen = false;
+            }
+            Search();
+        }
+        catch (Exception ex)
+        {
+            DialogService.ShowError(ex.Message, "Products");
+        }
+    }
+
+    [RelayCommand]
     private void Restore(Product? product)
     {
         var item = product ?? SelectedItem;

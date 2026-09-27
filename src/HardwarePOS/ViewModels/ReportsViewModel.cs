@@ -44,6 +44,10 @@ public partial class ReportsViewModel : ObservableObject
     [ObservableProperty] private bool _hasChart;
     [ObservableProperty] private string _chartTitle = string.Empty;
 
+    partial void OnReportTypeChanged(string value) => Generate();
+
+    partial void OnSelectedYearChanged(int value) => Generate();
+
     [RelayCommand]
     public void Load()
     {
@@ -53,7 +57,6 @@ public partial class ReportsViewModel : ObservableObject
         Generate();
     }
 
-    [RelayCommand]
     private void Generate()
     {
         ApplyColumnLayout();
@@ -82,30 +85,32 @@ public partial class ReportsViewModel : ObservableObject
                 BuildSalesLineChart(yearly, ReportType, "#6A1B9A");
                 break;
             case "Stock In History":
-                var stockIn = _inventory.GetHistory()
-                    .Where(h => h.MovementType == "IN")
-                    .ToList();
+                var stockIn = _inventory.GetStockInReport(SelectedYear);
                 list = stockIn.Select(h => new ReportRow
                 {
-                    Col1 = h.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                    Col1 = h.MovementDate.ToString("MMM dd, yyyy"),
                     Col2 = h.ProductName,
-                    Col3 = h.QtyChange.ToString("N0"),
-                    Col4 = h.Remarks ?? ""
+                    Col3 = string.IsNullOrWhiteSpace(h.SupplierName) ? "—" : h.SupplierName,
+                    Col4 = FormatQty(h.Quantity)
                 }).ToList();
-                BuildStockBarChart(stockIn, "Stock In by Product", "#2563EB");
+                BuildQuantityBarChart(
+                    stockIn.Select(h => (h.ProductName, h.Quantity)),
+                    "Stock In by Product",
+                    "#2563EB");
                 break;
             case "Stock Out History":
-                var stockOut = _inventory.GetHistory()
-                    .Where(h => h.MovementType == "OUT")
-                    .ToList();
+                var stockOut = _inventory.GetStockOutReport(SelectedYear);
                 list = stockOut.Select(h => new ReportRow
                 {
-                    Col1 = h.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                    Col1 = h.MovementDate.ToString("MMM dd, yyyy"),
                     Col2 = h.ProductName,
-                    Col3 = h.QtyChange.ToString("N0"),
-                    Col4 = h.Remarks ?? ""
+                    Col3 = FormatQty(h.Quantity),
+                    Col4 = FormatStockOutReason(h.Reason)
                 }).ToList();
-                BuildStockBarChart(stockOut, "Stock Out by Product", "#DC2626");
+                BuildQuantityBarChart(
+                    stockOut.Select(h => (h.ProductName, h.Quantity)),
+                    "Stock Out by Product",
+                    "#DC2626");
                 break;
             default:
                 var sales = _sales.GetHistory(year: SelectedYear).ToList();
@@ -169,7 +174,9 @@ public partial class ReportsViewModel : ObservableObject
         {
             "Daily Sales" or "Weekly Sales" or "Monthly Sales" or "Yearly Sales" =>
                 $"Total: ₱{Rows.Sum(r => ParseDecimal(r.Col2)):N2}",
-            "Stock In History" or "Stock Out History" =>
+            "Stock In History" =>
+                $"Total quantity: {Rows.Sum(r => ParseDecimal(r.Col4)):N0}",
+            "Stock Out History" =>
                 $"Total quantity: {Rows.Sum(r => ParseDecimal(r.Col3)):N0}",
             "All Sales Transactions" =>
                 $"Total due: ₱{Rows.Where(r => !r.ExcludeFromTotal).Sum(r => ParseDecimal(r.Col4)):N2}",
@@ -179,6 +186,18 @@ public partial class ReportsViewModel : ObservableObject
 
     private static decimal ParseDecimal(string value) =>
         decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out var result) ? result : 0m;
+
+    private static string FormatQty(decimal quantity) =>
+        quantity == decimal.Truncate(quantity) ? quantity.ToString("N0") : quantity.ToString("0.###");
+
+    private static string FormatStockOutReason(string? reason) => reason switch
+    {
+        "Damaged" => "Damaged",
+        "ReturnedToSupplier" => "Returned to supplier",
+        "InternalUse" => "Internal use",
+        null or "" => "—",
+        _ => reason
+    };
 
     private void ApplyColumnLayout()
     {
@@ -207,15 +226,15 @@ public partial class ReportsViewModel : ObservableObject
             case "Stock In History":
                 Col1Header = "Date";
                 Col2Header = "Product";
-                Col3Header = "Quantity";
-                Col4Header = "Remarks";
+                Col3Header = "Supplier";
+                Col4Header = "Quantity Received";
                 ShowCol3 = ShowCol4 = true;
                 break;
             case "Stock Out History":
                 Col1Header = "Date";
                 Col2Header = "Product";
                 Col3Header = "Quantity";
-                Col4Header = "Remarks";
+                Col4Header = "Reason";
                 ShowCol3 = ShowCol4 = true;
                 break;
             default:
@@ -274,11 +293,11 @@ public partial class ReportsViewModel : ObservableObject
         HasChart = true;
     }
 
-    private void BuildStockBarChart(List<InventoryLedgerEntry> entries, string title, string color)
+    private void BuildQuantityBarChart(IEnumerable<(string Product, decimal Qty)> entries, string title, string color)
     {
         var grouped = entries
-            .GroupBy(e => e.ProductName)
-            .Select(g => new { Product = g.Key, Qty = (double)g.Sum(x => Math.Abs(x.QtyChange)) })
+            .GroupBy(e => e.Product)
+            .Select(g => new { Product = g.Key, Qty = (double)g.Sum(x => Math.Abs(x.Qty)) })
             .OrderByDescending(x => x.Qty)
             .Take(12)
             .ToList();

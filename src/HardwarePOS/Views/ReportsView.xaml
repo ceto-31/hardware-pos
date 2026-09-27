@@ -7,10 +7,9 @@
     <Border Style="{StaticResource CardBorder}">
         <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
-                <ComboBox Width="200" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding ReportType}" Margin="2"/>
-                <ComboBox Width="90" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}" Margin="2"/>
-                <Button Content="Generate" Style="{StaticResource PrimaryButton}" Command="{Binding GenerateCommand}"/>
-                <Button Content="Export PDF" Style="{StaticResource SecondaryButton}" Command="{Binding ExportPdfCommand}"/>
+                <ComboBox Style="{StaticResource InlineDropdown}" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding ReportType}" Margin="0,0,16,0"/>
+                <ComboBox Style="{StaticResource InlineDropdown}" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}" Margin="0,0,8,0"/>
+                <Button Content="Export PDF" Style="{StaticResource PrimaryButton}" Command="{Binding ExportPdfCommand}"/>
             </StackPanel>
             <TextBlock DockPanel.Dock="Top" Text="No data for this report." HorizontalAlignment="Center" Margin="0,20"
                        Foreground="{StaticResource MutedBrush}"

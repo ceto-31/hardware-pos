@@ -182,6 +182,77 @@ public class InventoryRepository
         return list;
     }
 
+    public List<StockInReportRow> GetStockInReport(int year)
+    {
+        var list = new List<StockInReportRow>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT
+                COALESCE(si.DateReceived, CAST(l.CreatedAt AS date)) AS MovementDate,
+                p.ProductName,
+                s.CompanyName,
+                COALESCE(si.Quantity, l.QtyChange) AS Quantity
+            FROM dbo.InventoryLedger l
+            INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
+            LEFT JOIN dbo.StockIns si ON si.StockInId = l.ReferenceId
+            LEFT JOIN dbo.Suppliers s ON s.SupplierId = si.SupplierId
+            WHERE l.MovementType = N'IN'
+              AND YEAR(COALESCE(si.DateReceived, l.CreatedAt)) = @Year
+            ORDER BY MovementDate DESC, l.LedgerId DESC;
+            """;
+        cmd.Parameters.AddWithValue("@Year", year);
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new StockInReportRow
+            {
+                MovementDate = reader.GetDateTime(0),
+                ProductName = reader.GetString(1),
+                SupplierName = reader.IsDBNull(2) ? null : reader.GetString(2),
+                Quantity = reader.GetDecimal(3)
+            });
+        }
+        return list;
+    }
+
+    public List<StockOutReportRow> GetStockOutReport(int year)
+    {
+        var list = new List<StockOutReportRow>();
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT
+                COALESCE(so.DateOut, CAST(l.CreatedAt AS date)) AS MovementDate,
+                p.ProductName,
+                ABS(l.QtyChange) AS Quantity,
+                COALESCE(so.Reason, l.Remarks) AS Reason
+            FROM dbo.InventoryLedger l
+            INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
+            LEFT JOIN dbo.StockOuts so ON so.StockOutId = l.ReferenceId
+            WHERE l.MovementType = N'OUT'
+              AND YEAR(COALESCE(so.DateOut, l.CreatedAt)) = @Year
+            ORDER BY MovementDate DESC, l.LedgerId DESC;
+            """;
+        cmd.Parameters.AddWithValue("@Year", year);
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new StockOutReportRow
+            {
+                MovementDate = reader.GetDateTime(0),
+                ProductName = reader.GetString(1),
+                Quantity = reader.GetDecimal(2),
+                Reason = reader.IsDBNull(3) ? null : reader.GetString(3)
+            });
+        }
+        return list;
+    }
+
     private static void EnsureActiveProduct(SqlConnection conn, SqlTransaction tx, int productId)
     {
         using var cmd = conn.CreateCommand();

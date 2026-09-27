@@ -86,7 +86,14 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT DISTINCT YEAR(SaleDate) FROM dbo.Sales
-            UNION SELECT YEAR(SYSDATETIME())
+            UNION
+            SELECT YEAR(CreatedAt) FROM dbo.InventoryLedger
+            UNION
+            SELECT YEAR(DateReceived) FROM dbo.StockIns
+            UNION
+            SELECT YEAR(DateOut) FROM dbo.StockOuts
+            UNION
+            SELECT YEAR(SYSDATETIME())
             ORDER BY 1 DESC;
             """;
         using var reader = cmd.ExecuteReader();

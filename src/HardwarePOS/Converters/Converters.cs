@@ -69,6 +69,30 @@ public class EqualityMultiConverter : IMultiValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>
+/// Picks a column count for a card grid from the available width so cards never get
+/// squeezed below a readable minimum. Parameter = maximum columns. Steps 4 → 2 → 1, 3 → 2 → 1.
+/// </summary>
+public class WidthToColumnsConverter : IValueConverter
+{
+    // Compact cards (KPIs, alert lists) stay readable at ~260px; chart/summary cards need more room.
+    private static double MinCardWidth(int columns) => columns <= 2 ? 340 : 260;
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var width = value is double d && !double.IsNaN(d) ? d : 0;
+        var columns = int.TryParse(parameter?.ToString(), out var max) && max > 0 ? max : 1;
+
+        while (columns > 1 && width / columns < MinCardWidth(columns))
+            columns = columns % 2 == 0 ? columns / 2 : columns - 1;
+
+        return columns;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public class ProductImageConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)

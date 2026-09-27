@@ -3,24 +3,114 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
     <UserControl.Resources>
+        <!-- Empty-state text: hidden by default, shown by a DataTrigger on the collection count. -->
         <Style x:Key="DashboardEmptyText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
-            <Setter Property="Margin" Value="0,16,0,0"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Visibility" Value="Collapsed"/>
         </Style>
+
+        <!-- Card header: title on the left (ellipsis when tight), action docked right, fixed gap. -->
+        <Style x:Key="DashboardCardHeader" TargetType="DockPanel">
+            <Setter Property="DockPanel.Dock" Value="Top"/>
+            <Setter Property="LastChildFill" Value="True"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="MinHeight" Value="24"/>
+        </Style>
+        <Style x:Key="DashboardCardAction" TargetType="Button" BasedOn="{StaticResource DashboardViewAll}">
+            <Setter Property="DockPanel.Dock" Value="Right"/>
+            <Setter Property="Margin" Value="12,0,0,0"/>
+        </Style>
+
+        <!-- Row inside list cards -->
+        <Style x:Key="DashboardListRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style x:Key="DashboardRowTitle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="LineHeight" Value="18"/>
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            <Setter Property="MaxHeight" Value="36"/>
+        </Style>
+        <Style x:Key="DashboardRowSubtitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="DashboardRowValue" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="12,0,0,0"/>
+        </Style>
+        <Style x:Key="DashboardThumb" TargetType="Border">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+        <Style x:Key="DashboardBadge" TargetType="Border" BasedOn="{StaticResource StatusBadge}">
+            <Setter Property="Margin" Value="12,0,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style x:Key="DashboardBadgeText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Summary card key/value line -->
+        <Style x:Key="DashboardSummaryRow" TargetType="Border">
+            <Setter Property="Padding" Value="0,10"/>
+            <Setter Property="BorderBrush" Value="#F1F5F9"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style x:Key="DashboardSummaryLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <!-- Responsive column counts: 4 → 2 → 1 (admin) or 2 → 1 (cashier) for the alerts row -->
+        <Style x:Key="AlertsRowGrid" TargetType="UniformGrid">
+            <Setter Property="Columns"
+                    Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=4}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAdmin}" Value="False">
+                    <Setter Property="Columns"
+                            Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
-            <Border Style="{StaticResource CardBorder}" Padding="18,14">
+
+            <!-- Page header -->
+            <Border Style="{StaticResource DashboardCard}" Padding="18,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding CurrentDateTime}" FontSize="18" FontWeight="SemiBold"
-                               VerticalAlignment="Center"/>
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding WelcomeMessage}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                         <TextBlock Text="{Binding UserDisplay}" Foreground="{StaticResource MutedBrush}"
                                    FontSize="13" HorizontalAlignment="Right" Margin="0,2,0,0"/>
@@ -28,134 +118,166 @@
                 </Grid>
             </Border>
 
-            <UniformGrid Columns="4" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DBEAFE" DockPanel.Dock="Left">
+            <!-- ROW 1: KPI cards (admin) -->
+            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=4}">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DBEAFE">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconCart}" Fill="{StaticResource PrimaryBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TODAY'S SALES"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}"
                                        Text="{Binding TodaySales, StringFormat=₱{0:N2}}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DCFCE7" DockPanel.Dock="Left">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DCFCE7">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconTrend}" Fill="{StaticResource SuccessBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TOTAL TRANSACTIONS"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding TodayTransactions}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5" DockPanel.Dock="Left">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconBox}" Fill="{StaticResource AccentBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TOTAL ITEMS SOLD"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}"
                                        Text="{Binding TodayItemsSold, StringFormat=N0}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#F3E8FF" DockPanel.Dock="Left">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#F3E8FF">
                             <TextBlock Text="₱" FontSize="22" FontWeight="SemiBold" Foreground="#7C3AED"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="GROSS PROFIT"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}"
                                        Text="{Binding TodayGrossProfit, StringFormat=₱{0:N2}}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
             </UniformGrid>
 
-            <UniformGrid Columns="3" Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}">
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEF3C7" DockPanel.Dock="Left">
+            <!-- ROW 1: KPI cards (cashier) -->
+            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}"
+                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=3}">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEF3C7">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconBox}" Fill="{StaticResource WarningBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="LOW STOCK ITEMS"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding LowStockCount}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEE2E2" DockPanel.Dock="Left">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEE2E2">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconBox}" Fill="{StaticResource DangerBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="OUT OF STOCK"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding OutOfStockCount}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
-                <Border Style="{StaticResource CardBorder}">
-                    <DockPanel LastChildFill="True">
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5" DockPanel.Dock="Left">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5">
                             <Viewbox Width="22" Height="22">
                                 <Path Data="{StaticResource IconBox}" Fill="{StaticResource AccentBrush}"/>
                             </Viewbox>
                         </Border>
-                        <StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="EXPIRING SOON"/>
                             <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding ExpiringSoonCount}"/>
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
             </UniformGrid>
 
-            <Grid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Border Style="{StaticResource CardBorder}" MinHeight="300">
+            <!-- ROW 2: Sales Overview + Top Selling Items (admin) -->
+            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}">
+                <Border Style="{StaticResource DashboardCard}">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales Overview"/>
-                            <ComboBox Width="130" HorizontalAlignment="Right"
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <ComboBox DockPanel.Dock="Right" Style="{StaticResource InlineDropdown}" Margin="12,0,0,0"
                                       ItemsSource="{Binding ChartRangeOptions}"
                                       SelectedItem="{Binding SelectedChartRange}"/>
-                        </Grid>
-                        <lvc:CartesianChart Series="{Binding OverviewSeries}"
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales Overview"/>
+                        </DockPanel>
+                        <lvc:CartesianChart Height="270"
+                                            Series="{Binding OverviewSeries}"
                                             XAxes="{Binding OverviewXAxes}"
                                             YAxes="{Binding YAxes}"
                                             LegendPosition="Hidden"
                                             TooltipPosition="Top"/>
                     </DockPanel>
                 </Border>
-                <Border Grid.Column="1" Style="{StaticResource CardBorder}" MinHeight="300">
+
+                <Border Style="{StaticResource DashboardCard}">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Top Selling Items"/>
-                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
                                     Command="{Binding DataContext.NavigateProductsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                        </Grid>
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Top Selling Items"/>
+                        </DockPanel>
                         <Grid>
-                            <TextBlock Text="No products sold yet" VerticalAlignment="Center">
+                            <TextBlock Text="No products sold yet">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
                                         <Style.Triggers>
@@ -169,21 +291,20 @@
                             <ItemsControl ItemsSource="{Binding TopProducts}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
+                                        <Grid Style="{StaticResource DashboardListRow}">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="28"/>
-                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Width="24" Height="24" CornerRadius="12" Background="#EFF6FF"
-                                                    VerticalAlignment="Center">
+                                                    VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="{Binding Rank}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{StaticResource PrimaryBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <Border Grid.Column="1" Width="36" Height="36" Background="#F1F5F9" CornerRadius="6"
-                                                    ClipToBounds="True" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <Border Grid.Column="1" Style="{StaticResource DashboardThumb}">
                                                 <Grid>
                                                     <Viewbox Width="14" Height="14">
                                                         <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
@@ -192,10 +313,12 @@
                                                            Stretch="UniformToFill"/>
                                                 </Grid>
                                             </Border>
-                                            <TextBlock Grid.Column="2" Text="{Binding ProductName}" FontWeight="SemiBold"
-                                                       VerticalAlignment="Center" Margin="8,0,8,0" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Grid.Column="3" Text="{Binding QtyLabel}" Foreground="{StaticResource MutedBrush}"
-                                                       VerticalAlignment="Center" FontSize="13"/>
+                                            <TextBlock Grid.Column="2" Style="{StaticResource DashboardRowTitle}"
+                                                       Text="{Binding ProductName}" ToolTip="{Binding ProductName}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Style="{StaticResource DashboardRowValue}"
+                                                       Text="{Binding QtyLabel}" MinWidth="64"
+                                                       FontWeight="Normal" FontSize="13" Foreground="{StaticResource MutedBrush}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -203,19 +326,20 @@
                         </Grid>
                     </DockPanel>
                 </Border>
-            </Grid>
+            </UniformGrid>
 
-            <UniformGrid Columns="{Binding BottomPanelColumns}">
-                <Border Style="{StaticResource CardBorder}" MinHeight="260">
+            <!-- ROW 3: Low Stock / Expiring Soon / Active Discounts / Recent Transactions -->
+            <UniformGrid Style="{StaticResource AlertsRowGrid}">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Low Stock Alert"/>
-                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
                                     Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                        </Grid>
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Low Stock Alerts"/>
+                        </DockPanel>
                         <Grid>
-                            <TextBlock Text="All stock levels look healthy" VerticalAlignment="Center">
+                            <TextBlock Text="All stock levels look healthy">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
                                         <Style.Triggers>
@@ -229,14 +353,13 @@
                             <ItemsControl ItemsSource="{Binding InventoryAlerts}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
+                                        <Grid Style="{StaticResource DashboardListRow}">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="6"
-                                                    ClipToBounds="True" VerticalAlignment="Center">
+                                            <Border Style="{StaticResource DashboardThumb}">
                                                 <Grid>
                                                     <Viewbox Width="14" Height="14">
                                                         <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
@@ -245,17 +368,17 @@
                                                            Stretch="UniformToFill"/>
                                                 </Grid>
                                             </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0">
-                                                <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12">
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
+                                                           Text="{Binding ProductName}" ToolTip="{Binding ProductName}"/>
+                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}">
                                                     <Run Text="{Binding StockQty, Mode=OneWay, StringFormat=N0}"/>
                                                     <Run Text="{Binding UnitOfMeasure, Mode=OneWay}"/>
                                                 </TextBlock>
                                             </StackPanel>
-                                            <Border Grid.Column="2" CornerRadius="999" Padding="8,3" VerticalAlignment="Center">
+                                            <Border Grid.Column="2">
                                                 <Border.Style>
-                                                    <Style TargetType="Border">
+                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
                                                         <Setter Property="Background" Value="#FEF3C7"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding AlertBadge}" Value="Critical">
@@ -264,9 +387,9 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding AlertBadge}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock Text="{Binding AlertBadge}">
                                                     <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
                                                             <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding AlertBadge}" Value="Critical">
@@ -285,16 +408,16 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Expiring Soon"/>
-                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
                                     Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                        </Grid>
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Expiring Soon"/>
+                        </DockPanel>
                         <Grid>
-                            <TextBlock Text="No products expiring soon" VerticalAlignment="Center">
+                            <TextBlock Text="No products expiring soon">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
                                         <Style.Triggers>
@@ -308,14 +431,13 @@
                             <ItemsControl ItemsSource="{Binding ExpirationAlerts}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
+                                        <Grid Style="{StaticResource DashboardListRow}">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="6"
-                                                    ClipToBounds="True" VerticalAlignment="Center">
+                                            <Border Style="{StaticResource DashboardThumb}">
                                                 <Grid>
                                                     <Viewbox Width="14" Height="14">
                                                         <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
@@ -324,14 +446,14 @@
                                                            Stretch="UniformToFill"/>
                                                 </Grid>
                                             </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0">
-                                                <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding ExpirationDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
+                                                           Text="{Binding ProductName}" ToolTip="{Binding ProductName}"/>
+                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding ExpirationDisplay}"/>
                                             </StackPanel>
-                                            <Border Grid.Column="2" CornerRadius="999" Padding="8,3" VerticalAlignment="Center">
+                                            <Border Grid.Column="2">
                                                 <Border.Style>
-                                                    <Style TargetType="Border">
+                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
                                                         <Setter Property="Background" Value="#FFEDD5"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
@@ -340,9 +462,9 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding ExpirationBadge}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock Text="{Binding ExpirationBadge}">
                                                     <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
                                                             <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
@@ -361,16 +483,17 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260"
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280"
                         Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Active &amp; Scheduled Discounts"/>
-                            <Button Content="View All" Style="{StaticResource DashboardViewAll}" HorizontalAlignment="Right"
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
                                     Command="{Binding DataContext.NavigateDiscountsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                        </Grid>
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Active Discounts"
+                                       ToolTip="Active and scheduled discounts"/>
+                        </DockPanel>
                         <Grid>
-                            <TextBlock Text="No active or scheduled discounts" VerticalAlignment="Center">
+                            <TextBlock Text="No active discounts">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
                                         <Style.Triggers>
@@ -384,20 +507,20 @@
                             <ItemsControl ItemsSource="{Binding ScheduledDiscounts}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
+                                        <Grid Style="{StaticResource DashboardListRow}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
-                                                <TextBlock Text="{Binding DiscountName}" FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding SummaryDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
-                                                <TextBlock Text="{Binding ScheduleDisplay}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
+                                                           Text="{Binding DiscountName}" ToolTip="{Binding DiscountName}"/>
+                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding SummaryDisplay}"/>
+                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding ScheduleDisplay}"/>
                                             </StackPanel>
-                                            <Border Grid.Column="1" CornerRadius="999" Padding="8,3" VerticalAlignment="Center">
+                                            <Border Grid.Column="1">
                                                 <Border.Style>
-                                                    <Style TargetType="Border">
+                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
                                                         <Setter Property="Background" Value="#DCFCE7"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
@@ -406,13 +529,13 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock Text="{Binding StatusLabel}">
                                                     <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
-                                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -427,13 +550,14 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260"
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280"
                         Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                     <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource DashboardSectionTitle}"
-                                   Text="Recent Transactions" Margin="0,0,0,10"/>
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Recent Transactions"/>
+                        </DockPanel>
                         <Grid>
-                            <TextBlock Text="No transactions yet" VerticalAlignment="Center">
+                            <TextBlock Text="No transactions yet">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
                                         <Style.Triggers>
@@ -447,24 +571,26 @@
                             <ItemsControl ItemsSource="{Binding RecentSales}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
+                                        <Grid Style="{StaticResource DashboardListRow}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="32" Height="32" CornerRadius="8" Background="#EFF6FF" Margin="0,0,10,0">
+                                            <Border Width="32" Height="32" CornerRadius="8" Background="#EFF6FF"
+                                                    Margin="0,0,12,0" VerticalAlignment="Center">
                                                 <Viewbox Width="16" Height="16">
                                                     <Path Data="{StaticResource IconReceipt}" Fill="{StaticResource PrimaryBrush}"/>
                                                 </Viewbox>
                                             </Border>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding InvoiceNo}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding SaleDate, StringFormat=hh:mm tt}"
-                                                           Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                                <TextBlock Style="{StaticResource DashboardRowTitle}" TextWrapping="NoWrap"
+                                                           Text="{Binding InvoiceNo}" ToolTip="{Binding InvoiceNo}"/>
+                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}"
+                                                           Text="{Binding SaleDate, StringFormat=hh:mm tt}"/>
                                             </StackPanel>
-                                            <TextBlock Grid.Column="2" Text="{Binding TotalDue, StringFormat=₱{0:N2}}"
-                                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Style="{StaticResource DashboardRowValue}"
+                                                       Text="{Binding TotalDue, StringFormat=₱{0:N2}}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -472,21 +598,114 @@
                         </Grid>
                     </DockPanel>
                 </Border>
+            </UniformGrid>
 
-                <Border Style="{StaticResource CardBorder}" MinHeight="260"
-                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+            <!-- ROW 4: Summary + Sales by Payment Method (admin) -->
+            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}">
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
                     <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource DashboardSectionTitle}"
-                                   Text="Sales by Payment Method" Margin="0,0,0,4"/>
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
+                                    Command="{Binding DataContext.NavigateReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales Summary"/>
+                        </DockPanel>
+                        <StackPanel>
+                            <Border Style="{StaticResource DashboardSummaryRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Total revenue (all time)"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding TotalRevenue, StringFormat=₱{0:N2}}"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource DashboardSummaryRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Today's gross profit"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding TodayGrossProfit, StringFormat=₱{0:N2}}"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource DashboardSummaryRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Active products"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding TotalProducts, StringFormat=N0}"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource DashboardSummaryRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Suppliers"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding TotalSuppliers, StringFormat=N0}"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource DashboardSummaryRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Low stock items"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding LowStockCount, StringFormat=N0}"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource DashboardSummaryRow}" BorderThickness="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Out of stock"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
+                                               Text="{Binding OutOfStockCount, StringFormat=N0}"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
+                    <DockPanel LastChildFill="True">
+                        <DockPanel Style="{StaticResource DashboardCardHeader}">
+                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales by Payment Method"/>
+                        </DockPanel>
                         <Grid>
                             <lvc:PieChart Series="{Binding PaymentSeries}"
                                           LegendPosition="Bottom"
                                           InitialRotation="-90"
-                                          MinHeight="200"/>
+                                          Height="240"/>
+                            <!-- Centre label sits inside the donut; offset compensates for the legend below the ring. -->
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,28"
                                         IsHitTestVisible="False">
-                                <TextBlock Text="Cash" HorizontalAlignment="Center"
-                                           Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                <TextBlock HorizontalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="12">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Cash"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TodaySales}" Value="0">
+                                                    <Setter Property="Text" Value="No sales today"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <TextBlock Text="{Binding TodaySales, StringFormat=₱{0:N2}}"
                                            FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
                             </StackPanel>

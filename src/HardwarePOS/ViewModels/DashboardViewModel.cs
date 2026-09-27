@@ -20,7 +20,6 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string _userDisplay = string.Empty;
     [ObservableProperty] private string _currentDateTime = string.Empty;
     [ObservableProperty] private bool _isAdmin;
-    [ObservableProperty] private int _bottomPanelColumns = 3;
 
     [ObservableProperty] private decimal _todaySales;
     [ObservableProperty] private int _todayTransactions;
@@ -40,7 +39,7 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private Axis[] _overviewXAxes = Array.Empty<Axis>();
     [ObservableProperty] private Axis[] _yAxes =
     [
-        new Axis { Labeler = v => $"₱{v:N0}", SeparatorsPaint = new SolidColorPaint(new SKColor(226, 232, 240)), TextSize = 11 }
+        new Axis { Labeler = v => $"₱{v:N0}", MinLimit = 0, SeparatorsPaint = new SolidColorPaint(new SKColor(226, 232, 240)), TextSize = 11 }
     ];
     [ObservableProperty] private ISeries[] _paymentSeries = Array.Empty<ISeries>();
 
@@ -67,7 +66,6 @@ public partial class DashboardViewModel : ObservableObject
         WelcomeMessage = user?.FullName ?? "User";
         UserDisplay = user?.RoleName ?? string.Empty;
         IsAdmin = SessionManager.IsAdmin;
-        BottomPanelColumns = IsAdmin ? 5 : 2;
 
         var summary = _dashboard.GetSummary();
         TodaySales = summary.TodaySales;

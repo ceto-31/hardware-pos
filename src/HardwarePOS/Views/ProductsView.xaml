@@ -5,105 +5,96 @@
              xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
              xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Border Style="{StaticResource CardBorder}">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                    <TextBox Margin="0,0,0,8"
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource ManagementCard}">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox MinHeight="40" VerticalAlignment="Center" Margin="0,0,12,0"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              helpers:TextBoxHelper.Placeholder="Search products by name or code…"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <WrapPanel VerticalAlignment="Center">
-                            <ComboBox Width="180" ItemsSource="{Binding FilterCategories}" DisplayMemberPath="CategoryName"
-                                      SelectedValuePath="CategoryId" SelectedValue="{Binding FilterCategoryId}" Margin="0,0,8,4"/>
-                            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="0,0,12,4"/>
-                        </WrapPanel>
-                        <Button Grid.Column="1" Content="+ Add New Product" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding NewCommand}" VerticalAlignment="Center" Margin="0,0,0,4"/>
-                    </Grid>
-                </StackPanel>
-                <TextBlock DockPanel.Dock="Top" Text="No products found." HorizontalAlignment="Center" Margin="0,16"
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ComboBox Style="{StaticResource InlineDropdown}"
+                                  ItemsSource="{Binding FilterCategories}" DisplayMemberPath="CategoryName"
+                                  SelectedValuePath="CategoryId" SelectedValue="{Binding FilterCategoryId}"
+                                  Margin="0,0,16,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}"
+                                  VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Content="+ Add Product" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding NewCommand}" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Text="No products found." HorizontalAlignment="Center" Margin="0,8,0,12"
                            Foreground="{StaticResource MutedBrush}"
                            Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"/>
-                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
-                          RowHeight="{x:Static sys:Double.NaN}">
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="MinHeight" Value="44"/>
-                            <Setter Property="Background" Value="{Binding StockStatus, Converter={StaticResource StockStatusBrush}}"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.RowStyle>
+                <DataGrid Style="{StaticResource ManagementDataGrid}"
+                          RowHeight="{x:Static sys:Double.NaN}" MinRowHeight="68"
+                          RowStyle="{StaticResource ProductGridRow}"
+                          ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="Image" Width="56" MinWidth="56" CanUserResize="False">
+                        <DataGridTemplateColumn Header="Image" Width="80" MinWidth="80" CanUserResize="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border Width="36" Height="36" Background="#F1F5F9" CornerRadius="4"
-                                            ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4">
+                                    <Border Style="{StaticResource ProductThumbnail}"
+                                            Clip="{StaticResource ProductThumbnailClip}">
                                         <Grid>
-                                            <Viewbox Width="16" Height="16" Stretch="Uniform">
+                                            <Viewbox Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Viewbox.Style>
+                                                    <Style TargetType="Viewbox">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ImagePath}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ImagePath}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Viewbox.Style>
                                                 <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
                                             </Viewbox>
                                             <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
-                                                   Stretch="Uniform" Width="36" Height="36"/>
+                                                   Stretch="UniformToFill" Width="42" Height="42"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Code" Width="90" MinWidth="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding ProductCode}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                               Margin="6,4" ToolTip="{Binding ProductCode}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Product Name" Width="1.4*" MinWidth="140">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding ProductName}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                               Margin="6,4" ToolTip="{Binding ProductName}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Category" Width="110" MinWidth="90">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding CategoryName}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                               Margin="6,4" ToolTip="{Binding CategoryName}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Unit" Binding="{Binding UnitOfMeasure}" Width="70" MinWidth="60"/>
-                        <DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat=N2}" Width="80" MinWidth="70">
+                        <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="110" MinWidth="96"
+                                            ElementStyle="{StaticResource ManagementGridText}"/>
+                        <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="2*" MinWidth="180"
+                                            ElementStyle="{StaticResource ManagementGridText}"/>
+                        <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="*" MinWidth="120"
+                                            ElementStyle="{StaticResource ManagementGridText}"/>
+                        <DataGridTextColumn Header="Unit" Binding="{Binding UnitOfMeasure}" Width="90" MinWidth="72"
+                                            ElementStyle="{StaticResource ManagementGridText}"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat=N2}" Width="100" MinWidth="88">
                             <DataGridTextColumn.HeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementNumericHeader}"/>
                             </DataGridTextColumn.HeaderStyle>
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource ManagementNumericText}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Sell" Width="90" MinWidth="80">
+                        <DataGridTemplateColumn Header="Sell" Width="110" MinWidth="96">
                             <DataGridTemplateColumn.HeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementNumericHeader}"/>
                             </DataGridTemplateColumn.HeaderStyle>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="6,4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding SellingPrice, StringFormat=N2}"
                                                    TextDecorations="Strikethrough"
                                                    Foreground="{StaticResource MutedBrush}"
+                                                   HorizontalAlignment="Right"
                                                    Visibility="{Binding IsOnSale, Converter={StaticResource BoolToVis}}"/>
                                         <TextBlock Text="{Binding EffectivePrice, StringFormat=N2}"
-                                                   Style="{StaticResource GridNumericCell}"/>
+                                                   Style="{StaticResource ManagementNumericText}"/>
                                         <TextBlock Text="SALE" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource SuccessBrush}"
                                                    HorizontalAlignment="Right"
@@ -112,48 +103,55 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="70" MinWidth="60">
+                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="84" MinWidth="72">
                             <DataGridTextColumn.HeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementNumericHeader}"/>
                             </DataGridTextColumn.HeaderStyle>
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource ManagementNumericText}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Status" Width="90" MinWidth="80">
+                        <DataGridTemplateColumn Header="Status" Width="156" MinWidth="148">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>
+                                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBadgeTemplate}"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Left"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="110" MinWidth="100"/>
-                        <DataGridTemplateColumn Header="Actions" Width="80" MinWidth="80" CanUserResize="False">
+                        <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="130" MinWidth="118"
+                                            ElementStyle="{StaticResource ManagementGridText}"/>
+                        <DataGridTemplateColumn Header="Actions" Width="168" MinWidth="156">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
+                                    <StackPanel Style="{StaticResource ManagementActions}">
+                                        <Button Style="{StaticResource ManagementActionButton}" ToolTip="Edit"
                                                 ContentTemplate="{StaticResource EditIconContent}"
                                                 Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"/>
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Archive"
+                                        <Button Style="{StaticResource ManagementActionButton}" ToolTip="Archive"
                                                 ContentTemplate="{StaticResource ArchiveIconContent}"
                                                 Command="{Binding DataContext.ArchiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding IsArchived, Converter={StaticResource InverseBoolToVis}}"/>
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Restore"
+                                        <Button Style="{StaticResource ManagementActionButton}" ToolTip="Restore"
                                                 ContentTemplate="{StaticResource RestoreIconContent}"
                                                 Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}"/>
+                                        <Button Style="{StaticResource ManagementActionButtonDanger}" ToolTip="Delete"
+                                                ContentTemplate="{StaticResource DeleteIconContent}"
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </DockPanel>
-        </Border>
+            </StackPanel>
+            </Border>
+        </ScrollViewer>
 
         <views:FormOverlay Title="{Binding FormTitle}"
                            Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}"

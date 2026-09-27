@@ -4,7 +4,7 @@
              xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
              xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Border Style="{StaticResource CardBorder}">
+        <Border Style="{StaticResource ManagementCard}" VerticalAlignment="Stretch">
             <DockPanel>
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>

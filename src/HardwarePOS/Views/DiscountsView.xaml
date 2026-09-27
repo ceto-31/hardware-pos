@@ -4,75 +4,75 @@
              xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
              xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Border Style="{StaticResource CardBorder}">
-            <DockPanel>
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Margin="0,0,6,0"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             helpers:TextBoxHelper.Placeholder="Search discounts by name…"/>
-                    <CheckBox Grid.Column="1" Content="Show archived" IsChecked="{Binding ShowArchived}"
-                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <Button Grid.Column="2" Content="+ Add Discount" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding NewCommand}"/>
-                </Grid>
-                <TextBlock DockPanel.Dock="Top" Text="No discounts found."
-                           Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"
-                           Foreground="{StaticResource MutedBrush}" Margin="0,20" HorizontalAlignment="Center"/>
-                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding DiscountName}" Width="1.4*" MinWidth="140">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource GridEllipsisCell}">
-                                    <Setter Property="ToolTip" Value="{Binding DiscountName}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="Scope" Binding="{Binding ScopeDisplay}" Width="120" MinWidth="100"/>
-                        <DataGridTextColumn Header="Value" Binding="{Binding ValueDisplay}" Width="110" MinWidth="90"/>
-                        <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat='MMM dd, yyyy'}" Width="110"/>
-                        <DataGridTextColumn Header="End" Binding="{Binding EndDate, StringFormat='MMM dd, yyyy'}" Width="110"/>
-                        <DataGridTemplateColumn Header="Status" Width="90" MinWidth="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Actions" Width="96">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
-                                                ContentTemplate="{StaticResource EditIconContent}"
-                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Archive"
-                                                ContentTemplate="{StaticResource ArchiveIconContent}"
-                                                Command="{Binding DataContext.ArchiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"
-                                                Visibility="{Binding IsArchived, Converter={StaticResource InverseBoolToVis}}"/>
-                                        <Button Style="{StaticResource GridIconButton}" ToolTip="Restore"
-                                                ContentTemplate="{StaticResource RestoreIconContent}"
-                                                Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"
-                                                Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}"/>
-                                        <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Delete"
-                                                ContentTemplate="{StaticResource DeleteIconContent}"
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
-        </Border>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource ManagementCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox MinHeight="40" VerticalAlignment="Center" Margin="0,0,12,0"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 helpers:TextBoxHelper.Placeholder="Search discounts by name…"/>
+                        <CheckBox Grid.Column="1" Content="Show archived" IsChecked="{Binding ShowArchived}"
+                                  VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Grid.Column="2" Content="+ Add Discount" Style="{StaticResource PrimaryButton}"
+                                VerticalAlignment="Center" Command="{Binding NewCommand}"/>
+                    </Grid>
+                    <TextBlock Text="No discounts found."
+                               Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"
+                               Foreground="{StaticResource MutedBrush}" Margin="0,8,0,12" HorizontalAlignment="Center"/>
+                    <DataGrid Style="{StaticResource ManagementDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding DiscountName}" Width="*" MinWidth="160"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTextColumn Header="Scope" Binding="{Binding ScopeDisplay}" Width="140" MinWidth="120"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding ValueDisplay}" Width="120" MinWidth="100"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTextColumn Header="Period" Binding="{Binding PeriodDisplay}" Width="220" MinWidth="190"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTemplateColumn Header="Status" Width="156" MinWidth="144">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBadgeTemplate}"
+                                                        VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="160" MinWidth="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Style="{StaticResource ManagementActions}">
+                                            <Button Style="{StaticResource ManagementActionButton}" ToolTip="Edit"
+                                                    ContentTemplate="{StaticResource EditIconContent}"
+                                                    Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Style="{StaticResource ManagementActionButton}" ToolTip="Archive"
+                                                    ContentTemplate="{StaticResource ArchiveIconContent}"
+                                                    Command="{Binding DataContext.ArchiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Visibility="{Binding IsArchived, Converter={StaticResource InverseBoolToVis}}"/>
+                                            <Button Style="{StaticResource ManagementActionButton}" ToolTip="Restore"
+                                                    ContentTemplate="{StaticResource RestoreIconContent}"
+                                                    Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}"/>
+                                            <Button Style="{StaticResource ManagementActionButtonDanger}" ToolTip="Delete"
+                                                    ContentTemplate="{StaticResource DeleteIconContent}"
+                                                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
 
         <views:FormOverlay Title="{Binding FormTitle}"
                            Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}"

@@ -4,75 +4,81 @@
              xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
              xmlns:views="clr-namespace:HardwarePOS.Views">
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <Border Style="{StaticResource CardBorder}">
-            <DockPanel>
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Margin="0,0,6,0"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             helpers:TextBoxHelper.Placeholder="Search users by name or username…"/>
-                    <Button Grid.Column="1" Content="+ Add User" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding NewCommand}"/>
-                </Grid>
-                <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="110"/>
-                        <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*"/>
-                        <DataGridTextColumn Header="Role" Binding="{Binding RoleName}" Width="90"/>
-                        <DataGridTemplateColumn Header="Status" Width="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource StatusText}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Actions" Width="72">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Protected" Foreground="{StaticResource MutedBrush}" FontSize="14" VerticalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsProtected}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <StackPanel Orientation="Horizontal">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsProtected}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <Button Style="{StaticResource GridIconButton}" ToolTip="Edit"
-                                                    ContentTemplate="{StaticResource EditIconContent}"
-                                                    Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Style="{StaticResource GridIconButtonDanger}" ToolTip="Deactivate"
-                                                    ContentTemplate="{StaticResource DeactivateIconContent}"
-                                                    Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
-        </Border>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource ManagementCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox MinHeight="40" VerticalAlignment="Center" Margin="0,0,12,0"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 helpers:TextBoxHelper.Placeholder="Search users by name or username…"/>
+                        <Button Grid.Column="1" Content="+ Add User" Style="{StaticResource PrimaryButton}"
+                                VerticalAlignment="Center" Command="{Binding NewCommand}"/>
+                    </Grid>
+                    <DataGrid Style="{StaticResource ManagementDataGrid}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="160" MinWidth="140"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" MinWidth="200"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTextColumn Header="Role" Binding="{Binding RoleName}" Width="120" MinWidth="100"
+                                                ElementStyle="{StaticResource ManagementGridText}"/>
+                            <DataGridTemplateColumn Header="Status" Width="148" MinWidth="136">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBadgeTemplate}"
+                                                        VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="160" MinWidth="148">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Center">
+                                            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ProtectedBadgeTemplate}"
+                                                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                <ContentControl.Style>
+                                                    <Style TargetType="ContentControl">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ContentControl.Style>
+                                            </ContentControl>
+                                            <StackPanel>
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel" BasedOn="{StaticResource ManagementActions}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <Button Style="{StaticResource ManagementActionButton}" ToolTip="Edit"
+                                                        ContentTemplate="{StaticResource EditIconContent}"
+                                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Style="{StaticResource ManagementActionButtonDanger}" ToolTip="Deactivate"
+                                                        ContentTemplate="{StaticResource DeactivateIconContent}"
+                                                        Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
         <views:FormOverlay Title="{Binding FormTitle}"
                            Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}"
                            CancelCommand="{Binding CloseFormCommand}"

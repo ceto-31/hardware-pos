@@ -47,6 +47,11 @@ public class Discount
     public string ScheduleDisplay =>
         $"{StartDate:MMM dd, yyyy} – {EndDate:MMM dd, yyyy}";
 
+    public string PeriodDisplay =>
+        StartDate.Year == EndDate.Year
+            ? $"{StartDate:MMM dd} – {EndDate:MMM dd, yyyy}"
+            : ScheduleDisplay;
+
     public string SummaryDisplay => $"{ScopeDisplay} · {ValueDisplay}";
 }
 

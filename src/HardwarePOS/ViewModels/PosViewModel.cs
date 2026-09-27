@@ -103,7 +103,6 @@ public partial class PosViewModel : ObservableObject
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
-                Barcode = product.Barcode,
                 UnitOfMeasure = product.UnitOfMeasure,
                 RegularUnitPrice = product.EffectivePrice,
                 UnitPrice = DiscountPricing.ResolveUnitPrice(product, _activeDiscountRules),

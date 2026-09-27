@@ -195,8 +195,6 @@
                 <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="Details" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding ProductDetails, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
-                <TextBlock Text="Barcode" Style="{StaticResource DialogFieldLabel}"/>
-                <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="Unit" Style="{StaticResource DialogFieldLabel}"/>
                 <ComboBox ItemsSource="{Binding UnitOptions}" DisplayMemberPath="UnitName" SelectedValuePath="UnitId" SelectedValue="{Binding UnitId}"/>
                 <TextBlock Text="Cost Price" Style="{StaticResource DialogFieldLabel}"/>

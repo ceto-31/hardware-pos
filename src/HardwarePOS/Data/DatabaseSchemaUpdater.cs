@@ -50,6 +50,59 @@ public static class DatabaseSchemaUpdater
             """);
     }
 
+    public static void EnsureBarcodeRemoved()
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+
+        Execute(conn, """
+            IF COL_LENGTH('dbo.Products', 'Barcode') IS NOT NULL
+               OR EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'UX_Products_Barcode' AND object_id = OBJECT_ID(N'dbo.Products')
+               )
+            BEGIN
+                DECLARE @BackupDir nvarchar(400) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(400));
+                IF @BackupDir IS NULL OR @BackupDir = N''
+                BEGIN
+                    EXEC master.dbo.xp_instance_regread
+                        N'HKEY_LOCAL_MACHINE',
+                        N'Software\Microsoft\MSSQLServer\MSSQLServer',
+                        N'BackupDirectory',
+                        @BackupDir OUTPUT;
+                END
+
+                IF @BackupDir IS NULL OR @BackupDir = N''
+                    THROW 50030, 'SQL Server backup directory is not configured. The Barcode column was not dropped.', 1;
+
+                IF RIGHT(@BackupDir, 1) NOT IN (N'\', N'/')
+                    SET @BackupDir = @BackupDir + N'\';
+
+                DECLARE @BackupFile nvarchar(500) =
+                    @BackupDir + N'HardwarePOS_before_barcode_drop_'
+                    + CONVERT(nvarchar(8), SYSDATETIME(), 112) + N'_'
+                    + REPLACE(CONVERT(nvarchar(8), SYSDATETIME(), 108), N':', N'')
+                    + N'.bak';
+
+                DECLARE @BackupSql nvarchar(max) = N'
+                    BACKUP DATABASE [HardwarePOS]
+                        TO DISK = @file
+                        WITH COPY_ONLY, INIT, CHECKSUM,
+                             NAME = N''HardwarePOS before barcode column drop'';';
+                EXEC sys.sp_executesql @BackupSql, N'@file nvarchar(500)', @file = @BackupFile;
+
+                IF EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'UX_Products_Barcode' AND object_id = OBJECT_ID(N'dbo.Products')
+                )
+                    DROP INDEX UX_Products_Barcode ON dbo.Products;
+
+                IF COL_LENGTH('dbo.Products', 'Barcode') IS NOT NULL
+                    ALTER TABLE dbo.Products DROP COLUMN Barcode;
+            END
+            """);
+    }
+
     public static void EnsureVoidSaleSchema()
     {
         using var conn = DbConnectionFactory.Create();

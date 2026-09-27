@@ -82,7 +82,6 @@ BEGIN
         ProductId      INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Products PRIMARY KEY,
         ProductName    NVARCHAR(150) NOT NULL,
         ProductDetails NVARCHAR(500) NULL,
-        Barcode        NVARCHAR(50)  NULL,
         UnitOfMeasure  NVARCHAR(30)  NOT NULL CONSTRAINT DF_Products_UOM DEFAULT (N'Piece'),
         CostPrice      DECIMAL(18,2) NOT NULL CONSTRAINT DF_Products_Cost DEFAULT (0),
         SellingPrice   DECIMAL(18,2) NOT NULL CONSTRAINT DF_Products_Sell DEFAULT (0),
@@ -102,10 +101,6 @@ BEGIN
         CONSTRAINT CK_Products_Prices CHECK (CostPrice >= 0 AND SellingPrice >= 0),
         CONSTRAINT CK_Products_Stock CHECK (StockQty >= 0)
     );
-
-    CREATE UNIQUE INDEX UX_Products_Barcode
-        ON dbo.Products (Barcode)
-        WHERE Barcode IS NOT NULL AND Barcode <> N'';
 END
 GO
 

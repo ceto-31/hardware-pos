@@ -15,7 +15,7 @@ public class ProductRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+            SELECT p.ProductId, p.ProductName, p.ProductDetails,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
@@ -30,7 +30,6 @@ public class ProductRepository
                     @Search IS NULL OR @Search = N''
                     OR p.ProductCode LIKE N'%' + @Search + N'%'
                     OR p.ProductName LIKE N'%' + @Search + N'%'
-                    OR p.Barcode LIKE N'%' + @Search + N'%'
                     OR p.ProductDetails LIKE N'%' + @Search + N'%'
                   )
             ORDER BY p.ProductName;
@@ -51,7 +50,7 @@ public class ProductRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+            SELECT p.ProductId, p.ProductName, p.ProductDetails,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
@@ -63,28 +62,6 @@ public class ProductRepository
             WHERE p.ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? Map(reader) : null;
-    }
-
-    public Product? GetByBarcode(string barcode)
-    {
-        using var conn = DbConnectionFactory.Create();
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
-                   ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
-                   p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
-                   p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
-                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
-            FROM dbo.Products p
-            LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
-            LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
-            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
-            WHERE p.Barcode = @Barcode AND p.IsArchived = 0;
-            """;
-        cmd.Parameters.AddWithValue("@Barcode", barcode);
         using var reader = cmd.ExecuteReader();
         return reader.Read() ? Map(reader) : null;
     }
@@ -103,11 +80,11 @@ public class ProductRepository
                 cmd.Transaction = tx;
                 cmd.CommandText = """
                     INSERT INTO dbo.Products
-                        (ProductCode, ProductName, ProductDetails, Barcode, UnitId, UnitOfMeasure,
+                        (ProductCode, ProductName, ProductDetails, UnitId, UnitOfMeasure,
                          CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived,
                          ExpirationDate, SalePrice, SaleStartDate, SaleEndDate)
                     VALUES
-                        (@ProductCode, @Name, @Details, @Barcode, @UnitId,
+                        (@ProductCode, @Name, @Details, @UnitId,
                          ISNULL((SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId), N'Piece'),
                          @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0,
                          @ExpirationDate, @SalePrice, @SaleStartDate, @SaleEndDate);
@@ -153,7 +130,6 @@ public class ProductRepository
                 ProductCode = @ProductCode,
                 ProductName = @Name,
                 ProductDetails = @Details,
-                Barcode = @Barcode,
                 UnitId = @UnitId,
                 UnitOfMeasure = ISNULL(
                     (SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId),
@@ -192,13 +168,7 @@ public class ProductRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            IF EXISTS (SELECT 1 FROM dbo.SaleItems WHERE ProductId = @Id)
-                OR EXISTS (SELECT 1 FROM dbo.StockIns WHERE ProductId = @Id)
-                OR EXISTS (SELECT 1 FROM dbo.StockOuts WHERE ProductId = @Id)
-                OR EXISTS (SELECT 1 FROM dbo.InventoryLedger WHERE ProductId = @Id)
-                UPDATE dbo.Products SET IsArchived = 1 WHERE ProductId = @Id;
-            ELSE
-                DELETE FROM dbo.Products WHERE ProductId = @Id;
+            DELETE FROM dbo.Products WHERE ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
         cmd.ExecuteNonQuery();
@@ -242,9 +212,6 @@ public class ProductRepository
             string.IsNullOrWhiteSpace(product.ProductCode) ? DBNull.Value : product.ProductCode.Trim());
         cmd.Parameters.AddWithValue("@Name", product.ProductName);
         cmd.Parameters.AddWithValue("@Details", (object?)product.ProductDetails ?? DBNull.Value);
-        cmd.Parameters.AddWithValue(
-            "@Barcode",
-            string.IsNullOrWhiteSpace(product.Barcode) ? DBNull.Value : product.Barcode);
         cmd.Parameters.AddWithValue("@UnitId", (object?)product.UnitId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Cost", product.CostPrice);
         cmd.Parameters.AddWithValue("@Sell", product.SellingPrice);
@@ -274,23 +241,22 @@ public class ProductRepository
         ProductId = reader.GetInt32(0),
         ProductName = reader.GetString(1),
         ProductDetails = reader.IsDBNull(2) ? null : reader.GetString(2),
-        Barcode = reader.IsDBNull(3) ? null : reader.GetString(3),
-        UnitOfMeasure = reader.GetString(4),
-        CostPrice = reader.GetDecimal(5),
-        SellingPrice = reader.GetDecimal(6),
-        StockQty = reader.GetDecimal(7),
-        ReorderLevel = reader.GetDecimal(8),
-        CategoryId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
-        CategoryName = reader.IsDBNull(10) ? null : reader.GetString(10),
-        SupplierId = reader.IsDBNull(11) ? null : reader.GetInt32(11),
-        SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
-        IsArchived = reader.GetBoolean(13),
-        ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
-        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null,
-        ExpirationDate = ReadOptionalDate(reader, 17),
-        SalePrice = ReadOptionalDecimal(reader, 18),
-        SaleStartDate = ReadOptionalDate(reader, 19),
-        SaleEndDate = ReadOptionalDate(reader, 20)
+        UnitOfMeasure = reader.GetString(3),
+        CostPrice = reader.GetDecimal(4),
+        SellingPrice = reader.GetDecimal(5),
+        StockQty = reader.GetDecimal(6),
+        ReorderLevel = reader.GetDecimal(7),
+        CategoryId = reader.IsDBNull(8) ? null : reader.GetInt32(8),
+        CategoryName = reader.IsDBNull(9) ? null : reader.GetString(9),
+        SupplierId = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+        SupplierName = reader.IsDBNull(11) ? null : reader.GetString(11),
+        IsArchived = reader.GetBoolean(12),
+        ProductCode = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+        UnitId = reader.IsDBNull(14) ? null : reader.GetInt32(14),
+        ImagePath = reader.FieldCount > 15 && !reader.IsDBNull(15) ? reader.GetString(15) : null,
+        ExpirationDate = ReadOptionalDate(reader, 16),
+        SalePrice = ReadOptionalDecimal(reader, 17),
+        SaleStartDate = ReadOptionalDate(reader, 18),
+        SaleEndDate = ReadOptionalDate(reader, 19)
     };
 }

@@ -95,34 +95,34 @@ DECLARE @Sup1 INT = (SELECT TOP 1 SupplierId FROM dbo.Suppliers WHERE CompanyNam
 DECLARE @Sup2 INT = (SELECT TOP 1 SupplierId FROM dbo.Suppliers WHERE CompanyName = N'Island Hardware Traders');
 
 /* Sample products */
-IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE Barcode = N'4801001000011')
+IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE ProductName = N'Common Nail 2 inch')
 BEGIN
-    INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-    VALUES (N'Common Nail 2 inch', N'Box of common nails, 2"', N'4801001000011', N'Box', 85.00, 120.00, 25, 10, @CatFastener, @Sup1, 0);
+    INSERT INTO dbo.Products (ProductName, ProductDetails, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+    VALUES (N'Common Nail 2 inch', N'Box of common nails, 2"', N'Box', 85.00, 120.00, 25, 10, @CatFastener, @Sup1, 0);
 END
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE Barcode = N'4801001000028')
+IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE ProductName = N'Latex Paint White 4L')
 BEGIN
-    INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-    VALUES (N'Latex Paint White 4L', N'Interior latex paint, white', N'4801001000028', N'Piece', 450.00, 650.00, 8, 10, @CatPaint, @Sup2, 0);
+    INSERT INTO dbo.Products (ProductName, ProductDetails, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+    VALUES (N'Latex Paint White 4L', N'Interior latex paint, white', N'Piece', 450.00, 650.00, 8, 10, @CatPaint, @Sup2, 0);
 END
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE Barcode = N'4801001000035')
+IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE ProductName = N'PVC Pipe 1/2 inch')
 BEGIN
-    INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-    VALUES (N'PVC Pipe 1/2 inch', N'Schedule 40 PVC pipe', N'4801001000035', N'Meter', 35.00, 55.00, 100, 20, @CatPlumbing, @Sup1, 0);
+    INSERT INTO dbo.Products (ProductName, ProductDetails, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+    VALUES (N'PVC Pipe 1/2 inch', N'Schedule 40 PVC pipe', N'Meter', 35.00, 55.00, 100, 20, @CatPlumbing, @Sup1, 0);
 END
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE Barcode = N'4801001000042')
+IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE ProductName = N'Electrical Tape Black')
 BEGIN
-    INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-    VALUES (N'Electrical Tape Black', N'PVC electrical insulation tape', N'4801001000042', N'Piece', 15.00, 25.00, 0, 15, @CatElectrical, @Sup2, 0);
+    INSERT INTO dbo.Products (ProductName, ProductDetails, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+    VALUES (N'Electrical Tape Black', N'PVC electrical insulation tape', N'Piece', 15.00, 25.00, 0, 15, @CatElectrical, @Sup2, 0);
 END
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE Barcode = N'4801001000059')
+IF NOT EXISTS (SELECT 1 FROM dbo.Products WHERE ProductName = N'Wood Screw 1 inch')
 BEGIN
-    INSERT INTO dbo.Products (ProductName, ProductDetails, Barcode, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
-    VALUES (N'Wood Screw 1 inch', N'Phillips flat head wood screws', N'4801001000059', N'Box', 60.00, 95.00, 40, 12, @CatFastener, @Sup1, 0);
+    INSERT INTO dbo.Products (ProductName, ProductDetails, UnitOfMeasure, CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived)
+    VALUES (N'Wood Screw 1 inch', N'Phillips flat head wood screws', N'Box', 60.00, 95.00, 40, 12, @CatFastener, @Sup1, 0);
 END
 GO
 

@@ -4,7 +4,6 @@ public class CartItem
 {
     public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    public string? Barcode { get; set; }
     public string UnitOfMeasure { get; set; } = "Piece";
     public decimal RegularUnitPrice { get; set; }
     public decimal UnitPrice { get; set; }

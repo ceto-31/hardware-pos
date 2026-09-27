@@ -8,7 +8,6 @@ public class Product
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public string? ProductDetails { get; set; }
-    public string? Barcode { get; set; }
     public int? UnitId { get; set; }
     public string UnitOfMeasure { get; set; } = "Piece";
     public decimal CostPrice { get; set; }

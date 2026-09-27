@@ -281,7 +281,7 @@ public class DashboardRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+            SELECT p.ProductId, p.ProductName, p.ProductDetails,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate
@@ -308,7 +308,7 @@ public class DashboardRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductId, p.ProductName, p.ProductDetails, p.Barcode,
+            SELECT p.ProductId, p.ProductName, p.ProductDetails,
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate
@@ -334,21 +334,20 @@ public class DashboardRepository
         ProductId = reader.GetInt32(0),
         ProductName = reader.GetString(1),
         ProductDetails = reader.IsDBNull(2) ? null : reader.GetString(2),
-        Barcode = reader.IsDBNull(3) ? null : reader.GetString(3),
-        UnitOfMeasure = reader.GetString(4),
-        CostPrice = reader.GetDecimal(5),
-        SellingPrice = reader.GetDecimal(6),
-        StockQty = reader.GetDecimal(7),
-        ReorderLevel = reader.GetDecimal(8),
-        CategoryId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
-        CategoryName = reader.IsDBNull(10) ? null : reader.GetString(10),
-        SupplierId = reader.IsDBNull(11) ? null : reader.GetInt32(11),
-        SupplierName = reader.IsDBNull(12) ? null : reader.GetString(12),
-        IsArchived = reader.GetBoolean(13),
-        ProductCode = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-        UnitId = reader.IsDBNull(15) ? null : reader.GetInt32(15),
-        ImagePath = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetString(16) : null,
-        ExpirationDate = reader.FieldCount > 17 && !reader.IsDBNull(17) ? reader.GetDateTime(17).Date : null
+        UnitOfMeasure = reader.GetString(3),
+        CostPrice = reader.GetDecimal(4),
+        SellingPrice = reader.GetDecimal(5),
+        StockQty = reader.GetDecimal(6),
+        ReorderLevel = reader.GetDecimal(7),
+        CategoryId = reader.IsDBNull(8) ? null : reader.GetInt32(8),
+        CategoryName = reader.IsDBNull(9) ? null : reader.GetString(9),
+        SupplierId = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+        SupplierName = reader.IsDBNull(11) ? null : reader.GetString(11),
+        IsArchived = reader.GetBoolean(12),
+        ProductCode = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+        UnitId = reader.IsDBNull(14) ? null : reader.GetInt32(14),
+        ImagePath = reader.FieldCount > 15 && !reader.IsDBNull(15) ? reader.GetString(15) : null,
+        ExpirationDate = reader.FieldCount > 16 && !reader.IsDBNull(16) ? reader.GetDateTime(16).Date : null
     };
 
     private static List<SalesPoint> QueryPoints(string sql, (string, object) p1, (string, object) p2, Func<DateTime, string> labeler)

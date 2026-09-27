@@ -28,7 +28,6 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Code" Binding="{Binding ProductCode}" Width="90"/>
                             <DataGridTextColumn Header="Name" Binding="{Binding ProductName}" Width="*"/>
-                            <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120"/>
                             <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="80">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>

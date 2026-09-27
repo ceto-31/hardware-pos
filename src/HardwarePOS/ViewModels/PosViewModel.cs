@@ -5,6 +5,7 @@ using HardwarePOS.Data;
 using HardwarePOS.Helpers;
 using HardwarePOS.Models;
 using HardwarePOS.Services;
+using HardwarePOS.Views;
 
 namespace HardwarePOS.ViewModels;
 
@@ -235,7 +236,50 @@ public partial class PosViewModel : ObservableObject
             SelectedSale.TotalDue,
             SelectedSale.CashTendered,
             SelectedSale.ChangeAmount,
-            _settings.GetReceiptFooter());
+            _settings.GetReceiptFooter(),
+            SelectedSale.IsVoided);
+    }
+
+    [RelayCommand]
+    private void VoidSelectedSale(SaleHistoryRow? sale)
+    {
+        if (!SessionManager.IsAdmin)
+        {
+            DialogService.ShowWarning("Admin access required.", "4KV Hardware");
+            return;
+        }
+
+        sale ??= SelectedSale;
+        if (sale is null || sale.IsVoided)
+            return;
+
+        SelectedSale = sale;
+
+        var user = SessionManager.CurrentUser;
+        if (user is null)
+        {
+            DialogService.ShowError("Session expired. Please log in again.", "POS");
+            return;
+        }
+
+        var reason = VoidSaleWindow.Prompt(sale.InvoiceNo);
+        if (reason is null)
+            return;
+
+        try
+        {
+            var saleId = sale.SaleId;
+            var invoiceNo = sale.InvoiceNo;
+            _sales.VoidSale(saleId, user.UserId, user.FullName, reason);
+            DialogService.ShowInfo($"Sale {invoiceNo} was voided. Stock has been restored.", "Void Sale");
+            LoadHistory();
+            SearchProducts();
+            SelectedSale = SaleHistory.FirstOrDefault(s => s.SaleId == saleId);
+        }
+        catch (Exception ex)
+        {
+            DialogService.ShowError(ex.Message, "Void Sale");
+        }
     }
 
     [RelayCommand]

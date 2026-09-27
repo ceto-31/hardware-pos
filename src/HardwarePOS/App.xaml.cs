@@ -17,6 +17,7 @@ public partial class App : Application
         try
         {
             DatabaseSchemaUpdater.EnsureDiscountsSchema();
+            DatabaseSchemaUpdater.EnsureVoidSaleSchema();
         }
         catch (Exception ex)
         {

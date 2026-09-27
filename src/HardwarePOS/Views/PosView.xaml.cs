@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using HardwarePOS.Helpers;
 using HardwarePOS.ViewModels;
 
 namespace HardwarePOS.Views;
@@ -11,6 +12,8 @@ public partial class PosView : UserControl
     public PosView()
     {
         InitializeComponent();
+        if (!SessionManager.IsAdmin)
+            VoidActionColumn.Visibility = Visibility.Collapsed;
     }
 
     private void ProductGrid_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

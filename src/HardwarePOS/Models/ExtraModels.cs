@@ -56,6 +56,8 @@ public class SaleHistoryRow
     public decimal TotalDue { get; set; }
     public decimal CashTendered { get; set; }
     public decimal ChangeAmount { get; set; }
+    public bool IsVoided { get; set; }
+    public string? VoidReason { get; set; }
 }
 
 public class SaleHistoryItemRow

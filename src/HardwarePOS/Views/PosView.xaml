@@ -249,7 +249,45 @@
                             <DataGridTextColumn Header="Date" Binding="{Binding SaleDate, StringFormat=yyyy-MM-dd HH:mm}" Width="140"/>
                             <DataGridTextColumn Header="Invoice" Binding="{Binding InvoiceNo}" Width="*"/>
                             <DataGridTextColumn Header="Cashier" Binding="{Binding CashierName}" Width="120"/>
-                            <DataGridTextColumn Header="Total" Binding="{Binding TotalDue, StringFormat=N2}" Width="90"/>
+                            <DataGridTemplateColumn Header="Status" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource StatusBadge}"
+                                                Background="#FEE2E2"
+                                                ToolTip="{Binding VoidReason}"
+                                                Visibility="{Binding IsVoided, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="VOIDED" Foreground="#DC2626" FontWeight="SemiBold" FontSize="11"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn x:Name="VoidActionColumn" Header="" Width="44" CanUserResize="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource GridIconButtonDanger}"
+                                                ToolTip="Void sale"
+                                                ContentTemplate="{StaticResource DeactivateIconContent}"
+                                                Visibility="{Binding IsVoided, Converter={StaticResource InverseBoolToVis}}"
+                                                Command="{Binding DataContext.VoidSelectedSaleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Total" Binding="{Binding TotalDue, StringFormat=N2}" Width="90">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                </DataGridTextColumn.HeaderStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVoided}" Value="True">
+                                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

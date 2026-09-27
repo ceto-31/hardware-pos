@@ -50,6 +50,58 @@ public static class DatabaseSchemaUpdater
             """);
     }
 
+    public static void EnsureVoidSaleSchema()
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+
+        Execute(conn, """
+            IF COL_LENGTH('dbo.Sales', 'IsVoided') IS NULL
+                ALTER TABLE dbo.Sales ADD IsVoided BIT NOT NULL CONSTRAINT DF_Sales_IsVoided DEFAULT (0);
+            IF COL_LENGTH('dbo.Sales', 'VoidedBy') IS NULL
+                ALTER TABLE dbo.Sales ADD VoidedBy INT NULL;
+            IF COL_LENGTH('dbo.Sales', 'VoidedAt') IS NULL
+                ALTER TABLE dbo.Sales ADD VoidedAt DATETIME2(0) NULL;
+            IF COL_LENGTH('dbo.Sales', 'VoidReason') IS NULL
+                ALTER TABLE dbo.Sales ADD VoidReason NVARCHAR(200) NULL;
+            """);
+
+        Execute(conn, """
+            IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Sales_VoidedBy')
+            BEGIN
+                ALTER TABLE dbo.Sales
+                    ADD CONSTRAINT FK_Sales_VoidedBy FOREIGN KEY (VoidedBy) REFERENCES dbo.Users (UserId);
+            END
+            """);
+
+        Execute(conn, """
+            IF EXISTS (
+                SELECT 1
+                FROM sys.check_constraints
+                WHERE name = N'CK_InventoryLedger_Type'
+                  AND parent_object_id = OBJECT_ID(N'dbo.InventoryLedger')
+                  AND definition NOT LIKE N'%VOID%'
+            )
+            BEGIN
+                ALTER TABLE dbo.InventoryLedger DROP CONSTRAINT CK_InventoryLedger_Type;
+            END
+            """);
+
+        Execute(conn, """
+            IF NOT EXISTS (
+                SELECT 1
+                FROM sys.check_constraints
+                WHERE name = N'CK_InventoryLedger_Type'
+                  AND parent_object_id = OBJECT_ID(N'dbo.InventoryLedger')
+            )
+            BEGIN
+                ALTER TABLE dbo.InventoryLedger
+                    ADD CONSTRAINT CK_InventoryLedger_Type
+                    CHECK (MovementType IN (N'IN', N'OUT', N'SALE', N'VOID'));
+            END
+            """);
+    }
+
     private static void Execute(SqlConnection conn, string sql)
     {
         using var cmd = conn.CreateCommand();

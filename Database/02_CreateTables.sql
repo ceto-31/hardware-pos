@@ -169,7 +169,7 @@ BEGIN
         CreatedAt     DATETIME2(0) NOT NULL CONSTRAINT DF_InventoryLedger_CreatedAt DEFAULT (SYSUTCDATETIME()),
         CONSTRAINT FK_InventoryLedger_Products FOREIGN KEY (ProductId) REFERENCES dbo.Products (ProductId),
         CONSTRAINT FK_InventoryLedger_Users FOREIGN KEY (CreatedBy) REFERENCES dbo.Users (UserId),
-        CONSTRAINT CK_InventoryLedger_Type CHECK (MovementType IN (N'IN', N'OUT', N'SALE'))
+        CONSTRAINT CK_InventoryLedger_Type CHECK (MovementType IN (N'IN', N'OUT', N'SALE', N'VOID'))
     );
 
     CREATE INDEX IX_InventoryLedger_Product_CreatedAt
@@ -232,7 +232,12 @@ BEGIN
         TotalDue        DECIMAL(18,2) NOT NULL,
         CashTendered    DECIMAL(18,2) NOT NULL,
         ChangeAmount    DECIMAL(18,2) NOT NULL,
+        IsVoided        BIT NOT NULL CONSTRAINT DF_Sales_IsVoided DEFAULT (0),
+        VoidedBy        INT NULL,
+        VoidedAt        DATETIME2(0) NULL,
+        VoidReason      NVARCHAR(200) NULL,
         CONSTRAINT FK_Sales_Users FOREIGN KEY (CashierId) REFERENCES dbo.Users (UserId),
+        CONSTRAINT FK_Sales_VoidedBy FOREIGN KEY (VoidedBy) REFERENCES dbo.Users (UserId),
         CONSTRAINT CK_Sales_Amounts CHECK (Subtotal >= 0 AND TaxAmount >= 0 AND DiscountAmount >= 0 AND TotalDue >= 0)
     );
 

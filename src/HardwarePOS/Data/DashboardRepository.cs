@@ -13,38 +13,38 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
-                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales), 0),
+                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
+                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
+                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Suppliers WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty > 0 AND StockQty <= ReorderLevel), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty <= 0), 0),
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
-                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
+                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
+                ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
                 ISNULL((
                     SELECT SUM(si.Quantity)
                     FROM dbo.SaleItems si
-                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
                     WHERE CAST(s.SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)
                 ), 0),
                 ISNULL((
                     SELECT SUM(si.Quantity)
                     FROM dbo.SaleItems si
-                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
                     WHERE CAST(s.SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)
                 ), 0),
                 ISNULL((
                     SELECT SUM((si.UnitPrice - p.CostPrice) * si.Quantity)
                     FROM dbo.SaleItems si
-                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
                     INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
                     WHERE CAST(s.SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)
                 ), 0),
                 ISNULL((
                     SELECT SUM((si.UnitPrice - p.CostPrice) * si.Quantity)
                     FROM dbo.SaleItems si
-                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId
+                    INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
                     INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
                     WHERE CAST(s.SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)
                 ), 0),
@@ -105,7 +105,7 @@ public class DashboardRepository
             )
             SELECT d.SaleDay, ISNULL(SUM(s.TotalDue), 0)
             FROM Days d
-            LEFT JOIN dbo.Sales s ON CAST(s.SaleDate AS DATE) = d.SaleDay AND YEAR(s.SaleDate) = @Year
+            LEFT JOIN dbo.Sales s ON CAST(s.SaleDate AS DATE) = d.SaleDay AND YEAR(s.SaleDate) = @Year AND s.IsVoided = 0
             GROUP BY d.SaleDay ORDER BY d.SaleDay;
             """, ("@Days", days), ("@Year", year), d => d.ToString("MMM dd"));
     }
@@ -120,7 +120,7 @@ public class DashboardRepository
             )
             SELECT w.WeekStart, ISNULL(SUM(s.TotalDue), 0)
             FROM Weeks w
-            LEFT JOIN dbo.Sales s ON s.SaleDate >= w.WeekStart AND s.SaleDate < DATEADD(WEEK, 1, w.WeekStart) AND YEAR(s.SaleDate) = @Year
+            LEFT JOIN dbo.Sales s ON s.SaleDate >= w.WeekStart AND s.SaleDate < DATEADD(WEEK, 1, w.WeekStart) AND YEAR(s.SaleDate) = @Year AND s.IsVoided = 0
             GROUP BY w.WeekStart ORDER BY w.WeekStart;
             """, ("@Weeks", weeks), ("@Year", year), d => d.ToString("MMM dd"));
     }
@@ -134,7 +134,7 @@ public class DashboardRepository
             )
             SELECT m.MonthStart, ISNULL(SUM(s.TotalDue), 0)
             FROM Months m
-            LEFT JOIN dbo.Sales s ON s.SaleDate >= m.MonthStart AND s.SaleDate < DATEADD(MONTH, 1, m.MonthStart)
+            LEFT JOIN dbo.Sales s ON s.SaleDate >= m.MonthStart AND s.SaleDate < DATEADD(MONTH, 1, m.MonthStart) AND s.IsVoided = 0
             GROUP BY m.MonthStart ORDER BY m.MonthStart;
             """, ("@Year", year), ("@Dummy", 0), d => d.ToString("MMM"));
     }
@@ -152,7 +152,7 @@ public class DashboardRepository
             )
             SELECT y.Yr, ISNULL(SUM(s.TotalDue), 0)
             FROM Years y
-            LEFT JOIN dbo.Sales s ON YEAR(s.SaleDate) = y.Yr
+            LEFT JOIN dbo.Sales s ON YEAR(s.SaleDate) = y.Yr AND s.IsVoided = 0
             GROUP BY y.Yr ORDER BY y.Yr;
             """;
         using var reader = cmd.ExecuteReader();
@@ -171,6 +171,7 @@ public class DashboardRepository
             SELECT TOP (@Take) p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath,
                    SUM(si.Quantity), SUM(si.LineTotal)
             FROM dbo.SaleItems si
+            INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
             INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
             LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
             GROUP BY p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath
@@ -201,6 +202,7 @@ public class DashboardRepository
         cmd.CommandText = """
             SELECT TOP (@Take) s.InvoiceNo, s.SaleDate, s.TotalDue
             FROM dbo.Sales s
+            WHERE s.IsVoided = 0
             ORDER BY s.SaleDate DESC;
             """;
         cmd.Parameters.AddWithValue("@Take", take);
@@ -224,6 +226,7 @@ public class DashboardRepository
         cmd.CommandText = """
             SELECT ISNULL(c.CategoryName, N'Uncategorized'), ISNULL(SUM(si.LineTotal), 0)
             FROM dbo.SaleItems si
+            INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
             INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             GROUP BY c.CategoryName

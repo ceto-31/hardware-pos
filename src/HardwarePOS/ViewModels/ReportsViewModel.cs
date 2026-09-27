@@ -112,11 +112,12 @@ public partial class ReportsViewModel : ObservableObject
                 list = sales.Select(s => new ReportRow
                 {
                     Col1 = s.SaleDate.ToString("yyyy-MM-dd HH:mm"),
-                    Col2 = s.InvoiceNo,
+                    Col2 = s.IsVoided ? $"{s.InvoiceNo} (VOIDED)" : s.InvoiceNo,
                     Col3 = s.CashierName,
-                    Col4 = s.TotalDue.ToString("N2")
+                    Col4 = s.TotalDue.ToString("N2"),
+                    ExcludeFromTotal = s.IsVoided
                 }).ToList();
-                BuildTransactionBarChart(sales);
+                BuildTransactionBarChart(sales.Where(s => !s.IsVoided).ToList());
                 break;
         }
 
@@ -171,7 +172,7 @@ public partial class ReportsViewModel : ObservableObject
             "Stock In History" or "Stock Out History" =>
                 $"Total quantity: {Rows.Sum(r => ParseDecimal(r.Col3)):N0}",
             "All Sales Transactions" =>
-                $"Total due: ₱{Rows.Sum(r => ParseDecimal(r.Col4)):N2}",
+                $"Total due: ₱{Rows.Where(r => !r.ExcludeFromTotal).Sum(r => ParseDecimal(r.Col4)):N2}",
             _ => null
         };
     }

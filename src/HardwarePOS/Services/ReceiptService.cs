@@ -11,6 +11,7 @@ public class ReceiptService
     private static readonly Brush MutedBrush = new SolidColorBrush(Color.FromRgb(100, 116, 139));
     private static readonly Brush RuleBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240));
     private static readonly Brush PrimaryBrush = new SolidColorBrush(Color.FromRgb(37, 99, 235));
+    private static readonly Brush VoidBrush = new SolidColorBrush(Color.FromRgb(220, 38, 38));
     private static readonly Brush HeaderBgBrush = new SolidColorBrush(Color.FromRgb(248, 250, 252));
     private static readonly Brush PageBgBrush = new SolidColorBrush(Color.FromRgb(248, 250, 252));
 
@@ -26,10 +27,11 @@ public class ReceiptService
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
-        string? footer = null)
+        string? footer = null,
+        bool isVoided = false)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided);
 
         var scroll = new ScrollViewer
         {
@@ -77,10 +79,11 @@ public class ReceiptService
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
-        string? footer = null)
+        string? footer = null,
+        bool isVoided = false)
     {
         var receipt = BuildReceiptVisual(storeName, invoiceNo, cashierName, items, subtotal, taxAmount,
-            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer);
+            itemDiscountAmount, storeDiscountAmount, totalDue, cashTendered, changeAmount, footer, isVoided);
 
         var printDialog = new PrintDialog();
         if (printDialog.ShowDialog() == true)
@@ -149,7 +152,8 @@ public class ReceiptService
         decimal totalDue,
         decimal cashTendered,
         decimal changeAmount,
-        string? footer)
+        string? footer,
+        bool isVoided)
     {
         var root = new StackPanel();
 
@@ -167,6 +171,8 @@ public class ReceiptService
 
         root.Children.Add(MakeTitle(storeName));
         root.Children.Add(MakeSubtitle("Sales Receipt"));
+        if (isVoided)
+            root.Children.Add(MakeVoidBanner());
         root.Children.Add(MakeMeta("Invoice", invoiceNo));
         root.Children.Add(MakeMeta("Date", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
         root.Children.Add(MakeMeta("Cashier", cashierName));
@@ -197,6 +203,16 @@ public class ReceiptService
         Foreground = MutedBrush,
         TextAlignment = TextAlignment.Center,
         Margin = new Thickness(0, 0, 0, 12)
+    };
+
+    private static TextBlock MakeVoidBanner() => new()
+    {
+        Text = "VOIDED",
+        FontSize = 16,
+        FontWeight = FontWeights.Bold,
+        Foreground = VoidBrush,
+        TextAlignment = TextAlignment.Center,
+        Margin = new Thickness(0, 0, 0, 8)
     };
 
     private static TextBlock MakeMeta(string label, string value)

@@ -13,6 +13,7 @@
     <conv:StatusToBadgeBrushConverter x:Key="StatusTextBrush"/>
     <conv:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
     <conv:ProductImageConverter x:Key="ProductImage"/>
+    <conv:WidthToColumnsConverter x:Key="WidthToColumns"/>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="#2563EB"/>
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#1D4ED8"/>
@@ -42,6 +43,17 @@
     <Geometry x:Key="IconBox">M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15Z</Geometry>
     <Geometry x:Key="IconPeso">M9,3H15V5H13V6.1C15.28,6.56 17,8.47 17,11C17,13.05 15.89,14.81 14.18,15.64L17,21H14.7L12.12,16H11V21H9V5H7V3H9M11,8V14H13C14.66,14 16,12.66 16,11C16,9.34 14.66,8 13,8H11Z</Geometry>
     <Geometry x:Key="IconReceipt">M3,3H21V21H3V3M5,5V19H19V5H5M7,7H17V9H7V7M7,11H17V13H7V11M7,15H13V17H7V15Z</Geometry>
+    <Geometry x:Key="IconEye">M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z</Geometry>
+    <Geometry x:Key="IconPrinter">M18,3H6V7H18M19,12A1,1 0 0,1 18,11A1,1 0 0,1 19,10A1,1 0 0,1 20,11A1,1 0 0,1 19,12M16,19H8V14H16M19,8H5A3,3 0 0,0 2,11V17H6V21H18V17H22V11A3,3 0 0,0 19,8Z</Geometry>
+    <Geometry x:Key="IconCopy">M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z</Geometry>
+    <Geometry x:Key="IconWarning">M13,14H11V9H13M13,18H11V16H13M1,21H23L12,2L1,21Z</Geometry>
+    <Geometry x:Key="IconStatusCheck">M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z</Geometry>
+    <Geometry x:Key="IconStatusClock">M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z</Geometry>
+    <Geometry x:Key="IconStatusAlert">M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z</Geometry>
+    <Geometry x:Key="IconStatusMinus">M17,13H7V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z</Geometry>
+    <Geometry x:Key="IconStatusLock">M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z</Geometry>
+    <Geometry x:Key="IconStore">M12,18H6V14H12M21,14V12L20,7H4L3,12V14H4V20H14V14H18V20H20V14M20,4H4V6H20V4Z</Geometry>
+    <Geometry x:Key="IconTruck">M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z</Geometry>
 
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
@@ -163,6 +175,124 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Floating row-action popover used by Transaction History -->
+    <Style TargetType="ContextMenu" x:Key="ActionPopover">
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Margin="10" Background="White" CornerRadius="8"
+                            BorderBrush="#E2E8F0" BorderThickness="1"
+                            Padding="{TemplateBinding Padding}" MinWidth="220"
+                            SnapsToDevicePixels="True">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#0F172A"/>
+                        </Border.Effect>
+                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Separator" x:Key="ActionPopoverDivider">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="6,4"/>
+        <Setter Property="Background" Value="#E2E8F0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{TemplateBinding Background}" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem" x:Key="ActionPopoverItem">
+        <Setter Property="Foreground" Value="#0F172A"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="10,9"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="bd" Background="Transparent" CornerRadius="6"
+                            Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Viewbox Grid.Column="0" Width="15" Height="15" Stretch="Uniform"
+                                     HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Fill="{TemplateBinding Foreground}"/>
+                            </Viewbox>
+                            <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                              VerticalAlignment="Center" Margin="6,0,4,0"
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#F1F5F9"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem" x:Key="ActionPopoverItemDanger" BasedOn="{StaticResource ActionPopoverItem}">
+        <Setter Property="Foreground" Value="#DC2626"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="bd" Background="Transparent" CornerRadius="6"
+                            Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Viewbox Grid.Column="0" Width="15" Height="15" Stretch="Uniform"
+                                     HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Fill="{TemplateBinding Foreground}"/>
+                            </Viewbox>
+                            <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                              VerticalAlignment="Center" Margin="6,0,4,0"
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#FEF2F2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -360,6 +490,105 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
+    <!-- Closed state is text plus a chevron. The menu surface appears only while open. -->
+    <Style x:Key="InlineDropdown" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Style.Resources>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Padding" Value="10,8"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBoxItem">
+                            <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Style.Resources>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="2,4"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Focusable="False" ClickMode="Press" Cursor="Hand"
+                                      Background="Transparent" BorderThickness="0"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent" Padding="2,4">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              ContentTemplateSelector="{Binding SelectionBoxItemTemplateSelector, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              ContentStringFormat="{Binding SelectionBoxItemStringFormat, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              VerticalAlignment="Center"
+                                                              TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              TextElement.FontWeight="SemiBold"
+                                                              TextElement.FontSize="14"/>
+                                            <Path Data="M1,1 L5,5 L9,1" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                  StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                  Width="10" Height="6" Stretch="Fill" Margin="6,2,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                               Focusable="False" PopupAnimation="Fade"
+                               IsOpen="{TemplateBinding IsDropDownOpen}">
+                            <Grid Margin="8">
+                                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8"
+                                        Padding="4" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#0F172A"/>
+                                    </Border.Effect>
+                                    <ScrollViewer MaxHeight="240" SnapsToDevicePixels="True">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="#3B82F6"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="DatePicker">
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="MinHeight" Value="40"/>
@@ -405,8 +634,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4"
-                            Width="26" Height="26" SnapsToDevicePixels="True">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                            Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -429,6 +658,102 @@
 
     <Style TargetType="Button" x:Key="GridActionButton" BasedOn="{StaticResource GridIconButton}"/>
     <Style TargetType="Button" x:Key="GridActionButtonDanger" BasedOn="{StaticResource GridIconButtonDanger}"/>
+
+    <Style x:Key="ManagementActionButton" TargetType="Button" BasedOn="{StaticResource GridIconButton}">
+        <Setter Property="Width" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="MinWidth" Value="34"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Margin" Value="4,0"/>
+    </Style>
+
+    <Style x:Key="ManagementActionButtonDanger" TargetType="Button" BasedOn="{StaticResource ManagementActionButton}">
+        <Setter Property="Foreground" Value="#DC2626"/>
+    </Style>
+
+    <Style x:Key="ManagementActions" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="StatusChip" TargetType="Border">
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="CornerRadius" Value="13"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Background" Value="#F1F5F9"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+    </Style>
+
+    <Style x:Key="StatusChipText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#64748B"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <DataTemplate x:Key="StatusBadgeTemplate">
+        <Border x:Name="Badge" Style="{StaticResource StatusChip}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Viewbox x:Name="IconHost" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Path x:Name="Icon" Data="{StaticResource IconStatusMinus}" Fill="#64748B" Stretch="Uniform"/>
+                </Viewbox>
+                <TextBlock x:Name="Label" Text="{Binding StatusLabel}" Style="{StaticResource StatusChipText}"/>
+            </StackPanel>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Active">
+                <Setter TargetName="Badge" Property="Background" Value="#E7F6EC"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#166534"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#166534"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconStatusCheck}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
+                <Setter TargetName="Badge" Property="Background" Value="#E8EEF9"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#1E40AF"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#1E40AF"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconStatusClock}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Expired">
+                <Setter TargetName="Badge" Property="Background" Value="#FEF3C7"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#A16207"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#A16207"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconStatusAlert}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Archived">
+                <Setter TargetName="Badge" Property="Background" Value="#E8EDF3"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#475569"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#475569"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconArchive}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Low Stock">
+                <Setter TargetName="Badge" Property="Background" Value="#FEF3C7"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#A16207"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#A16207"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconStatusAlert}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusLabel}" Value="Out of Stock">
+                <Setter TargetName="Badge" Property="Background" Value="#FEE2E2"/>
+                <Setter TargetName="Label" Property="Foreground" Value="#B91C1C"/>
+                <Setter TargetName="Icon" Property="Fill" Value="#B91C1C"/>
+                <Setter TargetName="Icon" Property="Data" Value="{StaticResource IconStatusAlert}"/>
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ProtectedBadgeTemplate">
+        <Border Style="{StaticResource StatusChip}" HorizontalAlignment="Center" Background="#E8EEF4">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Viewbox Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Path Data="{StaticResource IconStatusLock}" Fill="#3E4C63" Stretch="Uniform"/>
+                </Viewbox>
+                <TextBlock Text="Protected" Style="{StaticResource StatusChipText}" Foreground="#3E4C63"/>
+            </StackPanel>
+        </Border>
+    </DataTemplate>
 
     <Style TargetType="TextBlock" x:Key="StatusText">
         <Setter Property="FontSize" Value="14"/>
@@ -509,6 +834,42 @@
         <Setter Property="Content" Value="{x:Null}"/>
     </Style>
 
+    <Style x:Key="OrderTypeOption" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="#334155"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="bd" MinHeight="38" CornerRadius="8" Padding="12,0"
+                            Background="White" BorderBrush="#E2E8F0" BorderThickness="1" SnapsToDevicePixels="True">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="16" Height="16" Margin="0,0,7,0">
+                                <Path x:Name="icon" Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Fill="#475569" Stretch="Uniform"/>
+                            </Viewbox>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter TargetName="icon" Property="Fill" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="DataGrid" x:Key="ModernDataGrid">
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="CanUserAddRows" Value="False"/>
@@ -571,6 +932,171 @@
                 </Style>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="ManagementGridText" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
+    </Style>
+
+    <Style x:Key="ManagementNumericText" TargetType="TextBlock" BasedOn="{StaticResource ManagementGridText}">
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="TextAlignment" Value="Right"/>
+    </Style>
+
+    <Style x:Key="ManagementColumnHeader" TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="#F1F5F9"/>
+        <Setter Property="Foreground" Value="#0F172A"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+
+    <Style x:Key="ManagementNumericHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementColumnHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Right"/>
+    </Style>
+
+    <Style x:Key="ManagementRow" TargetType="DataGridRow">
+        <Setter Property="MinHeight" Value="56"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#BFDBFE"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ProductGridRow" TargetType="DataGridRow" BasedOn="{StaticResource ManagementRow}">
+        <Setter Property="MinHeight" Value="68"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding StockStatus}" Value="LowStock">
+                <Setter Property="Background" Value="#FFFBEB"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StockStatus}" Value="OutOfStock">
+                <Setter Property="Background" Value="#FEF2F2"/>
+            </DataTrigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#BFDBFE"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <RectangleGeometry x:Key="ProductThumbnailClip" Rect="0,0,42,42" RadiusX="6" RadiusY="6"/>
+
+    <Style x:Key="ProductThumbnail" TargetType="Border">
+        <Setter Property="Width" Value="42"/>
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Background" Value="#F1F5F9"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ImagePath}" Value="{x:Null}">
+                <Setter Property="ToolTip" Value="No product image"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding ImagePath}" Value="">
+                <Setter Property="ToolTip" Value="No product image"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="PosDataGrid" TargetType="DataGrid" BasedOn="{StaticResource ModernDataGrid}">
+        <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="#EEF2F6"/>
+        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="RowHeight" Value="56"/>
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource ManagementColumnHeader}"/>
+        <Setter Property="CellStyle">
+            <Setter.Value>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="14,8"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="RowStyle">
+            <Setter.Value>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="MinHeight" Value="56"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#DBEAFE"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ManagementDataGrid" TargetType="DataGrid" BasedOn="{StaticResource ModernDataGrid}">
+        <Setter Property="RowHeight" Value="56"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource ManagementColumnHeader}"/>
+        <Setter Property="CellStyle">
+            <Setter.Value>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="16,10"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Setter Property="ClipToBounds" Value="True"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridCell">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Padding="{TemplateBinding Padding}"
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="RowStyle" Value="{StaticResource ManagementRow}"/>
     </Style>
 
     <Style TargetType="DataGrid" BasedOn="{StaticResource ModernDataGrid}"/>
@@ -642,25 +1168,40 @@
         <Setter Property="UseLayoutRounding" Value="True"/>
     </Style>
 
+    <Style x:Key="ManagementCard" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+    </Style>
+
+    <Style x:Key="DashboardCard" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="18"/>
+        <Setter Property="Margin" Value="8"/>
+    </Style>
+
     <Style x:Key="DashboardKpiIcon" TargetType="Border">
         <Setter Property="Width" Value="44"/>
         <Setter Property="Height" Value="44"/>
         <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="VerticalAlignment" Value="Top"/>
-        <Setter Property="Margin" Value="0,0,12,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,14,0"/>
     </Style>
 
     <Style x:Key="DashboardKpiTitle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
     <Style x:Key="DashboardKpiValue" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="FontSize" Value="26"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Margin" Value="0,4,0,0"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
     <Style x:Key="DashboardSectionTitle" TargetType="TextBlock">
@@ -668,6 +1209,7 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
     <Style x:Key="DashboardViewAll" TargetType="Button" BasedOn="{StaticResource LinkButton}">

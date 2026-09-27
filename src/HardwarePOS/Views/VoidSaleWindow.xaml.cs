@@ -1,7 +1,6 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 using HardwarePOS.Services;
 
 namespace HardwarePOS.Views;
@@ -21,24 +20,19 @@ public partial class VoidSaleWindow : Window
 
     public string? Reason { get; private set; }
 
-    public VoidSaleWindow(string invoiceNo)
+    public VoidSaleWindow(string invoiceNo, decimal totalDue)
     {
         InitializeComponent();
-        MessageText.Inlines.Add(new Run("Void the entire sale "));
-        MessageText.Inlines.Add(new Run(invoiceNo)
-        {
-            FontWeight = FontWeights.Bold,
-            FontFamily = new FontFamily("Consolas")
-        });
-        MessageText.Inlines.Add(new Run("? Choose a reason before confirming. This cannot be undone."));
+        InvoiceText.Text = invoiceNo;
+        TotalText.Text = totalDue.ToString("₱#,##0.00", CultureInfo.GetCultureInfo("en-US"));
         foreach (var reason in Reasons)
             ReasonCombo.Items.Add(reason);
     }
 
-    public static string? Prompt(string invoiceNo)
+    public static string? Prompt(string invoiceNo, decimal totalDue)
     {
         var owner = DialogService.GetVisibleOwner();
-        var dialog = new VoidSaleWindow(invoiceNo);
+        var dialog = new VoidSaleWindow(invoiceNo, totalDue);
         if (owner is not null)
         {
             dialog.Owner = owner;

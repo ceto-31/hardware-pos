@@ -8,7 +8,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Width="420" Height="360"
+        Width="440" Height="460"
         FontFamily="Segoe UI">
     <Grid>
         <Border Background="#990F172A"/>
@@ -20,9 +20,14 @@
             <DockPanel>
                 <Border DockPanel.Dock="Top" Height="6" Background="#DC2626" CornerRadius="8,8,0,0"/>
                 <StackPanel Margin="24,20,24,20">
-                    <TextBlock Text="Void Sale" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
-                    <TextBlock x:Name="MessageText" Margin="0,12,0,0" FontSize="15" Foreground="#475569" TextWrapping="Wrap"/>
-                    <TextBlock Text="Reason" Margin="0,28,0,6" FontWeight="SemiBold" Foreground="#0F172A"/>
+                    <TextBlock Text="Void Transaction?" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
+                    <TextBlock Text="Invoice" Margin="0,16,0,2" FontSize="12" Foreground="#64748B"/>
+                    <TextBlock x:Name="InvoiceText" FontFamily="Consolas" FontWeight="SemiBold" FontSize="15" Foreground="#0F172A"/>
+                    <TextBlock Text="Total" Margin="0,12,0,2" FontSize="12" Foreground="#64748B"/>
+                    <TextBlock x:Name="TotalText" FontWeight="Bold" FontSize="18" Foreground="#0F172A"/>
+                    <TextBlock Text="This transaction will be marked as voided."
+                               Margin="0,14,0,0" FontSize="14" Foreground="#475569" TextWrapping="Wrap"/>
+                    <TextBlock Text="Reason" Margin="0,18,0,6" FontWeight="SemiBold" Foreground="#0F172A"/>
                     <Grid>
                         <ComboBox x:Name="ReasonCombo" MinHeight="40" SelectionChanged="ReasonCombo_SelectionChanged"/>
                         <TextBlock x:Name="ReasonPlaceholder" Text="Select a reason"
@@ -37,8 +42,8 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
                         <Button Content="Cancel" Style="{StaticResource OutlineButton}" Click="Cancel_Click" MinWidth="96" IsCancel="True"/>
-                        <Button x:Name="VoidButton" Content="Void Sale" Style="{StaticResource DangerButton}"
-                                Click="Void_Click" MinWidth="96" IsEnabled="False" IsDefault="True"/>
+                        <Button x:Name="VoidButton" Content="Void Transaction" Style="{StaticResource DangerButton}"
+                                Click="Void_Click" MinWidth="148" IsEnabled="False" IsDefault="True"/>
                     </StackPanel>
                 </StackPanel>
             </DockPanel>

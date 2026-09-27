@@ -261,7 +261,7 @@ public partial class PosViewModel : ObservableObject
             return;
         }
 
-        var reason = VoidSaleWindow.Prompt(sale.InvoiceNo);
+        var reason = VoidSaleWindow.Prompt(sale.InvoiceNo, sale.TotalDue);
         if (reason is null)
             return;
 

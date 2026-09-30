@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using HardwarePOS.Helpers;
@@ -79,6 +80,35 @@ public partial class PosView : UserControl
         if (sender is not MenuItem item || item.Parent is not ContextMenu menu)
             return null;
         return menu.PlacementTarget is FrameworkElement target ? target.DataContext as SaleHistoryRow : null;
+    }
+
+    private bool _formattingTendered;
+
+    private void CashTendered_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox box)
+            ShowTenderedDecimals(box);
+    }
+
+    private void CashTendered_TargetUpdated(object sender, DataTransferEventArgs e)
+    {
+        if (sender is TextBox box && !box.IsKeyboardFocused)
+            ShowTenderedDecimals(box);
+    }
+
+    private void ShowTenderedDecimals(TextBox box)
+    {
+        if (_formattingTendered || box.DataContext is not PosViewModel vm)
+            return;
+
+        var formatted = vm.CashTendered.ToString("0.00");
+        if (box.Text == formatted)
+            return;
+
+        _formattingTendered = true;
+        box.Text = formatted;
+        box.CaretIndex = box.Text.Length;
+        _formattingTendered = false;
     }
 
     private void ProductGrid_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

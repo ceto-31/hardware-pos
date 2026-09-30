@@ -1,0 +1,20 @@
+---
+description: When the user says ship, commit each change separately with a short message
+alwaysApply: true
+---
+
+# Ship one change per commit
+
+When the user says "ship", commit the work one change at a time. Do not put unrelated changes in one commit.
+
+- One commit per change (a feature, a fix, or a schema change).
+- Use a short `-m` message that says what changed.
+- Then push those commits.
+
+```text
+Target Windows 10 for the chart libraries.
+Remove product barcodes.
+Save pickup or delivery with each sale.
+```
+
+Do not use one message that bundles several changes together.

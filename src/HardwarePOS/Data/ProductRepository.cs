@@ -32,7 +32,7 @@ public class ProductRepository
                     OR p.ProductName LIKE N'%' + @Search + N'%'
                     OR p.ProductDetails LIKE N'%' + @Search + N'%'
                   )
-            ORDER BY p.ProductName;
+            ORDER BY p.IsArchived DESC, p.ProductName;
             """;
         cmd.Parameters.AddWithValue("@IncludeArchived", includeArchived);
         cmd.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);

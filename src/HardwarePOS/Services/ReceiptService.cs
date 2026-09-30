@@ -66,8 +66,8 @@ public class ReceiptService
         var buttonBar = CreateActionButtons(invoiceNo, receipt, window.Close);
         var panel = new DockPanel { Background = PageBgBrush };
         DockPanel.SetDock(buttonBar, Dock.Bottom);
-        panel.Children.Add(scroll);
         panel.Children.Add(buttonBar);
+        panel.Children.Add(scroll);
         window.Content = panel;
         window.ShowDialog();
     }

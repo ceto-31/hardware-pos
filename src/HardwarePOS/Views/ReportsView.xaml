@@ -1,44 +1,293 @@
 <UserControl x:Class="HardwarePOS.Views.ReportsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:models="clr-namespace:HardwarePOS.Models"
+             Background="{StaticResource BgBrush}"
              UseLayoutRounding="True"
              SnapsToDevicePixels="True">
-    <Border Style="{StaticResource CardBorder}">
-        <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
-                <ComboBox Style="{StaticResource InlineDropdown}" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding ReportType}" Margin="0,0,16,0"/>
-                <ComboBox Style="{StaticResource InlineDropdown}" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding SelectedYear}" Margin="0,0,8,0"/>
-                <Button Content="Export PDF" Style="{StaticResource PrimaryButton}" Command="{Binding ExportPdfCommand}"/>
-            </StackPanel>
-            <TextBlock DockPanel.Dock="Top" Text="No data for this report." HorizontalAlignment="Center" Margin="0,20"
-                       Foreground="{StaticResource MutedBrush}"
-                       Visibility="{Binding HasRows, Converter={StaticResource InverseBoolToVis}}"/>
-            <Border DockPanel.Dock="Top" Height="260" Margin="0,0,0,10"
-                    Visibility="{Binding HasChart, Converter={StaticResource BoolToVis}}"
-                    UseLayoutRounding="True"
-                    SnapsToDevicePixels="True">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8">
+        <StackPanel>
+            <Border Style="{StaticResource ReportCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="{Binding ReportTitle}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                        <TextBlock Text="{Binding PeriodDescription}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedBrush}" FontSize="13"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Preview report" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ExportPdfCommand}" VerticalAlignment="Center" Margin="0"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource ReportCard}">
+                <StackPanel>
+                    <TextBlock Text="Sales" Style="{StaticResource ReportSummaryLabel}" Margin="0,0,0,6"/>
+                    <WrapPanel Margin="0,0,0,12">
+                        <RadioButton Content="Today's Sales" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Today}"/>
+                        <RadioButton Content="Daily" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Daily}"/>
+                        <RadioButton Content="Weekly" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Weekly}"/>
+                        <RadioButton Content="Monthly" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Monthly}"/>
+                        <RadioButton Content="Yearly" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Yearly}"/>
+                    </WrapPanel>
+
+                    <TextBlock Text="Other reports" Style="{StaticResource ReportSummaryLabel}" Margin="0,0,0,6"/>
+                    <WrapPanel Margin="0,0,0,14">
+                        <RadioButton Content="Stock In" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=StockIn}"/>
+                        <RadioButton Content="Stock Out" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=StockOut}"/>
+                        <RadioButton Content="Transactions" GroupName="ReportView" Style="{StaticResource SegmentedOption}"
+                                     IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Transactions}"/>
+                    </WrapPanel>
+
+                    <CheckBox Content="Single-day detail (transactions and products)" IsChecked="{Binding SingleDayDetail}"
+                              Visibility="{Binding IsDaily,Converter={StaticResource BoolToVis}}" Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsToday,Converter={StaticResource BoolToVis}}" Margin="0,0,0,12">
+                        <TextBlock Text="All store sales for today, including refunds and top products." VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" Margin="0,0,12,0"/>
+                        <Button Content="Refresh today" Command="{Binding RetryCommand}" Style="{StaticResource SecondaryButton}"/>
+                    </StackPanel>
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsDaily, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="From" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding DailyFrom}" Width="156"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding ShowDailyTo, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="To" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding DailyTo}" Width="156"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsWeekly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding WeeklyYear}"/>
+                            <TextBlock Text="Weeks run Monday to Sunday." Margin="0,4,0,0" FontSize="12"
+                                       Foreground="{StaticResource MutedBrush}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsMonthly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding MonthlyYear}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsYearly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="From year" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding YearFrom}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsYearly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="To year" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding YearTo}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsOther, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding OtherYear}"/>
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding ValidationMessage}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Foreground="{StaticResource DangerBrush}" FontSize="13"
+                               Visibility="{Binding HasValidation, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ReportCard}" Background="#FEF2F2" BorderBrush="#FECACA"
+                    Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="{Binding ChartTitle}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                    <lvc:CartesianChart x:Name="ReportChart"
-                                        Series="{Binding ChartSeries}"
-                                        XAxes="{Binding ChartXAxes}"
-                                        YAxes="{Binding ChartYAxes}"
-                                        TooltipPosition="Top"
-                                        UseLayoutRounding="True"
-                                        SnapsToDevicePixels="True"/>
+                    <Button DockPanel.Dock="Right" Content="Retry" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding RetryCommand}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="The report could not be loaded." FontWeight="SemiBold" Foreground="#991B1B"/>
+                        <TextBlock Text="{Binding ErrorMessage}" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="#991B1B"/>
+                    </StackPanel>
                 </DockPanel>
             </Border>
-            <DataGrid x:Name="ReportGrid"
-                      Style="{StaticResource ModernDataGrid}"
-                      ItemsSource="{Binding Rows}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Date" Binding="{Binding Col1}" Width="*"/>
-                    <DataGridTextColumn Header="Total Sales" Binding="{Binding Col2}" Width="*"/>
-                    <DataGridTextColumn Header="Column 3" Binding="{Binding Col3}" Width="*"/>
-                    <DataGridTextColumn Header="Column 4" Binding="{Binding Col4}" Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </DockPanel>
-    </Border>
+
+            <Grid Visibility="{Binding ShowResults, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding SummaryItems}" Margin="0,0,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource WidthToColumns}, ConverterParameter=4}"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ReportSummaryCard}" Margin="0,0,12,12">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource ReportSummaryLabel}"/>
+                                        <TextBlock Text="{Binding Value}" Style="{StaticResource ReportSummaryValue}"/>
+                                        <TextBlock Text="{Binding Detail}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Detail}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Style="{StaticResource ReportCard}" Visibility="{Binding ShowChartSection, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ChartTitle}" FontWeight="SemiBold" FontSize="15"
+                                       Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"
+                                       Visibility="{Binding HasChart, Converter={StaticResource BoolToVis}}"/>
+                            <ContentControl x:Name="ChartHost" Height="220"
+                                            Visibility="{Binding HasChart, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Text="{Binding ChartCaption}" Margin="0,8,0,0" TextWrapping="Wrap"
+                                       FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                       Visibility="{Binding HasChartCaption, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Text="{Binding ChartEmptyMessage}" Margin="0,12" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Visibility="{Binding ShowChartEmpty, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource ReportCard}" Margin="0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding TableTitle}" FontWeight="SemiBold" FontSize="15"
+                                           Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                            Visibility="{Binding IsSalesView, Converter={StaticResource BoolToVis}}">
+                                    <CheckBox Content="Hide zero-activity periods" IsChecked="{Binding HideZeroRows}"
+                                              VerticalAlignment="Center" FontSize="13"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="Only changes the rows shown. Totals and the chart use the full period."
+                                       Margin="0,0,0,8" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                                       Visibility="{Binding IsSalesView, Converter={StaticResource BoolToVis}}"/>
+
+                            <DataGrid x:Name="SalesGrid"
+                                      Style="{StaticResource ReportsDataGrid}"
+                                      ItemsSource="{Binding VisibleSalesRows}"
+                                      Visibility="{Binding IsSalesView, Converter={StaticResource BoolToVis}}">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Width="*" MinWidth="220">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FullLabel}" Style="{StaticResource ReportsText}"/>
+                                                    <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4" VerticalAlignment="Center"
+                                                            Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#F1F5F9"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static models:SalesPeriodStatus.ToDate}">
+                                                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static models:SalesPeriodStatus.Partial}">
+                                                                        <Setter Property="Background" Value="#FEF3C7"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="SemiBold">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#475569"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:SalesPeriodStatus.ToDate}">
+                                                                            <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:SalesPeriodStatus.Partial}">
+                                                                            <Setter Property="Foreground" Value="#A16207"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Sales before refunds" Binding="{Binding SalesDisplay}" Width="170" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    <DataGridTextColumn Header="Refunds" Binding="{Binding RefundDisplay}" Width="130" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    <DataGridTextColumn Header="Net Sales" Binding="{Binding AmountDisplay}" Width="150"
+                                                        HeaderStyle="{StaticResource ReportsNumericHeader}"
+                                                        ElementStyle="{StaticResource ReportsNumericText}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <DataGrid x:Name="OtherGrid"
+                                      Style="{StaticResource ReportsDataGrid}"
+                                      ItemsSource="{Binding OtherRows}"
+                                      Visibility="{Binding IsSalesView, Converter={StaticResource InverseBoolToVis}}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding Col1}" Width="160" MinWidth="120"
+                                                        ElementStyle="{StaticResource ReportsText}"/>
+                                    <DataGridTextColumn Binding="{Binding Col2}" Width="*" MinWidth="140"
+                                                        ElementStyle="{StaticResource ReportsText}"/>
+                                    <DataGridTextColumn Binding="{Binding Col3}" Width="*" MinWidth="110"
+                                                        ElementStyle="{StaticResource ReportsText}"/>
+                                    <DataGridTextColumn Binding="{Binding Col4}" Width="160" MinWidth="110"
+                                                        ElementStyle="{StaticResource ReportsText}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="{Binding FooterText}" Margin="0,8,0,0" FontSize="12"
+                                       Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+                            <StackPanel Visibility="{Binding ShowDailyDetails,Converter={StaticResource BoolToVis}}" Margin="0,18,0,0">
+                                <TextBlock Text="Transactions and products for this day" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding DailyDetails}" Style="{StaticResource ReportsDataGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Invoice" Binding="{Binding Invoice}" Width="180"/>
+                                        <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                                        <DataGridTextColumn Header="Qty" Binding="{Binding Quantity,StringFormat=0.###}" Width="80"/>
+                                        <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="70"/>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Event}" Width="80"/>
+                                        <DataGridTextColumn Header="Amount" Binding="{Binding Amount,StringFormat=₱{0:N2}}" Width="130" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                            <StackPanel Visibility="{Binding IsSalesView,Converter={StaticResource BoolToVis}}" Margin="0,18,0,0">
+                                <TextBlock Text="Top 10 products for the selected period" FontSize="16" FontWeight="SemiBold"/>
+                                <CheckBox Content="Rank by net quantity instead of sales amount" IsChecked="{Binding RankByQuantity}" Margin="0,8,0,4"/>
+                                <TextBlock Text="{Binding ProductRankingNote}" TextWrapping="Wrap" Foreground="#64748B" Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding TopProducts}" Style="{StaticResource ReportsDataGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                                        <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="80"/>
+                                        <DataGridTextColumn Header="Sold" Binding="{Binding Sold,StringFormat=0.###}" Width="90"/>
+                                        <DataGridTextColumn Header="Returned" Binding="{Binding Returned,StringFormat=0.###}" Width="90"/>
+                                        <DataGridTextColumn Header="Net qty" Binding="{Binding NetQuantity,StringFormat=0.###}" Width="90"/>
+                                        <DataGridTextColumn Header="Net sales" Binding="{Binding NetSales,StringFormat=₱{0:N2}}" Width="140" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border Background="#F8FAFC" Opacity="0.72"
+                        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="Loading report…" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}"
+                           Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"/>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -57,6 +57,19 @@ public class StatusToBadgeBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+public class EnumEqualsConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value?.ToString() == parameter?.ToString();
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is true && parameter is not null && Enum.TryParse(targetType, parameter.ToString(), out var parsed))
+            return parsed!;
+        return Binding.DoNothing;
+    }
+}
+
 public class EqualityMultiConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

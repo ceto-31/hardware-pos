@@ -4,11 +4,21 @@ using CommunityToolkit.Mvvm.Input;
 using HardwarePOS.Data;
 using HardwarePOS.Models;
 using HardwarePOS.Services;
+using HardwarePOS.Helpers;
 
 namespace HardwarePOS.ViewModels;
 
 public partial class ArchivesViewModel : ObservableObject
 {
+    public PagedList<Product> ProductsPage { get; } = new();
+    public PagedList<Supplier> SuppliersPage { get; } = new();
+    public ArchivesViewModel()
+    {
+        ProductsPage.PageChanged += () => SelectedProduct = null;
+        SuppliersPage.PageChanged += () => SelectedSupplier = null;
+    }
+    partial void OnArchivedProductsChanged(ObservableCollection<Product> value) => ProductsPage.SetSource(value);
+    partial void OnArchivedSuppliersChanged(ObservableCollection<Supplier> value) => SuppliersPage.SetSource(value);
     private readonly ProductRepository _products = new();
     private readonly SupplierRepository _suppliers = new();
     private readonly ActivityRepository _activity = new();

@@ -336,15 +336,15 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void VoidSelectedSale(SaleHistoryRow? sale)
     {
-        if (!SessionManager.IsAdmin)
-        {
-            DialogService.ShowWarning("Admin access required.", "4KV Hardware");
-            return;
-        }
-
         sale ??= SelectedSale;
         if (sale is null || sale.IsVoided)
             return;
+
+        if (!SalePermissions.CanVoid(sale.CashierId))
+        {
+            DialogService.ShowWarning("Cashiers can void only their own transactions.", "Void Sale");
+            return;
+        }
 
         SelectedSale = sale;
 

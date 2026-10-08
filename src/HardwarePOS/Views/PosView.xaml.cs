@@ -24,18 +24,18 @@ public partial class PosView : UserControl
             return;
 
         button.ContextMenu.DataContext = sale;
-        var adminVisibility = SessionManager.IsAdmin ? Visibility.Visible : Visibility.Collapsed;
+        var voidVisibility = SalePermissions.CanVoid(sale.CashierId) ? Visibility.Visible : Visibility.Collapsed;
         foreach (var child in button.ContextMenu.Items)
         {
             switch (child)
             {
                 case MenuItem { Name: "VoidMenuItem" } item:
-                    item.Visibility = adminVisibility;
-                    item.IsEnabled = !sale.IsVoided;
-                    item.ToolTip = sale.IsVoided ? "This sale is already voided." : null;
+                    item.Visibility = voidVisibility;
+                    item.IsEnabled = !sale.IsVoided && sale.RefundedAmount == 0;
+                    item.ToolTip = sale.IsVoided ? "This sale is already voided." : sale.RefundedAmount > 0 ? "This sale already has customer returns." : "Void this transaction and restore its stock.";
                     break;
                 case Separator { Name: "VoidDivider" } separator:
-                    separator.Visibility = adminVisibility;
+                    separator.Visibility = voidVisibility;
                     break;
             }
         }

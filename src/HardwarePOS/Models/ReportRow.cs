@@ -14,6 +14,7 @@ public class StockInReportRow
     public DateTime MovementDate { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public string? SupplierName { get; set; }
+    public string Unit { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
 }
 
@@ -21,6 +22,7 @@ public class StockOutReportRow
 {
     public DateTime MovementDate { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string Unit { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public string? Reason { get; set; }
 }

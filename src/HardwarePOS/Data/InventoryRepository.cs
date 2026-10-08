@@ -11,10 +11,14 @@ public class InventoryRepository
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var tx = conn.BeginTransaction();
+        BatchStock.RequireAdmin();
+        HardwarePOS.Services.InventoryRules.ValidateQuantity(quantity);
 
         try
         {
-            EnsureActiveProduct(conn, tx, productId);
+            EnsureActiveProduct(conn, tx, productId, quantity);
+            using (var supplier = BatchStock.Command(conn,tx,"SELECT COUNT(*) FROM dbo.Suppliers WHERE SupplierId=@Id AND IsActive=1 AND IsArchived=0;",("@Id",supplierId)))
+                if ((int)supplier.ExecuteScalar()! != 1) throw new InvalidOperationException("Select an active supplier.");
 
             int stockInId;
             using (var cmd = conn.CreateCommand())
@@ -57,6 +61,7 @@ public class InventoryRepository
                 newBalance = (decimal)cmd.ExecuteScalar()!;
             }
 
+            BatchStock.Add(conn, tx, productId, supplierId, stockInId, quantity, dateReceived.Date, expirationDate, "Supplier delivery");
             InsertLedger(conn, tx, productId, "IN", quantity, newBalance, stockInId, remarks, createdBy);
             tx.Commit();
         }
@@ -68,15 +73,17 @@ public class InventoryRepository
     }
 
     public void StockOut(int productId, decimal quantity, string reason, DateTime dateOut,
-        string? remarks, int? createdBy)
+        string? remarks, int? createdBy, int? batchId = null)
     {
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var tx = conn.BeginTransaction();
+        BatchStock.RequireAdmin();
+        HardwarePOS.Services.InventoryRules.ValidateQuantity(quantity);
 
         try
         {
-            EnsureActiveProduct(conn, tx, productId);
+            EnsureActiveProduct(conn, tx, productId, quantity);
 
             decimal currentStock;
             using (var cmd = conn.CreateCommand())
@@ -132,6 +139,15 @@ public class InventoryRepository
                 newBalance = (decimal)cmd.ExecuteScalar()!;
             }
 
+            foreach (var allocation in BatchStock.Take(conn, tx, productId, quantity, batchId))
+            {
+                using var allocationCmd = BatchStock.Command(conn, tx,
+                    "INSERT dbo.StockOutAllocations(StockOutId,BatchId,Quantity) VALUES(@Id,@Batch,@Qty);",
+                    ("@Id",stockOutId),("@Batch",allocation.BatchId),("@Qty",allocation.Quantity));
+                allocationCmd.ExecuteNonQuery();
+                if (reason == "Damaged") BatchStock.AddBadStock(conn,tx,productId,allocation.BatchId,null,allocation.Quantity,
+                    string.IsNullOrWhiteSpace(remarks)?"Damaged stock":remarks,createdBy);
+            }
             InsertLedger(conn, tx, productId, "OUT", -quantity, newBalance, stockOutId,
                 $"{reason}: {remarks}".Trim(' ', ':'), createdBy);
             tx.Commit();
@@ -193,7 +209,7 @@ public class InventoryRepository
                 COALESCE(si.DateReceived, CAST(l.CreatedAt AS date)) AS MovementDate,
                 p.ProductName,
                 s.CompanyName,
-                COALESCE(si.Quantity, l.QtyChange) AS Quantity
+                COALESCE(si.Quantity, l.QtyChange) AS Quantity, p.UnitOfMeasure
             FROM dbo.InventoryLedger l
             INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
             LEFT JOIN dbo.StockIns si ON si.StockInId = l.ReferenceId
@@ -212,7 +228,7 @@ public class InventoryRepository
                 MovementDate = reader.GetDateTime(0),
                 ProductName = reader.GetString(1),
                 SupplierName = reader.IsDBNull(2) ? null : reader.GetString(2),
-                Quantity = reader.GetDecimal(3)
+                Quantity = reader.GetDecimal(3), Unit=reader.GetString(4)
             });
         }
         return list;
@@ -229,7 +245,7 @@ public class InventoryRepository
                 COALESCE(so.DateOut, CAST(l.CreatedAt AS date)) AS MovementDate,
                 p.ProductName,
                 ABS(l.QtyChange) AS Quantity,
-                COALESCE(so.Reason, l.Remarks) AS Reason
+                COALESCE(so.Reason, l.Remarks) AS Reason, p.UnitOfMeasure
             FROM dbo.InventoryLedger l
             INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
             LEFT JOIN dbo.StockOuts so ON so.StockOutId = l.ReferenceId
@@ -247,26 +263,27 @@ public class InventoryRepository
                 MovementDate = reader.GetDateTime(0),
                 ProductName = reader.GetString(1),
                 Quantity = reader.GetDecimal(2),
-                Reason = reader.IsDBNull(3) ? null : reader.GetString(3)
+                Reason = reader.IsDBNull(3) ? null : reader.GetString(3), Unit=reader.GetString(4)
             });
         }
         return list;
     }
 
-    private static void EnsureActiveProduct(SqlConnection conn, SqlTransaction tx, int productId)
+    private static void EnsureActiveProduct(SqlConnection conn, SqlTransaction tx, int productId, decimal quantity)
     {
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText = """
-            SELECT IsArchived FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
+            SELECT IsArchived,AllowsFractional FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
             WHERE ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
-        var result = cmd.ExecuteScalar();
-        if (result is null)
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
             throw new InvalidOperationException("Product not found.");
-        if ((bool)result)
+        if (reader.GetBoolean(0))
             throw new InvalidOperationException("Cannot move stock for an archived product. Restore it first.");
+        HardwarePOS.Services.InventoryRules.ValidateQuantity(quantity,reader.GetBoolean(1));
     }
 
     private static void InsertLedger(SqlConnection conn, SqlTransaction tx, int productId,

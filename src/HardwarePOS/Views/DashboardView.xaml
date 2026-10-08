@@ -1,718 +1,209 @@
 <UserControl x:Class="HardwarePOS.Views.DashboardView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
-    <UserControl.Resources>
-        <!-- Empty-state text: hidden by default, shown by a DataTrigger on the collection count. -->
-        <Style x:Key="DashboardEmptyText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Visibility" Value="Collapsed"/>
-        </Style>
-
-        <!-- Card header: title on the left (ellipsis when tight), action docked right, fixed gap. -->
-        <Style x:Key="DashboardCardHeader" TargetType="DockPanel">
-            <Setter Property="DockPanel.Dock" Value="Top"/>
-            <Setter Property="LastChildFill" Value="True"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
-            <Setter Property="MinHeight" Value="24"/>
-        </Style>
-        <Style x:Key="DashboardCardAction" TargetType="Button" BasedOn="{StaticResource DashboardViewAll}">
-            <Setter Property="DockPanel.Dock" Value="Right"/>
-            <Setter Property="Margin" Value="12,0,0,0"/>
-        </Style>
-
-        <!-- Row inside list cards -->
-        <Style x:Key="DashboardListRow" TargetType="Grid">
-            <Setter Property="Margin" Value="0,0,0,12"/>
-        </Style>
-        <Style x:Key="DashboardRowTitle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="LineHeight" Value="18"/>
-            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
-            <Setter Property="MaxHeight" Value="36"/>
-        </Style>
-        <Style x:Key="DashboardRowSubtitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
-            <Setter Property="Margin" Value="0,2,0,0"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-        </Style>
-        <Style x:Key="DashboardRowValue" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="TextAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="12,0,0,0"/>
-        </Style>
-        <Style x:Key="DashboardThumb" TargetType="Border">
-            <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Background" Value="#F1F5F9"/>
-            <Setter Property="ClipToBounds" Value="True"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,0,12,0"/>
-        </Style>
-        <Style x:Key="DashboardBadge" TargetType="Border" BasedOn="{StaticResource StatusBadge}">
-            <Setter Property="Margin" Value="12,0,0,0"/>
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-        </Style>
-        <Style x:Key="DashboardBadgeText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-
-        <!-- Summary card key/value line -->
-        <Style x:Key="DashboardSummaryRow" TargetType="Border">
-            <Setter Property="Padding" Value="0,10"/>
-            <Setter Property="BorderBrush" Value="#F1F5F9"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        </Style>
-        <Style x:Key="DashboardSummaryLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-        </Style>
-
-        <!-- Responsive column counts: 4 → 2 → 1 (admin) or 2 → 1 (cashier) for the alerts row -->
-        <Style x:Key="AlertsRowGrid" TargetType="UniformGrid">
-            <Setter Property="Columns"
-                    Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=4}"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsAdmin}" Value="False">
-                    <Setter Property="Columns"
-                            Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel>
-
-            <!-- Page header -->
-            <Border Style="{StaticResource DashboardCard}" Padding="18,14">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding CurrentDateTime}" FontSize="18" FontWeight="SemiBold"
-                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding WelcomeMessage}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                        <TextBlock Text="{Binding UserDisplay}" Foreground="{StaticResource MutedBrush}"
-                                   FontSize="13" HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- ROW 1: KPI cards (admin) -->
-            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
-                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=4}">
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DBEAFE">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconCart}" Fill="{StaticResource PrimaryBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TODAY'S SALES"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}"
-                                       Text="{Binding TodaySales, StringFormat=₱{0:N2}}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#DCFCE7">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconTrend}" Fill="{StaticResource SuccessBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TOTAL TRANSACTIONS"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding TodayTransactions}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource AccentBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="TOTAL ITEMS SOLD"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}"
-                                       Text="{Binding TodayItemsSold, StringFormat=N0}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#F3E8FF">
-                            <TextBlock Text="₱" FontSize="22" FontWeight="SemiBold" Foreground="#7C3AED"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="GROSS PROFIT"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}"
-                                       Text="{Binding TodayGrossProfit, StringFormat=₱{0:N2}}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </UniformGrid>
-
-            <!-- ROW 1: KPI cards (cashier) -->
-            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVis}}"
-                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=3}">
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEF3C7">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource WarningBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="LOW STOCK ITEMS"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding LowStockCount}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FEE2E2">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource DangerBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="OUT OF STOCK"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding OutOfStockCount}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource DashboardCard}" MinHeight="100">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource DashboardKpiIcon}" Background="#FFEDD5">
-                            <Viewbox Width="22" Height="22">
-                                <Path Data="{StaticResource IconBox}" Fill="{StaticResource AccentBrush}"/>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource DashboardKpiTitle}" Text="EXPIRING SOON"/>
-                            <TextBlock Style="{StaticResource DashboardKpiValue}" Text="{Binding ExpiringSoonCount}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </UniformGrid>
-
-            <!-- ROW 2: Sales Overview + Top Selling Items (admin) -->
-            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
-                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}">
-                <Border Style="{StaticResource DashboardCard}">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <ComboBox DockPanel.Dock="Right" Style="{StaticResource InlineDropdown}" Margin="12,0,0,0"
-                                      ItemsSource="{Binding ChartRangeOptions}"
-                                      SelectedItem="{Binding SelectedChartRange}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales Overview"/>
-                        </DockPanel>
-                        <lvc:CartesianChart Height="270"
-                                            Series="{Binding OverviewSeries}"
-                                            XAxes="{Binding OverviewXAxes}"
-                                            YAxes="{Binding YAxes}"
-                                            LegendPosition="Hidden"
-                                            TooltipPosition="Top"/>
-                    </DockPanel>
-                </Border>
-
-                <Border Style="{StaticResource DashboardCard}">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
-                                    Command="{Binding DataContext.NavigateProductsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Top Selling Items"/>
-                        </DockPanel>
-                        <Grid>
-                            <TextBlock Text="No products sold yet">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding TopProducts.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding TopProducts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Style="{StaticResource DashboardListRow}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="24" Height="24" CornerRadius="12" Background="#EFF6FF"
-                                                    VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="{Binding Rank}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <Border Grid.Column="1" Style="{StaticResource DashboardThumb}">
-                                                <Grid>
-                                                    <Viewbox Width="14" Height="14">
-                                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
-                                                    </Viewbox>
-                                                    <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
-                                                           Stretch="UniformToFill"/>
-                                                </Grid>
-                                            </Border>
-                                            <TextBlock Grid.Column="2" Style="{StaticResource DashboardRowTitle}"
-                                                       Text="{Binding ProductName}" ToolTip="{Binding ProductName}"
-                                                       VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="3" Style="{StaticResource DashboardRowValue}"
-                                                       Text="{Binding QtyLabel}" MinWidth="64"
-                                                       FontWeight="Normal" FontSize="13" Foreground="{StaticResource MutedBrush}"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-            </UniformGrid>
-
-            <!-- ROW 3: Low Stock / Expiring Soon / Active Discounts / Recent Transactions -->
-            <UniformGrid Style="{StaticResource AlertsRowGrid}">
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
-                                    Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Low Stock Alerts"/>
-                        </DockPanel>
-                        <Grid>
-                            <TextBlock Text="All stock levels look healthy">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding InventoryAlerts.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding InventoryAlerts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Style="{StaticResource DashboardListRow}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Style="{StaticResource DashboardThumb}">
-                                                <Grid>
-                                                    <Viewbox Width="14" Height="14">
-                                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
-                                                    </Viewbox>
-                                                    <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
-                                                           Stretch="UniformToFill"/>
-                                                </Grid>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
-                                                           Text="{Binding ProductName}" ToolTip="{Binding ProductName}"/>
-                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}">
-                                                    <Run Text="{Binding StockQty, Mode=OneWay, StringFormat=N0}"/>
-                                                    <Run Text="{Binding UnitOfMeasure, Mode=OneWay}"/>
-                                                </TextBlock>
-                                            </StackPanel>
-                                            <Border Grid.Column="2">
-                                                <Border.Style>
-                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
-                                                        <Setter Property="Background" Value="#FEF3C7"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding AlertBadge}" Value="Critical">
-                                                                <Setter Property="Background" Value="#FEE2E2"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="{Binding AlertBadge}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
-                                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding AlertBadge}" Value="Critical">
-                                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Border>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
-                                    Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Expiring Soon"/>
-                        </DockPanel>
-                        <Grid>
-                            <TextBlock Text="No products expiring soon">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ExpirationAlerts.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding ExpirationAlerts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Style="{StaticResource DashboardListRow}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Style="{StaticResource DashboardThumb}">
-                                                <Grid>
-                                                    <Viewbox Width="14" Height="14">
-                                                        <Path Data="{StaticResource IconCamera}" Fill="#94A3B8"/>
-                                                    </Viewbox>
-                                                    <Image Source="{Binding ImagePath, Converter={StaticResource ProductImage}}"
-                                                           Stretch="UniformToFill"/>
-                                                </Grid>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
-                                                           Text="{Binding ProductName}" ToolTip="{Binding ProductName}"/>
-                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding ExpirationDisplay}"/>
-                                            </StackPanel>
-                                            <Border Grid.Column="2">
-                                                <Border.Style>
-                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
-                                                        <Setter Property="Background" Value="#FFEDD5"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
-                                                                <Setter Property="Background" Value="#FEE2E2"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="{Binding ExpirationBadge}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
-                                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ExpirationBadge}" Value="Expired">
-                                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Border>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280"
-                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
-                                    Command="{Binding DataContext.NavigateDiscountsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Active Discounts"
-                                       ToolTip="Active and scheduled discounts"/>
-                        </DockPanel>
-                        <Grid>
-                            <TextBlock Text="No active discounts">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ScheduledDiscounts.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding ScheduledDiscounts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Style="{StaticResource DashboardListRow}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Style="{StaticResource DashboardRowTitle}"
-                                                           Text="{Binding DiscountName}" ToolTip="{Binding DiscountName}"/>
-                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding SummaryDisplay}"/>
-                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}" Text="{Binding ScheduleDisplay}"/>
-                                            </StackPanel>
-                                            <Border Grid.Column="1">
-                                                <Border.Style>
-                                                    <Style TargetType="Border" BasedOn="{StaticResource DashboardBadge}">
-                                                        <Setter Property="Background" Value="#DCFCE7"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
-                                                                <Setter Property="Background" Value="#DBEAFE"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="{Binding StatusLabel}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardBadgeText}">
-                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding StatusLabel}" Value="Scheduled">
-                                                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Border>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280"
-                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Recent Transactions"/>
-                        </DockPanel>
-                        <Grid>
-                            <TextBlock Text="No transactions yet">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DashboardEmptyText}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding RecentSales.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding RecentSales}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Style="{StaticResource DashboardListRow}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="32" Height="32" CornerRadius="8" Background="#EFF6FF"
-                                                    Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <Viewbox Width="16" Height="16">
-                                                    <Path Data="{StaticResource IconReceipt}" Fill="{StaticResource PrimaryBrush}"/>
-                                                </Viewbox>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Style="{StaticResource DashboardRowTitle}" TextWrapping="NoWrap"
-                                                           Text="{Binding InvoiceNo}" ToolTip="{Binding InvoiceNo}"/>
-                                                <TextBlock Style="{StaticResource DashboardRowSubtitle}"
-                                                           Text="{Binding SaleDate, StringFormat=hh:mm tt}"/>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="2" Style="{StaticResource DashboardRowValue}"
-                                                       Text="{Binding TotalDue, StringFormat=₱{0:N2}}"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-            </UniformGrid>
-
-            <!-- ROW 4: Summary + Sales by Payment Method (admin) -->
-            <UniformGrid Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
-                         Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource WidthToColumns}, ConverterParameter=2}">
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <Button Content="View All" Style="{StaticResource DashboardCardAction}"
-                                    Command="{Binding DataContext.NavigateReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales Summary"/>
-                        </DockPanel>
-                        <StackPanel>
-                            <Border Style="{StaticResource DashboardSummaryRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Total revenue (all time)"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding TotalRevenue, StringFormat=₱{0:N2}}"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource DashboardSummaryRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Today's gross profit"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding TodayGrossProfit, StringFormat=₱{0:N2}}"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource DashboardSummaryRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Active products"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding TotalProducts, StringFormat=N0}"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource DashboardSummaryRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Suppliers"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding TotalSuppliers, StringFormat=N0}"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource DashboardSummaryRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Low stock items"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding LowStockCount, StringFormat=N0}"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource DashboardSummaryRow}" BorderThickness="0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource DashboardSummaryLabel}" Text="Out of stock"/>
-                                    <TextBlock Grid.Column="1" Style="{StaticResource DashboardRowValue}"
-                                               Text="{Binding OutOfStockCount, StringFormat=N0}"/>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </DockPanel>
-                </Border>
-
-                <Border Style="{StaticResource DashboardCard}" MinHeight="280">
-                    <DockPanel LastChildFill="True">
-                        <DockPanel Style="{StaticResource DashboardCardHeader}">
-                            <TextBlock Style="{StaticResource DashboardSectionTitle}" Text="Sales by Payment Method"/>
-                        </DockPanel>
-                        <Grid>
-                            <lvc:PieChart Series="{Binding PaymentSeries}"
-                                          LegendPosition="Bottom"
-                                          InitialRotation="-90"
-                                          Height="240"/>
-                            <!-- Centre label sits inside the donut; offset compensates for the legend below the ring. -->
-                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,28"
-                                        IsHitTestVisible="False">
-                                <TextBlock HorizontalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="12">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Cash"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding TodaySales}" Value="0">
-                                                    <Setter Property="Text" Value="No sales today"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock Text="{Binding TodaySales, StringFormat=₱{0:N2}}"
-                                           FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-                    </DockPanel>
-                </Border>
-            </UniformGrid>
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+ xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+ Background="{StaticResource BgBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+ <UserControl.Resources>
+  <Style x:Key="DashCard" TargetType="Border">
+   <Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E2E8F0"/><Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="20"/><Setter Property="Margin" Value="6"/>
+  </Style>
+  <Style x:Key="SectionHeading" TargetType="TextBlock">
+   <Setter Property="FontSize" Value="16"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#0F172A"/>
+  </Style>
+  <Style x:Key="Caption" TargetType="TextBlock">
+   <Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="#64748B"/><Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+  <Style x:Key="RowTitle" TargetType="TextBlock">
+   <Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#1E293B"/>
+   <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  </Style>
+  <Style x:Key="ListRow" TargetType="Border">
+   <Setter Property="Padding" Value="0,9"/><Setter Property="BorderBrush" Value="#F1F5F9"/><Setter Property="BorderThickness" Value="0,0,0,1"/>
+  </Style>
+  <Style x:Key="DashLink" TargetType="Button" BasedOn="{StaticResource OutlineButton}">
+   <Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="10,6"/><Setter Property="MinHeight" Value="30"/><Setter Property="Margin" Value="12,0,0,0"/>
+   <Setter Property="VerticalAlignment" Value="Top"/>
+  </Style>
+  <Style x:Key="EmptyNote" TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+   <Setter Property="Visibility" Value="Collapsed"/><Setter Property="TextAlignment" Value="Center"/><Setter Property="Margin" Value="24,36"/>
+   <Style.Triggers><Trigger Property="Tag"><Trigger.Value><sys:Int32>0</sys:Int32></Trigger.Value><Setter Property="Visibility" Value="Visible"/></Trigger></Style.Triggers>
+  </Style>
+ </UserControl.Resources>
+ <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Margin="10">
+   <Grid Margin="6,8,6,18">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel>
+     <TextBlock Text="Your store at a glance" FontSize="26" FontWeight="SemiBold" Foreground="#0F172A"/>
+     <TextBlock Text="{Binding CurrentDateTime}" Style="{StaticResource Caption}" Margin="0,6,0,0"/>
+     <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0"><Run Text="{Binding WelcomeMessage}"/><Run Text=" · "/><Run Text="{Binding UserDisplay}"/></TextBlock>
+    </StackPanel>
+    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Content="Sales reports" Style="{StaticResource OutlineButton}" Command="{Binding DataContext.NavigateReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,0"/>
+      <Button Content="+ New sale" Style="{StaticResource PrimaryButton}" Command="{Binding DataContext.NavigatePosCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+     </StackPanel>
+     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+      <TextBlock Text="{Binding LastUpdated}" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+      <Button Content="Refresh" Command="{Binding LoadCommand}" Style="{StaticResource LinkButton}" Margin="12,0,0,0" FontSize="12"/>
+     </StackPanel>
+    </StackPanel>
+   </Grid>
+   <UniformGrid Columns="{Binding ActualWidth,RelativeSource={RelativeSource AncestorType=StackPanel},Converter={StaticResource WidthToColumns},ConverterParameter=4}">
+    <Border Style="{StaticResource DashCard}" Background="#2563EB" BorderBrush="#2563EB">
+     <StackPanel>
+      <TextBlock Text="Today's net sales" FontSize="13" Foreground="#DBEAFE"/>
+      <TextBlock Text="{Binding TodaySales, StringFormat=₱{0:N2}}" FontSize="30" FontWeight="SemiBold" Foreground="White" Margin="0,10,0,6"/>
+      <TextBlock Text="After refunds · excludes voids" FontSize="11" Foreground="#DBEAFE" TextWrapping="Wrap"/>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DashCard}" >
+     <StackPanel>
+      <TextBlock Text="Today's transactions" FontSize="13" Foreground="#64748B"/>
+      <TextBlock Text="{Binding TodayTransactions, StringFormat=N0}" FontSize="30" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,10,0,6"/>
+      <TextBlock Text="Completed sales today" FontSize="11" Foreground="#64748B" TextWrapping="Wrap"/>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DashCard}" >
+     <StackPanel>
+      <TextBlock Text="Active products" FontSize="13" Foreground="#64748B"/>
+      <TextBlock Text="{Binding TotalProducts, StringFormat=N0}" FontSize="30" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,10,0,6"/>
+      <TextBlock Text="Products in your catalog" FontSize="11" Foreground="#64748B" TextWrapping="Wrap"/>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DashCard}" >
+     <StackPanel>
+      <TextBlock Text="Needs restocking" FontSize="13" Foreground="#64748B"/>
+      <TextBlock Text="{Binding StockAttentionCount, StringFormat=N0}" FontSize="30" FontWeight="SemiBold" Foreground="#B45309" Margin="0,10,0,6"/>
+      <TextBlock Text="Low stock + out of stock" FontSize="11" Foreground="#64748B" TextWrapping="Wrap"/>
+     </StackPanel>
+    </Border>
+   </UniformGrid>
+   <Grid x:Name="OverviewGrid" SizeChanged="OverviewGrid_SizeChanged" Margin="0,6,0,0" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="1.65*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Border x:Name="ChartCard" Style="{StaticResource DashCard}">
+     <StackPanel>
+      <DockPanel>
+       <ComboBox DockPanel.Dock="Right" Style="{StaticResource InlineDropdown}" ItemsSource="{Binding ChartRangeOptions}" SelectedItem="{Binding SelectedChartRange}" Margin="12,0,0,0"/>
+       <StackPanel><TextBlock Text="Sales performance" Style="{StaticResource SectionHeading}"/><TextBlock Text="{Binding ChartPeriodLabel}" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel>
+      </DockPanel>
+      <StackPanel Orientation="Horizontal" Margin="0,16,0,4">
+       <TextBlock Text="{Binding ChartTotal,StringFormat=₱{0:N2}}" FontSize="27" FontWeight="SemiBold" Foreground="#0F172A"/>
+       <TextBlock Text="net sales in this period" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="10,0,0,5"/>
+      </StackPanel>
+      <Grid Height="242" Margin="0,8,0,0">
+       <lvc:CartesianChart Series="{Binding OverviewSeries}" XAxes="{Binding OverviewXAxes}" YAxes="{Binding YAxes}" LegendPosition="Hidden" TooltipPosition="Top" Visibility="{Binding HasChartActivity,Converter={StaticResource BoolToVis}}"/>
+       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding HasChartActivity,Converter={StaticResource InverseBoolToVis}}">
+        <TextBlock Text="No net sales activity in this period" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
+        <TextBlock Text="Sales will appear here as transactions are completed." Style="{StaticResource Caption}" Margin="0,8,0,0" TextAlignment="Center"/>
+       </StackPanel>
+      </Grid>
+      <TextBlock Text="Net of refunds. Voided transactions are excluded." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+     </StackPanel>
+    </Border>
+    <Border x:Name="TopProductsCard" Grid.Column="1" Style="{StaticResource DashCard}">
+     <StackPanel>
+      <DockPanel Margin="0,0,0,16">
+<Button DockPanel.Dock="Right" Content="Reports" Style="{StaticResource DashLink}" Command="{Binding DataContext.NavigateReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+<StackPanel><TextBlock Text="Top products" Style="{StaticResource SectionHeading}"/><TextBlock Text="All time · ranked by net sales" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+      <TextBlock Text="No product sales yet. Completed sales will appear here." Style="{StaticResource EmptyNote}" Tag="{Binding TopProducts.Count}"/>
+      <ItemsControl ItemsSource="{Binding TopProducts}"><ItemsControl.ItemTemplate><DataTemplate>
+       <Border Style="{StaticResource ListRow}"><Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding Rank,StringFormat=00}" Foreground="#94A3B8" VerticalAlignment="Center" FontSize="12"/>
+        <StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
+         <TextBlock Text="{Binding ProductName}" Style="{StaticResource RowTitle}" ToolTip="{Binding ProductName}"/>
+         <TextBlock Text="{Binding QtyLabel}" Style="{StaticResource Caption}" Margin="0,3,0,0"/>
+         <ProgressBar Value="{Binding Revenue}" Maximum="{Binding DataContext.TopProductMaximum,RelativeSource={RelativeSource AncestorType=ItemsControl}}" Height="3" BorderThickness="0" Background="#EFF6FF" Foreground="#93C5FD" Margin="0,6,0,0"/>
         </StackPanel>
-    </ScrollViewer>
+        <TextBlock Grid.Column="2" Text="{Binding Revenue,StringFormat=₱{0:N2}}" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
+       </Grid></Border>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </StackPanel>
+    </Border>
+   </Grid>
+   <UniformGrid Columns="{Binding ActualWidth,RelativeSource={RelativeSource AncestorType=StackPanel},Converter={StaticResource WidthToColumns},ConverterParameter=2}" Margin="0,6,0,0">
+    <Border Style="{StaticResource DashCard}">
+     <StackPanel>
+      <DockPanel Margin="0,0,0,16">
+<Button DockPanel.Dock="Right" Content="Inventory" Style="{StaticResource DashLink}" Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"/>
+<StackPanel><TextBlock Text="Inventory attention" Style="{StaticResource SectionHeading}"/><TextBlock Text="Low stock and out-of-stock products" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+       <Border Background="#FFFBEB" CornerRadius="6" Padding="10,6" Margin="0,0,8,0"><TextBlock Foreground="#92400E" FontSize="12"><Run Text="{Binding LowStockCount}"/><Run Text=" low stock"/></TextBlock></Border>
+       <Border Background="#FEF2F2" CornerRadius="6" Padding="10,6"><TextBlock Foreground="#B91C1C" FontSize="12"><Run Text="{Binding OutOfStockCount}"/><Run Text=" out of stock"/></TextBlock></Border>
+      </StackPanel>
+      <TextBlock Text="Stock levels look good. No low-stock alerts." Style="{StaticResource EmptyNote}" Tag="{Binding InventoryAlerts.Count}"/>
+      <ItemsControl ItemsSource="{Binding InventoryAlerts}"><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource ListRow}"><Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+<Border Width="36" Height="36" CornerRadius="7" Background="#F1F5F9" Margin="0,0,12,0" VerticalAlignment="Center"><Grid><Viewbox Width="16" Height="16"><Path Data="{StaticResource IconBox}" Fill="#94A3B8"/></Viewbox><Image Source="{Binding ImagePath,Converter={StaticResource ProductImage}}" Stretch="UniformToFill"/></Grid></Border>
+<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock Text="{Binding ProductName}" Style="{StaticResource RowTitle}" ToolTip="{Binding ProductName}"/>
+<TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"><Run Text="{Binding StockQty,StringFormat=0.###}"/><Run Text=" "/><Run Text="{Binding UnitOfMeasure}"/><Run Text=" remaining"/></TextBlock></StackPanel>
+<Border Grid.Column="2" Background="#FEF3C7" CornerRadius="6" Padding="9,4" VerticalAlignment="Center"><TextBlock Text="{Binding StatusLabel}" Foreground="#92400E" FontSize="11" FontWeight="SemiBold"/></Border>
+</Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DashCard}">
+     <StackPanel>
+      <DockPanel Margin="0,0,0,16">
+<Button DockPanel.Dock="Right" Content="Reports" Style="{StaticResource DashLink}" Command="{Binding DataContext.NavigateReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+<StackPanel><TextBlock Text="Recent transactions" Style="{StaticResource SectionHeading}"/><TextBlock Text="Latest completed sales · before refunds" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+      <TextBlock Text="No completed transactions yet. Start a new sale to get going." Style="{StaticResource EmptyNote}" Tag="{Binding RecentSales.Count}"/>
+      <ItemsControl ItemsSource="{Binding RecentSales}"><ItemsControl.ItemTemplate><DataTemplate>
+       <Border Style="{StaticResource ListRow}"><Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Margin="0,0,16,0"><TextBlock Text="{Binding InvoiceNo}" Style="{StaticResource RowTitle}" ToolTip="{Binding InvoiceNo}"/>
+        <TextBlock Text="{Binding SaleDate,StringFormat=MMM d · h:mm tt}" Style="{StaticResource Caption}" Margin="0,4,0,0"/></StackPanel>
+        <TextBlock Grid.Column="1" Text="{Binding TotalDue,StringFormat=₱{0:N2}}" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
+       </Grid></Border>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </StackPanel>
+    </Border>
+   </UniformGrid>
+   <UniformGrid Columns="{Binding ActualWidth,RelativeSource={RelativeSource AncestorType=StackPanel},Converter={StaticResource WidthToColumns},ConverterParameter=2}">
+    <Border Style="{StaticResource DashCard}">
+     <StackPanel>
+      <DockPanel Margin="0,0,0,16">
+<Button DockPanel.Dock="Right" Content="Inventory" Style="{StaticResource DashLink}" Command="{Binding DataContext.NavigateInventoryCommand, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"/>
+<StackPanel><TextBlock Text="Expiry watch" Style="{StaticResource SectionHeading}"/><TextBlock Text="Expired products and items expiring within 30 days" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+      <TextBlock Text="No expiry alerts. Your tracked products are up to date." Style="{StaticResource EmptyNote}" Tag="{Binding ExpirationAlerts.Count}"/>
+      <ItemsControl ItemsSource="{Binding ExpirationAlerts}"><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource ListRow}"><Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+<Border Width="36" Height="36" CornerRadius="7" Background="#F1F5F9" Margin="0,0,12,0" VerticalAlignment="Center"><Grid><Viewbox Width="16" Height="16"><Path Data="{StaticResource IconBox}" Fill="#94A3B8"/></Viewbox><Image Source="{Binding ImagePath,Converter={StaticResource ProductImage}}" Stretch="UniformToFill"/></Grid></Border>
+<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock Text="{Binding ProductName}" Style="{StaticResource RowTitle}" ToolTip="{Binding ProductName}"/>
+<TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"><Run Text="{Binding ExpirationDisplay}"/></TextBlock></StackPanel>
+<Border Grid.Column="2" Background="#FEF3C7" CornerRadius="6" Padding="9,4" VerticalAlignment="Center"><TextBlock Text="{Binding ExpirationBadge}" Foreground="#92400E" FontSize="11" FontWeight="SemiBold"/></Border>
+</Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DashCard}" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}">
+     <StackPanel>
+      <DockPanel Margin="0,0,0,16">
+<Button DockPanel.Dock="Right" Content="Manage" Style="{StaticResource DashLink}" Command="{Binding DataContext.NavigateDiscountsCommand, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"/>
+<StackPanel><TextBlock Text="Discounts &amp; promotions" Style="{StaticResource SectionHeading}"/><TextBlock Text="Active and scheduled offers" Style="{StaticResource Caption}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+      <TextBlock Text="No active or scheduled promotions." Style="{StaticResource EmptyNote}" Tag="{Binding ScheduledDiscounts.Count}"/>
+      <ItemsControl ItemsSource="{Binding ScheduledDiscounts}"><ItemsControl.ItemTemplate><DataTemplate>
+       <Border Style="{StaticResource ListRow}"><Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Margin="0,0,12,0"><TextBlock Text="{Binding DiscountName}" Style="{StaticResource RowTitle}"/>
+         <TextBlock Text="{Binding SummaryDisplay}" Style="{StaticResource Caption}" Margin="0,3,0,0"/>
+         <TextBlock Text="{Binding ScheduleDisplay}" Style="{StaticResource Caption}" Margin="0,3,0,0"/>
+        </StackPanel>
+        <Border Grid.Column="1" Background="#EFF6FF" CornerRadius="6" Padding="9,4" VerticalAlignment="Center"><TextBlock Text="{Binding StatusLabel}" Foreground="#1D4ED8" FontSize="11"/></Border>
+       </Grid></Border>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </StackPanel>
+    </Border>
+   </UniformGrid>
+   <Border Style="{StaticResource DashCard}" Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}">
+    <UniformGrid Columns="{Binding ActualWidth,RelativeSource={RelativeSource AncestorType=Border},Converter={StaticResource WidthToColumns},ConverterParameter=3}">
+     <StackPanel Margin="0,6,16,6"><TextBlock Text="All-time net sales" Style="{StaticResource Caption}"/><TextBlock Text="{Binding TotalRevenue,StringFormat=₱{0:N2}}" Style="{StaticResource SectionHeading}" Margin="0,6,0,0"/></StackPanel>
+     <StackPanel Margin="0,6,16,6" ToolTip="Today's sold quantities × (unit sale price − current product cost). Before refunds and order discounts."><TextBlock Text="Today's estimated product margin" Style="{StaticResource Caption}"/><TextBlock Text="{Binding TodayGrossProfit,StringFormat=₱{0:N2}}" Style="{StaticResource SectionHeading}" Margin="0,6,0,0"/><TextBlock Text="Before refunds and order discounts" Style="{StaticResource Caption}" Margin="0,4,0,0"/></StackPanel>
+     <StackPanel Margin="0,6,0,6"><TextBlock Text="Suppliers" Style="{StaticResource Caption}"/><TextBlock Text="{Binding TotalSuppliers,StringFormat=N0}" Style="{StaticResource SectionHeading}" Margin="0,6,0,0"/></StackPanel>
+    </UniformGrid>
+   </Border>
+  </StackPanel>
+ </ScrollViewer>
 </UserControl>

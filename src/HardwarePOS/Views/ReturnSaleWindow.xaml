@@ -1,0 +1,32 @@
+<Window x:Class="HardwarePOS.Views.ReturnSaleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Customer return" Width="680" Height="610" MinWidth="580" MinHeight="540"
+        WindowStartupLocation="CenterOwner" Background="#F8FAFC">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+            <TextBlock Text="Customer return" FontSize="22" FontWeight="SemiBold"/>
+            <TextBlock x:Name="InvoiceText" Margin="0,6,0,0"/>
+            <TextBlock x:Name="DeadlineText" TextWrapping="Wrap" Margin="0,6,0,18"/>
+            <TextBlock Text="Item on original receipt" Style="{StaticResource FieldLabel}"/>
+            <ComboBox x:Name="ItemsBox" DisplayMemberPath="Display" SelectionChanged="Changed"/>
+            <TextBlock Text="Return quantity" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="QuantityBox" Text="1" TextChanged="Changed"/>
+            <TextBlock Text="Condition" Style="{StaticResource FieldLabel}"/>
+            <ComboBox x:Name="ConditionBox" SelectedIndex="0" SelectionChanged="Changed">
+                <ComboBoxItem Content="Usable"/><ComboBoxItem Content="Defective"/>
+            </ComboBox>
+            <TextBlock Text="Usable items return to saleable stock. Defective items go to BO." TextWrapping="Wrap" Foreground="#64748B" Margin="0,6,0,8"/>
+            <TextBlock Text="Reason" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="ReasonBox" Height="64" MaxLength="300" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="Changed"/>
+            <Border Background="#EFF6FF" Padding="12" Margin="0,16,0,12" CornerRadius="8">
+                <TextBlock x:Name="RefundText" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </Border>
+            <TextBlock Text="Refund uses the original amount paid, including allocated discounts and tax. Delivery attribution follows the original sale allocations." TextWrapping="Wrap" Foreground="#64748B"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                <Button Content="Close" Click="Close_Click" Style="{StaticResource SecondaryButton}"/>
+                <Button x:Name="SaveButton" Content="Record return and refund" Click="Save_Click" Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

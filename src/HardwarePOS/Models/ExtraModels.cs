@@ -56,6 +56,8 @@ public class SaleHistoryRow
     public decimal TotalDue { get; set; }
     public decimal CashTendered { get; set; }
     public decimal ChangeAmount { get; set; }
+    public decimal RefundedAmount { get; set; }
+    public decimal NetPaid => IsVoided ? 0 : TotalDue - RefundedAmount;
     public bool IsVoided { get; set; }
     public string? VoidReason { get; set; }
     public string OrderType { get; set; } = "Pickup";

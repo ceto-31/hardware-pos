@@ -41,6 +41,11 @@ public partial class TransactionDetailsWindow : Window
             ReasonText.Visibility = Visibility.Visible;
         }
 
+        if (!sale.IsVoided)
+        {
+            ReasonText.Text = $"Return deadline: {sale.SaleDate.AddDays(7):MMM d, yyyy h:mm tt}\nRefunded: ₱{sale.RefundedAmount:N2} · Net retained: ₱{sale.NetPaid:N2}";
+            ReasonText.Visibility=Visibility.Visible;
+        }
         foreach (var item in items)
         {
             var row = new Grid { Margin = new Thickness(0, 0, 0, 6) };
@@ -48,7 +53,7 @@ public partial class TransactionDetailsWindow : Window
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var name = new TextBlock
             {
-                Text = $"{item.ProductName}  × {item.Quantity:N0}",
+                Text = $"{item.ProductName}  × {item.Quantity:0.###} {item.UnitOfMeasure}",
                 FontSize = 13,
                 Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
                 TextTrimming = TextTrimming.CharacterEllipsis

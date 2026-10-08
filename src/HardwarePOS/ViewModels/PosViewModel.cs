@@ -173,6 +173,17 @@ public partial class PosViewModel : ObservableObject
         ApplyQuantity();
     }
 
+    [RelayCommand]
+    private void ReturnSelectedSale()
+    {
+        if(!SessionManager.IsAdmin) return;
+        var sale=SelectedSale;
+        if(sale is null) { DialogService.ShowInfo("Select a transaction first.","Returns"); return; }
+        if(sale.IsVoided) { DialogService.ShowWarning("Voided sales cannot be returned.","Returns"); return; }
+        ReturnSaleWindow.ShowFor(sale);
+        LoadHistory(); SearchProducts();
+    }
+
     private CartItem? GetTargetCartItem() => SelectedCartItem ?? Cart.LastOrDefault();
 
     [RelayCommand]

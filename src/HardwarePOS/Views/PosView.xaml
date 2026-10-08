@@ -325,6 +325,9 @@
                         <Button Grid.Column="1" Content="Preview Receipt" MinWidth="110"
                                 Style="{StaticResource SecondaryButton}" Command="{Binding PreviewSelectedReceiptCommand}"/>
                     </Grid>
+                    <Button DockPanel.Dock="Top" Content="Return selected transaction (within 7 days)" HorizontalAlignment="Left"
+                            Command="{Binding ReturnSelectedSaleCommand}" Style="{StaticResource SecondaryButton}"
+                            Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"/>
                     <DataGrid x:Name="HistoryGrid"
                               Style="{StaticResource ModernDataGrid}"
                               ItemsSource="{Binding SaleHistory}"

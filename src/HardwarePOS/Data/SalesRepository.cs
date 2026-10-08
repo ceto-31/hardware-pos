@@ -323,12 +323,13 @@ public class SalesRepository
         cmd.CommandText = """
             SELECT s.SaleId, s.InvoiceNo, s.SaleDate, u.FullName, s.Subtotal, s.TaxAmount,
                    s.DiscountAmount, s.TotalDue, s.CashTendered, s.ChangeAmount,
-                   s.IsVoided, s.VoidReason, s.OrderType, s.CustomerName, s.ContactNumber, s.DeliveryAddress
+                   s.IsVoided, s.VoidReason, s.OrderType, s.CustomerName, s.ContactNumber, s.DeliveryAddress,
+                   COALESCE((SELECT SUM(r.RefundAmount) FROM dbo.CustomerReturns r JOIN dbo.SaleItems si ON si.SaleItemId=r.SaleItemId WHERE si.SaleId=s.SaleId),0), s.CashierId
             FROM dbo.Sales s
             INNER JOIN dbo.Users u ON u.UserId = s.CashierId
             WHERE (@Year IS NULL OR YEAR(s.SaleDate) = @Year)
               AND (@Search IS NULL OR @Search = N'' OR s.InvoiceNo LIKE N'%' + @Search + N'%' OR u.FullName LIKE N'%' + @Search + N'%')
-            ORDER BY s.SaleDate DESC;
+            ORDER BY s.SaleDate DESC, s.SaleId DESC;
             """;
         cmd.Parameters.AddWithValue("@Year", (object?)year ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
@@ -352,7 +353,7 @@ public class SalesRepository
                 OrderType = reader.IsDBNull(12) ? "Pickup" : reader.GetString(12),
                 CustomerName = reader.IsDBNull(13) ? null : reader.GetString(13),
                 ContactNumber = reader.IsDBNull(14) ? null : reader.GetString(14),
-                DeliveryAddress = reader.IsDBNull(15) ? null : reader.GetString(15)
+                DeliveryAddress = reader.IsDBNull(15) ? null : reader.GetString(15), RefundedAmount = reader.GetDecimal(16)
             });
         }
         return list;

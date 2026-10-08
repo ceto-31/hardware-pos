@@ -12,6 +12,9 @@ namespace HardwarePOS.ViewModels;
 
 public partial class ProductsViewModel : ObservableObject
 {
+    public PagedList<Product> ProductsPage { get; } = new();
+    public ProductsViewModel() => ProductsPage.PageChanged += () => SelectedItem = null;
+    partial void OnItemsChanged(ObservableCollection<Product> value) => ProductsPage.SetSource(value);
     private readonly ProductRepository _products = new();
     private readonly SupplierRepository _suppliers = new();
     private readonly UnitRepository _units = new();

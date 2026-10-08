@@ -34,7 +34,7 @@
                 <DataGrid Style="{StaticResource ManagementDataGrid}"
                           RowHeight="{x:Static sys:Double.NaN}" MinRowHeight="68"
                           RowStyle="{StaticResource ProductGridRow}"
-                          ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}">
+                          ItemsSource="{Binding ProductsPage.Items}" helpers:Paging.GridSource="{Binding ProductsPage}" SelectedItem="{Binding SelectedItem}">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="Image" Width="80" MinWidth="80" CanUserResize="False">
                             <DataGridTemplateColumn.CellTemplate>
@@ -149,6 +149,7 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+                <views:PaginationBar DataContext="{Binding ProductsPage}"/>
             </StackPanel>
             </Border>
         </ScrollViewer>

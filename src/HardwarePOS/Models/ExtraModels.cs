@@ -46,6 +46,7 @@ public class CategorySalesRow
 
 public class SaleHistoryRow
 {
+    public int CashierId { get; set; }
     public int SaleId { get; set; }
     public string InvoiceNo { get; set; } = string.Empty;
     public DateTime SaleDate { get; set; }

@@ -180,6 +180,10 @@ public class SalesRepository
 
     public void VoidSale(int saleId, int voidedBy, string voidedByName, string reason)
     {
+        var actor = SessionManager.CurrentUser ?? throw new InvalidOperationException("Please log in before voiding a transaction.");
+        // Audit identity comes from the session, never from caller-supplied values.
+        voidedBy = actor.UserId;
+        voidedByName = actor.FullName;
         var storedReason = (reason ?? string.Empty).Trim();
         if (storedReason.Length == 0)
             throw new InvalidOperationException("A void reason is required.");
@@ -197,7 +201,7 @@ public class SalesRepository
             {
                 cmd.Transaction = tx;
                 cmd.CommandText = """
-                    SELECT InvoiceNo, IsVoided
+                    SELECT InvoiceNo, IsVoided, CashierId
                     FROM dbo.Sales WITH (UPDLOCK, ROWLOCK)
                     WHERE SaleId = @Id;
                     """;
@@ -205,21 +209,28 @@ public class SalesRepository
                 using var reader = cmd.ExecuteReader();
                 if (!reader.Read())
                     throw new InvalidOperationException("Sale not found.");
+                if (!SalePermissions.CanVoid(reader.GetInt32(2)))
+                    throw new InvalidOperationException("Cashiers can void only their own transactions.");
                 invoiceNo = reader.GetString(0);
                 if (reader.GetBoolean(1))
                     throw new InvalidOperationException("This sale has already been voided.");
             }
 
-            var lines = new List<(int ProductId, decimal Quantity)>();
+            using (var returned = BatchStock.Command(conn, tx,
+                "SELECT COUNT(*) FROM dbo.CustomerReturns r JOIN dbo.SaleItems si ON si.SaleItemId=r.SaleItemId WHERE si.SaleId=@Sale;", ("@Sale",saleId)))
+                if ((int)returned.ExecuteScalar()! > 0)
+                    throw new InvalidOperationException("This sale has customer returns. Return remaining items instead of voiding the sale.");
+
+            var lines = new List<(int ProductId, decimal Quantity, int ItemId)>();
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
                 cmd.CommandText = """
-                    SELECT si.ProductId, si.Quantity, p.ProductId
+                    SELECT si.ProductId, si.Quantity, p.ProductId, si.SaleItemId
                     FROM dbo.SaleItems si
                     LEFT JOIN dbo.Products p ON p.ProductId = si.ProductId
                     WHERE si.SaleId = @Id
-                    ORDER BY si.SaleItemId;
+                    ORDER BY si.ProductId,si.SaleItemId;
                     """;
                 cmd.Parameters.AddWithValue("@Id", saleId);
                 using var reader = cmd.ExecuteReader();
@@ -227,7 +238,7 @@ public class SalesRepository
                 {
                     if (reader.IsDBNull(2))
                         throw new InvalidOperationException($"Product #{reader.GetInt32(0)} no longer exists. The void was cancelled.");
-                    lines.Add((reader.GetInt32(0), reader.GetDecimal(1)));
+                    lines.Add((reader.GetInt32(0), reader.GetDecimal(1), reader.GetInt32(3)));
                 }
             }
 
@@ -243,11 +254,23 @@ public class SalesRepository
                         WHERE ProductId = @ProductId;
                         IF @@ROWCOUNT = 0
                             THROW 50004, 'Product not found while restoring stock.', 1;
-                        SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
+                        SELECT StockQty, AllowsFractional FROM dbo.Products WHERE ProductId = @ProductId;
                         """;
                     cmd.Parameters.AddWithValue("@Qty", line.Quantity);
                     cmd.Parameters.AddWithValue("@ProductId", line.ProductId);
                     newBalance = (decimal)cmd.ExecuteScalar()!;
+                }
+
+                using (var restore = BatchStock.Command(conn, tx, """
+                    UPDATE b SET RemainingQuantity=b.RemainingQuantity+a.Quantity
+                    FROM dbo.InventoryBatches b JOIN dbo.SaleAllocations a ON a.BatchId=b.BatchId
+                    WHERE a.SaleItemId=@Item;
+                    SELECT COALESCE(SUM(Quantity),0) FROM dbo.SaleAllocations WHERE SaleItemId=@Item;
+                    """, ("@Item",line.ItemId)))
+                {
+                    var tracked = (decimal)restore.ExecuteScalar()!;
+                    if (tracked < line.Quantity)
+                        BatchStock.Add(conn,tx,line.ProductId,null,null,line.Quantity-tracked,DateTime.Now,null,"Legacy void — supplier/delivery unknown");
                 }
 
                 using (var cmd = conn.CreateCommand())
@@ -338,7 +361,7 @@ public class SalesRepository
         {
             list.Add(new SaleHistoryRow
             {
-                SaleId = reader.GetInt32(0),
+                SaleId = reader.GetInt32(0), CashierId = reader.GetInt32(17),
                 InvoiceNo = reader.GetString(1),
                 SaleDate = reader.GetDateTime(2),
                 CashierName = reader.GetString(3),

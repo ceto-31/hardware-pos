@@ -120,7 +120,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavigateReports()
     {
-        if (!EnsureAdmin()) return;
+        if (!SessionManager.IsLoggedIn) return;
         ActiveNav = "Reports";
         HeaderTitle = "Reports";
         Reports.Load();

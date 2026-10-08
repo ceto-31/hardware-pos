@@ -1,6 +1,7 @@
 <UserControl x:Class="HardwarePOS.Views.InventoryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:HardwarePOS.Views" xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
              TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
     <UserControl.Resources>
         <Style x:Key="DropdownPlaceholder" TargetType="TextBlock">
@@ -224,7 +225,8 @@
                 <DockPanel>
                     <Button DockPanel.Dock="Top" Content="Refresh History" Style="{StaticResource PrimaryButton}"
                             Command="{Binding RefreshHistoryCommand}" HorizontalAlignment="Left" Margin="0,0,0,8"/>
-                    <DataGrid ItemsSource="{Binding History}">
+                    <views:PaginationBar DockPanel.Dock="Bottom" DataContext="{Binding HistoryPage}"/>
+                    <DataGrid ItemsSource="{Binding HistoryPage.Items}" helpers:Paging.GridSource="{Binding HistoryPage}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Date" Binding="{Binding CreatedAt, StringFormat=yyyy-MM-dd HH:mm}" Width="140"/>
                             <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
@@ -245,7 +247,8 @@
                     <ComboBox Width="260" ItemsSource="{Binding HistorySuppliers}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding DeliverySupplierFilter}"/>
                     <Button Content="Refresh" Command="{Binding RefreshDeliveriesCommand}" Style="{StaticResource SecondaryButton}"/>
                 </WrapPanel>
-                <DataGrid ItemsSource="{Binding Deliveries}" RowHeight="36">
+                <views:PaginationBar DockPanel.Dock="Bottom" DataContext="{Binding DeliveriesPage}"/>
+                <DataGrid ItemsSource="{Binding DeliveriesPage.Items}" helpers:Paging.GridSource="{Binding DeliveriesPage}" RowHeight="36">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Batch" Binding="{Binding BatchId}" Width="70"/>
                         <DataGridTextColumn Header="Received" Binding="{Binding ReceivedAt,StringFormat=MMM d yyyy}" Width="115"/>
@@ -279,7 +282,8 @@
                     </WrapPanel>
                     <TextBlock Text="These actions reduce BO only; they do not deduct saleable stock again." Foreground="#64748B"/>
                 </StackPanel>
-                <DataGrid ItemsSource="{Binding BadStock}" SelectedItem="{Binding SelectedBadStock}" RowHeight="36">
+                <views:PaginationBar DockPanel.Dock="Bottom" DataContext="{Binding BadStockPage}"/>
+                <DataGrid ItemsSource="{Binding BadStockPage.Items}" helpers:Paging.GridSource="{Binding BadStockPage}" SelectedItem="{Binding SelectedBadStock}" RowHeight="36">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="BO #" Binding="{Binding BadStockId}" Width="60"/>
                         <DataGridTextColumn Header="Date" Binding="{Binding CreatedAt,StringFormat=MMM d yyyy}" Width="110"/>

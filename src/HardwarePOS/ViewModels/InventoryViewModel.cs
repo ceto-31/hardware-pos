@@ -10,6 +10,13 @@ namespace HardwarePOS.ViewModels;
 
 public partial class InventoryViewModel : ObservableObject
 {
+    public PagedList<InventoryLedgerEntry> HistoryPage { get; } = new();
+    public PagedList<InventoryBatch> DeliveriesPage { get; } = new();
+    public PagedList<BadStockRow> BadStockPage { get; } = new();
+    public InventoryViewModel() => BadStockPage.PageChanged += () => SelectedBadStock = null;
+    partial void OnHistoryChanged(ObservableCollection<InventoryLedgerEntry> value) => HistoryPage.SetSource(value);
+    partial void OnDeliveriesChanged(ObservableCollection<InventoryBatch> value) => DeliveriesPage.SetSource(value);
+    partial void OnBadStockChanged(ObservableCollection<BadStockRow> value) => BadStockPage.SetSource(value);
     private readonly ProductRepository _products = new();
     private readonly SupplierRepository _suppliers = new();
     private readonly InventoryRepository _inventory = new();

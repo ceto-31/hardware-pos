@@ -19,7 +19,9 @@ public partial class App : Application
             DatabaseSchemaUpdater.EnsureDiscountsSchema();
             DatabaseSchemaUpdater.EnsureVoidSaleSchema();
             DatabaseSchemaUpdater.EnsureOrderTypeSchema();
+            DatabaseSchemaUpdater.EnsureStockOutReasonSchema();
             DatabaseSchemaUpdater.EnsureBarcodeRemoved();
+            InventorySchemaUpgrade.Ensure();
         }
         catch (Exception ex)
         {
@@ -28,6 +30,8 @@ public partial class App : Application
                 "4KV Hardware",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
+            Shutdown(1);
+            return;
         }
         base.OnStartup(e);
     }

@@ -248,6 +248,32 @@ BEGIN
 END
 GO
 
+/* Allow Expired alongside Damaged / ReturnedToSupplier / InternalUse */
+IF EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_StockOuts_Reason'
+      AND parent_object_id = OBJECT_ID(N'dbo.StockOuts')
+      AND definition NOT LIKE N'%Expired%'
+)
+BEGIN
+    ALTER TABLE dbo.StockOuts DROP CONSTRAINT CK_StockOuts_Reason;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_StockOuts_Reason'
+      AND parent_object_id = OBJECT_ID(N'dbo.StockOuts')
+)
+BEGIN
+    ALTER TABLE dbo.StockOuts
+        ADD CONSTRAINT CK_StockOuts_Reason
+        CHECK (Reason IN (N'Damaged', N'ReturnedToSupplier', N'InternalUse', N'Expired'));
+END
+GO
+
 /* Allow VOID alongside IN / OUT / SALE */
 IF EXISTS (
     SELECT 1

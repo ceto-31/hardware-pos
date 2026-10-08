@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\4kv-logo.png" />
+    <EmbeddedResource Include="../../Database/06_InventoryReturns.sql" LogicalName="InventoryReturns.sql" />
   </ItemGroup>
 
 </Project>

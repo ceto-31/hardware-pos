@@ -150,7 +150,40 @@ public static class DatabaseSchemaUpdater
             BEGIN
                 ALTER TABLE dbo.InventoryLedger
                     ADD CONSTRAINT CK_InventoryLedger_Type
-                    CHECK (MovementType IN (N'IN', N'OUT', N'SALE', N'VOID'));
+                    CHECK (MovementType IN (N'IN', N'OUT', N'SALE', N'VOID', N'RETURN', N'BO'));
+            END
+            """);
+    }
+
+    public static void EnsureStockOutReasonSchema()
+    {
+        using var conn = DbConnectionFactory.Create();
+        conn.Open();
+
+        Execute(conn, """
+            IF EXISTS (
+                SELECT 1
+                FROM sys.check_constraints
+                WHERE name = N'CK_StockOuts_Reason'
+                  AND parent_object_id = OBJECT_ID(N'dbo.StockOuts')
+                  AND definition NOT LIKE N'%Expired%'
+            )
+            BEGIN
+                ALTER TABLE dbo.StockOuts DROP CONSTRAINT CK_StockOuts_Reason;
+            END
+            """);
+
+        Execute(conn, """
+            IF NOT EXISTS (
+                SELECT 1
+                FROM sys.check_constraints
+                WHERE name = N'CK_StockOuts_Reason'
+                  AND parent_object_id = OBJECT_ID(N'dbo.StockOuts')
+            )
+            BEGIN
+                ALTER TABLE dbo.StockOuts
+                    ADD CONSTRAINT CK_StockOuts_Reason
+                    CHECK (Reason IN (N'Damaged', N'ReturnedToSupplier', N'InternalUse', N'Expired'));
             END
             """);
     }

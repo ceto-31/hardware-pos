@@ -143,7 +143,7 @@ BEGIN
         CONSTRAINT FK_StockOuts_Products FOREIGN KEY (ProductId) REFERENCES dbo.Products (ProductId),
         CONSTRAINT FK_StockOuts_Users FOREIGN KEY (CreatedBy) REFERENCES dbo.Users (UserId),
         CONSTRAINT CK_StockOuts_Qty CHECK (Quantity > 0),
-        CONSTRAINT CK_StockOuts_Reason CHECK (Reason IN (N'Damaged', N'ReturnedToSupplier', N'InternalUse'))
+        CONSTRAINT CK_StockOuts_Reason CHECK (Reason IN (N'Damaged', N'ReturnedToSupplier', N'InternalUse', N'Expired'))
     );
 END
 GO

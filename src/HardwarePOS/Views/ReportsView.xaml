@@ -224,9 +224,9 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Sales before refunds" Binding="{Binding SalesDisplay}" Width="170" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
-                                    <DataGridTextColumn Header="Refunds" Binding="{Binding RefundDisplay}" Width="130" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
-                                    <DataGridTextColumn Header="Net Sales" Binding="{Binding AmountDisplay}" Width="150"
+                                    <DataGridTextColumn Header="Sales before refunds" Binding="{Binding SalesDisplay, Mode=OneWay}" Width="170" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    <DataGridTextColumn Header="Refunds" Binding="{Binding RefundDisplay, Mode=OneWay}" Width="130" HeaderStyle="{StaticResource ReportsNumericHeader}" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    <DataGridTextColumn Header="Net Sales" Binding="{Binding AmountDisplay, Mode=OneWay}" Width="150"
                                                         HeaderStyle="{StaticResource ReportsNumericHeader}"
                                                         ElementStyle="{StaticResource ReportsNumericText}"/>
                                 </DataGrid.Columns>
@@ -273,7 +273,7 @@
                                         <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="80"/>
                                         <DataGridTextColumn Header="Sold" Binding="{Binding Sold,StringFormat=0.###}" Width="90"/>
                                         <DataGridTextColumn Header="Returned" Binding="{Binding Returned,StringFormat=0.###}" Width="90"/>
-                                        <DataGridTextColumn Header="Net qty" Binding="{Binding NetQuantity,StringFormat=0.###}" Width="90"/>
+                                        <DataGridTextColumn Header="Net qty" Binding="{Binding NetQuantity, Mode=OneWay, StringFormat=0.###}" Width="90"/>
                                         <DataGridTextColumn Header="Net sales" Binding="{Binding NetSales,StringFormat=₱{0:N2}}" Width="140" ElementStyle="{StaticResource ReportsNumericText}"/>
                                     </DataGrid.Columns>
                                 </DataGrid>

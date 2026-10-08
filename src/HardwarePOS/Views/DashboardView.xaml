@@ -173,7 +173,7 @@
 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
 <Border Width="36" Height="36" CornerRadius="7" Background="#F1F5F9" Margin="0,0,12,0" VerticalAlignment="Center"><Grid><Viewbox Width="16" Height="16"><Path Data="{StaticResource IconBox}" Fill="#94A3B8"/></Viewbox><Image Source="{Binding ImagePath,Converter={StaticResource ProductImage}}" Stretch="UniformToFill"/></Grid></Border>
 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock Text="{Binding ProductName}" Style="{StaticResource RowTitle}" ToolTip="{Binding ProductName}"/>
-<TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"><Run Text="{Binding ExpirationDisplay}"/></TextBlock></StackPanel>
+<TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"><Run Text="{Binding ExpirationDisplay, Mode=OneWay}"/></TextBlock></StackPanel>
 <Border Grid.Column="2" Background="#FEF3C7" CornerRadius="6" Padding="9,4" VerticalAlignment="Center"><TextBlock Text="{Binding ExpirationBadge}" Foreground="#92400E" FontSize="11" FontWeight="SemiBold"/></Border>
 </Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
      </StackPanel>

@@ -129,7 +129,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="110" MinWidth="100"/>
+                            <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay, Mode=OneWay}" Width="110" MinWidth="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

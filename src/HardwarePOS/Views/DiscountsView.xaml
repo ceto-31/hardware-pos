@@ -28,11 +28,11 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Name" Binding="{Binding DiscountName}" Width="*" MinWidth="160"
                                                 ElementStyle="{StaticResource ManagementGridText}"/>
-                            <DataGridTextColumn Header="Scope" Binding="{Binding ScopeDisplay}" Width="140" MinWidth="120"
+                            <DataGridTextColumn Header="Scope" Binding="{Binding ScopeDisplay, Mode=OneWay}" Width="140" MinWidth="120"
                                                 ElementStyle="{StaticResource ManagementGridText}"/>
-                            <DataGridTextColumn Header="Value" Binding="{Binding ValueDisplay}" Width="120" MinWidth="100"
+                            <DataGridTextColumn Header="Value" Binding="{Binding ValueDisplay, Mode=OneWay}" Width="120" MinWidth="100"
                                                 ElementStyle="{StaticResource ManagementGridText}"/>
-                            <DataGridTextColumn Header="Period" Binding="{Binding PeriodDisplay}" Width="220" MinWidth="190"
+                            <DataGridTextColumn Header="Period" Binding="{Binding PeriodDisplay, Mode=OneWay}" Width="220" MinWidth="190"
                                                 ElementStyle="{StaticResource ManagementGridText}"/>
                             <DataGridTemplateColumn Header="Status" Width="156" MinWidth="144">
                                 <DataGridTemplateColumn.CellTemplate>

@@ -119,7 +119,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay}" Width="130" MinWidth="118"
+                        <DataGridTextColumn Header="Expires" Binding="{Binding ExpirationDisplay, Mode=OneWay}" Width="130" MinWidth="118"
                                             ElementStyle="{StaticResource ManagementGridText}"/>
                         <DataGridTemplateColumn Header="Actions" Width="168" MinWidth="156">
                             <DataGridTemplateColumn.CellTemplate>

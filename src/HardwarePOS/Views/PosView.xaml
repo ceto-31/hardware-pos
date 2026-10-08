@@ -297,7 +297,7 @@
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource ManagementNumericText}"/>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, StringFormat=₱{0:N2}}" Width="110" MinWidth="96">
+                                <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, Mode=OneWay, StringFormat=₱{0:N2}}" Width="110" MinWidth="96">
                                     <DataGridTextColumn.HeaderStyle>
                                         <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementNumericHeader}"/>
                                     </DataGridTextColumn.HeaderStyle>

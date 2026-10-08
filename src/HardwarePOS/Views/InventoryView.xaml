@@ -1,7 +1,16 @@
 <UserControl x:Class="HardwarePOS.Views.InventoryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
     <UserControl.Resources>
+        <Style x:Key="DropdownPlaceholder" TargetType="TextBlock">
+            <Setter Property="Margin" Value="12,0,32,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers><Trigger Property="Tag" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></Trigger></Style.Triggers>
+        </Style>
         <Style x:Key="StockFilterToggle" TargetType="ToggleButton">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
@@ -96,7 +105,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
                             <DataGridTextColumn Header="UOM" Binding="{Binding UnitOfMeasure}" Width="80"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="90">
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=0.###}" Width="90">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                                 </DataGridTextColumn.HeaderStyle>
@@ -104,7 +113,7 @@
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Reorder At" Binding="{Binding ReorderLevel, StringFormat=N0}" Width="120" MinWidth="120">
+                            <DataGridTextColumn Header="Reorder At" Binding="{Binding ReorderLevel, StringFormat=0.###}" Width="120" MinWidth="120">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                                 </DataGridTextColumn.HeaderStyle>
@@ -127,150 +136,89 @@
         </TabItem>
 
         <TabItem Header="Stock In">
-            <Border Style="{StaticResource CardBorder}">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-                        <TextBlock Text="Receive stock from supplier" FontSize="16" FontWeight="SemiBold"/>
-                        <TextBlock Text="Select a category to filter products." Foreground="{StaticResource MutedBrush}"
-                                   FontSize="12" Margin="0,4,0,0"/>
-                    </StackPanel>
-                    <Border DockPanel.Dock="Bottom" Padding="0,16,0,0" Margin="0,12,0,0"
-                            BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
-                        <Button Content="Save Stock In" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding SaveStockInCommand}" HorizontalAlignment="Right"
-                                MinWidth="140" Padding="18,8"/>
-                    </Border>
-                    <Grid Margin="0,0,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" Grid.Column="0">
-                            <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
-                                      SelectedValuePath="CategoryId" SelectedValue="{Binding InCategoryId}"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="960" HorizontalAlignment="Left" Margin="12" TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
+                    <TextBlock Text="Receive stock from supplier" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <Grid Width="680" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Supplier for this delivery" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding InSupplierId}"/>
+                            <TextBlock Text="Category" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding InCategoryId}"/>
+                            <TextBlock Text="Product" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding InProductOptions}" DisplayMemberPath="ProductName" SelectedValuePath="ProductId" SelectedValue="{Binding InProductId}"/>
+                            <TextBlock Text="Incoming quantity" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding InQuantityText,UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="2">
-                            <TextBlock Text="Supplier" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName"
-                                      SelectedValuePath="SupplierId" SelectedValue="{Binding InSupplierId}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
-                            <TextBlock Text="Product" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding InProductOptions}" DisplayMemberPath="ProductName"
-                                      SelectedValuePath="ProductId" SelectedValue="{Binding InProductId}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,0,0">
-                            <TextBlock Text="Quantity" Style="{StaticResource DialogFieldLabel}"/>
-                            <TextBox Text="{Binding InQuantity, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,4,0,0">
-                            <TextBlock Text="Date Received" Style="{StaticResource DialogFieldLabel}"/>
-                            <DatePicker SelectedDate="{Binding InDate}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
-                            <TextBlock Text="Expiry Date (optional)" Style="{StaticResource DialogFieldLabel}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <DatePicker Grid.Column="0" SelectedDate="{Binding InExpirationDate}"/>
-                                <Button Grid.Column="1" Content="Clear" Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Command="{Binding ClearInExpirationDateCommand}"
-                                        VerticalAlignment="Bottom"/>
-                            </Grid>
-                            <TextBlock Text="Leave blank for products with no expiration."
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
-                            <TextBlock Text="Remarks" Style="{StaticResource DialogFieldLabel}"/>
-                            <TextBox Text="{Binding InRemarks, UpdateSourceTrigger=PropertyChanged}"
-                                     MinHeight="120" VerticalAlignment="Stretch"
-                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Date received" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding InDate}"/>
+                            <TextBlock Text="Delivery expiry (optional)" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding InExpirationDate}"/>
+                            <Button Content="Clear expiry" Command="{Binding ClearInExpirationDateCommand}" Style="{StaticResource LinkButton}" HorizontalAlignment="Left"/>
+                            <TextBlock Text="Remarks" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding InRemarks,UpdateSourceTrigger=PropertyChanged}" Height="72" MaxLength="300" TextWrapping="Wrap" AcceptsReturn="True"/>
                         </StackPanel>
                     </Grid>
-                </DockPanel>
-            </Border>
+                    <Border Background="#EFF6FF" CornerRadius="8" Padding="14" Margin="0,14,0,10">
+                        <WrapPanel>
+                            <TextBlock Text="Current stock: " FontWeight="SemiBold"/><TextBlock Text="{Binding CurrentInStock,StringFormat={}{0:0.###}}"/>
+                            <TextBlock Text="  + Incoming: " FontWeight="SemiBold"/><TextBlock Text="{Binding InQuantity,StringFormat={}{0:0.###}}"/>
+                            <TextBlock Text="  = After receiving: " FontWeight="SemiBold"/><TextBlock Text="{Binding AfterReceiving,StringFormat={}{0:0.###}}"/>
+                            <TextBlock Text="{Binding InUnit}" Margin="6,0,0,0"/>
+                        </WrapPanel>
+                    </Border>
+                    <Button Content="Save Stock In" Command="{Binding SaveStockInCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="Existing deliveries — oldest first" FontWeight="SemiBold" Margin="0,16,0,6"/>
+                    <TextBlock Text="Each new delivery is saved separately. Current stock includes all suppliers." Foreground="#64748B" Margin="0,0,0,8"/>
+                    <DataGrid ItemsSource="{Binding InBatches}" MaxHeight="260" MinWidth="680" RowHeight="34">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Batch" Binding="{Binding BatchId}" Width="70"/>
+                            <DataGridTextColumn Header="Received" Binding="{Binding ReceivedAt,StringFormat=MMM d yyyy}" Width="110"/>
+                            <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Received" Binding="{Binding OriginalQuantity,StringFormat=0.###}" Width="100"/>
+                            <DataGridTextColumn Header="Remaining" Binding="{Binding RemainingQuantity,StringFormat=0.###}" Width="100"/>
+                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="70"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
         </TabItem>
-
         <TabItem Header="Stock Out">
-            <Border Style="{StaticResource CardBorder}">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-                        <TextBlock Text="Issue / adjust stock out" FontSize="16" FontWeight="SemiBold"/>
-                        <TextBlock Text="Select a category to filter products." Foreground="{StaticResource MutedBrush}"
-                                   FontSize="12" Margin="0,4,0,0"/>
-                    </StackPanel>
-                    <Border DockPanel.Dock="Bottom" Padding="0,16,0,0" Margin="0,12,0,0"
-                            BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
-                        <Button Content="Save Stock Out" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding SaveStockOutCommand}" HorizontalAlignment="Right"
-                                MinWidth="140" Padding="18,8"/>
-                    </Border>
-                    <Grid Margin="0,0,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" Grid.Column="0">
-                            <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName"
-                                      SelectedValuePath="CategoryId" SelectedValue="{Binding OutCategoryId}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="2">
-                            <TextBlock Text="Reason" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding StockOutReasons}" SelectedItem="{Binding OutReason}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
-                            <TextBlock Text="Product" Style="{StaticResource DialogFieldLabel}"/>
-                            <ComboBox ItemsSource="{Binding OutProductOptions}" DisplayMemberPath="ProductName"
-                                      SelectedValuePath="ProductId" SelectedValue="{Binding OutProductId}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,0,0">
-                            <TextBlock Text="Quantity" Style="{StaticResource DialogFieldLabel}"/>
-                            <TextBox Text="{Binding OutQuantity, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,4,0,0">
-                            <TextBlock Text="Date" Style="{StaticResource DialogFieldLabel}"/>
-                            <DatePicker SelectedDate="{Binding OutDate}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
-                            <TextBlock Text="Remarks" Style="{StaticResource DialogFieldLabel}"/>
-                            <TextBox Text="{Binding OutRemarks, UpdateSourceTrigger=PropertyChanged}"
-                                     MinHeight="120" VerticalAlignment="Stretch"
-                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
-                        </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Width="680" HorizontalAlignment="Left" Margin="12" TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
+                    <TextBlock Text="Issue stock or record damaged products" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Text="Category" Style="{StaticResource FieldLabel}"/>
+                    <Grid>
+                        <ComboBox x:Name="OutCategoryBox" ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding OutCategoryId}"/>
+                        <TextBlock Text="Select a category…" Tag="{Binding SelectedItem,ElementName=OutCategoryBox}" Style="{StaticResource DropdownPlaceholder}"/>
                     </Grid>
-                </DockPanel>
-            </Border>
+                    <TextBlock Text="Product" Style="{StaticResource FieldLabel}"/>
+                    <Grid>
+                        <ComboBox x:Name="OutProductBox" ItemsSource="{Binding OutProductOptions}" DisplayMemberPath="ProductName" SelectedValuePath="ProductId" SelectedValue="{Binding OutProductId}"/>
+                        <TextBlock Text="Select a product…" Tag="{Binding SelectedItem,ElementName=OutProductBox}" Style="{StaticResource DropdownPlaceholder}"/>
+                    </Grid>
+                    <TextBlock Text="Affected delivery / supplier" Style="{StaticResource FieldLabel}"/>
+                    <Grid>
+                        <ComboBox x:Name="OutDeliveryBox" ItemsSource="{Binding OutBatches}" DisplayMemberPath="Display" SelectedValuePath="BatchId" SelectedValue="{Binding OutBatchId}"/>
+                        <TextBlock Text="Select a delivery… (optional, oldest stock first)" Tag="{Binding SelectedItem,ElementName=OutDeliveryBox}" Style="{StaticResource DropdownPlaceholder}"/>
+                    </Grid>
+                    <Button Content="Use oldest stock first" Command="{Binding ClearOutBatchCommand}" Style="{StaticResource LinkButton}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="Select a delivery for supplier tracing. With none selected, stock is taken oldest first." Foreground="#64748B" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                        <StackPanel><TextBlock Text="Quantity" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding OutQuantityText,UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                        <StackPanel Grid.Column="2"><TextBlock Text="Date" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding OutDate}"/></StackPanel>
+                    </Grid>
+                    <TextBlock Text="Reason" Style="{StaticResource FieldLabel}"/>
+                    <Grid>
+                        <ComboBox x:Name="OutReasonBox" ItemsSource="{Binding StockOutReasons}" SelectedItem="{Binding OutReason}"/>
+                        <TextBlock Text="Select a reason…" Tag="{Binding SelectedItem,ElementName=OutReasonBox}" Style="{StaticResource DropdownPlaceholder}"/>
+                    </Grid>
+                    <TextBlock Text="Damaged items move from saleable stock to BO. Dispose or return them from the BO tab." TextWrapping="Wrap" Foreground="#64748B" Margin="0,6,0,4"/>
+                    <TextBlock Text="Remarks" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding OutRemarks,UpdateSourceTrigger=PropertyChanged}" Height="72" MaxLength="300" TextWrapping="Wrap" AcceptsReturn="True"/>
+                    <Button Content="Save Stock Out" Command="{Binding SaveStockOutCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,14,0,0"/>
+                </StackPanel>
+            </ScrollViewer>
         </TabItem>
-
         <TabItem Header="History">
             <Border Style="{StaticResource CardBorder}">
                 <DockPanel>
@@ -289,6 +237,62 @@
                     </DataGrid>
                 </DockPanel>
             </Border>
+        </TabItem>
+        <TabItem Header="Supplier Deliveries">
+            <DockPanel Margin="12" TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
+                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <TextBlock Text="Supplier" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="260" ItemsSource="{Binding HistorySuppliers}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding DeliverySupplierFilter}"/>
+                    <Button Content="Refresh" Command="{Binding RefreshDeliveriesCommand}" Style="{StaticResource SecondaryButton}"/>
+                </WrapPanel>
+                <DataGrid ItemsSource="{Binding Deliveries}" RowHeight="36">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Batch" Binding="{Binding BatchId}" Width="70"/>
+                        <DataGridTextColumn Header="Received" Binding="{Binding ReceivedAt,StringFormat=MMM d yyyy}" Width="115"/>
+                        <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                        <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*"/>
+                        <DataGridTextColumn Header="Received" Binding="{Binding OriginalQuantity,StringFormat=0.###}" Width="100"/>
+                        <DataGridTextColumn Header="Remaining" Binding="{Binding RemainingQuantity,StringFormat=0.###}" Width="100"/>
+                        <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="70"/>
+                        <DataGridTextColumn Header="Expiry" Binding="{Binding ExpirationDate,StringFormat=MMM d yyyy}" Width="110"/>
+                        <DataGridTextColumn Header="Source" Binding="{Binding SourceLabel}" Width="180"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </TabItem>
+        <TabItem Header="BO / Defective Stock">
+            <DockPanel Margin="12" TextElement.Foreground="{StaticResource TextBrush}" TextElement.FontWeight="Normal">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Defective stock — excluded from saleable inventory" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <WrapPanel>
+                        <ComboBox Width="260" ItemsSource="{Binding HistorySuppliers}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding DeliverySupplierFilter}"/>
+                        <Button Content="Refresh" Command="{Binding RefreshDeliveriesCommand}" Style="{StaticResource SecondaryButton}"/>
+                    </WrapPanel>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                    <TextBlock Text="For the selected BO entry" FontWeight="SemiBold"/>
+                    <WrapPanel>
+                        <TextBlock Text="Quantity" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Width="100" Text="{Binding BoQuantityText,UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Reason" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Width="280" MaxLength="300" Text="{Binding BoReason,UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Content="Dispose" Command="{Binding DisposeBoCommand}" CommandParameter="Disposed" Style="{StaticResource SecondaryButton}"/>
+                        <Button Content="Return to supplier" Command="{Binding DisposeBoCommand}" CommandParameter="ReturnedToSupplier" Style="{StaticResource SecondaryButton}"/>
+                    </WrapPanel>
+                    <TextBlock Text="These actions reduce BO only; they do not deduct saleable stock again." Foreground="#64748B"/>
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding BadStock}" SelectedItem="{Binding SelectedBadStock}" RowHeight="36">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="BO #" Binding="{Binding BadStockId}" Width="60"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding CreatedAt,StringFormat=MMM d yyyy}" Width="110"/>
+                        <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                        <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*"/>
+                        <DataGridTextColumn Header="Batch" Binding="{Binding BatchId}" Width="70"/>
+                        <DataGridTextColumn Header="Original" Binding="{Binding Quantity,StringFormat=0.###}" Width="75"/>
+                        <DataGridTextColumn Header="Remaining" Binding="{Binding RemainingQuantity,StringFormat=0.###}" Width="90"/>
+                        <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="85"/>
+                        <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
         </TabItem>
     </TabControl>
 </UserControl>

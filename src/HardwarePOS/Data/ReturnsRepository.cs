@@ -100,4 +100,44 @@ public class ReturnsRepository
         catch { tx.Rollback(); throw; }
     }
 
+    public List<BadStockRow> GetBadStock(int? supplier=null)
+    {
+        using var conn=DbConnectionFactory.Create(); conn.Open();
+        using var cmd=Command(conn,null,"""
+            SELECT bo.BadStockId,p.ProductName,bo.BatchId,s.CompanyName,bo.CreatedAt,bo.Quantity,bo.RemainingQuantity,p.UnitOfMeasure,bo.Reason
+            FROM dbo.BadStock bo JOIN dbo.Products p ON p.ProductId=bo.ProductId
+            LEFT JOIN dbo.InventoryBatches b ON b.BatchId=bo.BatchId LEFT JOIN dbo.Suppliers s ON s.SupplierId=b.SupplierId
+            WHERE (@Supplier IS NULL OR b.SupplierId=@Supplier) ORDER BY bo.CreatedAt DESC,bo.BadStockId DESC;
+            """,("@Supplier",supplier is >0 ? supplier : null));
+        using var r=cmd.ExecuteReader(); var rows=new List<BadStockRow>();
+        while(r.Read()) rows.Add(new BadStockRow {BadStockId=r.GetInt32(0),ProductName=r.GetString(1),BatchId=r.IsDBNull(2)?null:r.GetInt32(2),
+            SupplierName=r.IsDBNull(3)?"Supplier/delivery unknown":r.GetString(3),CreatedAt=r.GetDateTime(4),Quantity=r.GetDecimal(5),
+            RemainingQuantity=r.GetDecimal(6),Unit=r.GetString(7),Reason=r.GetString(8)});
+        return rows;
+    }
+
+    public void DisposeBadStock(int badStockId,decimal quantity,string action,string reason)
+    {
+        RequireAdmin(); InventoryRules.ValidateQuantity(quantity);
+        if(action is not ("Disposed" or "ReturnedToSupplier")) throw new InvalidOperationException("Select a BO action.");
+        reason=reason.Trim(); if(reason.Length is 0 or >300) throw new InvalidOperationException("Enter a reason (up to 300 characters).");
+        using var conn=DbConnectionFactory.Create(); conn.Open(); using var tx=conn.BeginTransaction();
+        try
+        {
+            using var cmd=Command(conn,tx,"""
+                IF EXISTS(SELECT 1 FROM dbo.BadStock b JOIN dbo.Products p ON p.ProductId=b.ProductId
+                    WHERE b.BadStockId=@Id AND p.AllowsFractional=0 AND @Qty<>FLOOR(@Qty))
+                    THROW 50111,'This product requires a whole-number BO quantity.',1;
+                UPDATE dbo.BadStock WITH(UPDLOCK) SET RemainingQuantity=RemainingQuantity-@Qty
+                WHERE BadStockId=@Id AND RemainingQuantity>=@Qty;
+                IF @@ROWCOUNT=0 THROW 50110,'BO quantity exceeds the remaining defective stock.',1;
+                INSERT dbo.BadStockDispositions(BadStockId,Quantity,Action,Reason,CreatedBy) VALUES(@Id,@Qty,@Action,@Reason,@User);
+                INSERT dbo.ActivityLog(ActivityType,Description,CreatedBy,CreatedAt) VALUES(N'BO',@Description,@User,SYSDATETIME());
+                """,("@Id",badStockId),("@Qty",quantity),("@Action",action),("@Reason",reason),("@User",SessionManager.CurrentUser!.UserId),
+                ("@Description",$"BO #{badStockId}: {action}, {quantity:0.###}. {reason}"));
+            cmd.ExecuteNonQuery(); tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+    }
+
 }

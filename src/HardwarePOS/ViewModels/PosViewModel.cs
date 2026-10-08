@@ -11,6 +11,9 @@ namespace HardwarePOS.ViewModels;
 
 public partial class PosViewModel : ObservableObject
 {
+    public PagedList<SaleHistoryRow> HistoryPage { get; } = new();
+    public PosViewModel() => HistoryPage.PageChanged += () => SelectedSale = null;
+    partial void OnSaleHistoryChanged(ObservableCollection<SaleHistoryRow> value) => HistoryPage.SetSource(value);
     private readonly ProductRepository _products = new();
     private readonly SalesRepository _sales = new();
     private readonly SettingsRepository _settings = new();
@@ -367,7 +370,7 @@ public partial class PosViewModel : ObservableObject
             DialogService.ShowInfo($"Sale {invoiceNo} was voided. Stock has been restored.", "Void Sale");
             LoadHistory();
             SearchProducts();
-            SelectedSale = SaleHistory.FirstOrDefault(s => s.SaleId == saleId);
+            SelectedSale = HistoryPage.Items.FirstOrDefault(s => s.SaleId == saleId);
         }
         catch (Exception ex)
         {

@@ -1,7 +1,8 @@
 <UserControl x:Class="HardwarePOS.Views.PosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:helpers="clr-namespace:HardwarePOS.Helpers">
+             xmlns:helpers="clr-namespace:HardwarePOS.Helpers"
+             xmlns:views="clr-namespace:HardwarePOS.Views">
     <TabControl Style="{StaticResource ModernTabControl}"
                 ItemContainerStyle="{StaticResource ModernTabItem}"
                 UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -328,9 +329,10 @@
                     <Button DockPanel.Dock="Top" Content="Return selected transaction (within 7 days)" HorizontalAlignment="Left"
                             Command="{Binding ReturnSelectedSaleCommand}" Style="{StaticResource SecondaryButton}"
                             Visibility="{Binding IsAdmin,Converter={StaticResource BoolToVis}}"/>
+                    <views:PaginationBar DockPanel.Dock="Bottom" DataContext="{Binding HistoryPage}"/>
                     <DataGrid x:Name="HistoryGrid"
                               Style="{StaticResource ModernDataGrid}"
-                              ItemsSource="{Binding SaleHistory}"
+                              ItemsSource="{Binding HistoryPage.Items}" helpers:Paging.GridSource="{Binding HistoryPage}"
                               SelectedItem="{Binding SelectedSale}"
                               HeadersVisibility="None"
                               GridLinesVisibility="None"

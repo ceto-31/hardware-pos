@@ -16,6 +16,21 @@ public partial class PosViewModel : ObservableObject
     private readonly SettingsRepository _settings = new();
     private readonly ReceiptService _receipts = new();
     private readonly DiscountRepository _discounts = new();
+    [ObservableProperty] private ObservableCollection<Category> _categories = new();
+    [ObservableProperty] private ObservableCollection<UnitOfMeasureItem> _units = new();
+    [ObservableProperty] private int _categoryFilter;
+    [ObservableProperty] private int _unitFilter;
+    [ObservableProperty] private string _quantityInput = "1";
+    public bool IsAdmin => SessionManager.IsAdmin;
+    public bool ShowKgPresets => SelectedCartItem?.AllowsFractional == true &&
+        new[] { "kg", "kilo", "kilos", "kilogram", "kilograms" }.Contains(SelectedCartItem.UnitOfMeasure.Trim().ToLowerInvariant());
+    partial void OnCategoryFilterChanged(int value) => SearchProducts();
+    partial void OnUnitFilterChanged(int value) => SearchProducts();
+    partial void OnSelectedCartItemChanged(CartItem? value)
+    {
+        QuantityInput = (value?.Quantity ?? 1).ToString("0.###");
+        OnPropertyChanged(nameof(ShowKgPresets));
+    }
     private List<Discount> _activeDiscountRules = new();
 
     [ObservableProperty] private ObservableCollection<Product> _productList = new();
@@ -63,6 +78,8 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     public void Load()
     {
+        Categories = new ObservableCollection<Category>(new[] { new Category { CategoryId=0, CategoryName="All categories" } }.Concat(_products.GetCategories()));
+        Units = new ObservableCollection<UnitOfMeasureItem>(new[] {new UnitOfMeasureItem {UnitId=0,UnitName="All units"}}.Concat(new UnitRepository().GetAll(activeOnly:true)));
         TaxRate = _settings.GetTaxRate();
         _activeDiscountRules = _discounts.GetActiveRulesForPos(DateTime.Today);
         SearchProducts();
@@ -79,7 +96,7 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void SearchProducts()
     {
-        ProductList = new ObservableCollection<Product>(_products.GetAll(SearchText));
+        ProductList = new ObservableCollection<Product>(_products.GetAll(SearchText, categoryId:CategoryFilter==0?null:CategoryFilter, unitId:UnitFilter==0?null:UnitFilter));
     }
 
     partial void OnSearchTextChanged(string value) => SearchProducts();
@@ -100,16 +117,17 @@ public partial class PosViewModel : ObservableObject
             return;
         }
 
+        var increment = product.AllowsFractional ? Math.Min(1m,product.StockQty) : 1m;
         CartItem target;
         var existing = Cart.FirstOrDefault(c => c.ProductId == product.ProductId);
         if (existing is not null)
         {
-            if (existing.Quantity + 1 > product.StockQty)
+            if (existing.Quantity + increment > product.StockQty)
             {
                 DialogService.ShowWarning("Not enough stock.", "POS");
                 return;
             }
-            existing.Quantity += 1;
+            existing.Quantity += increment;
             Cart = new ObservableCollection<CartItem>(Cart);
             target = existing;
         }
@@ -122,7 +140,7 @@ public partial class PosViewModel : ObservableObject
                 UnitOfMeasure = product.UnitOfMeasure,
                 RegularUnitPrice = product.EffectivePrice,
                 UnitPrice = DiscountPricing.ResolveUnitPrice(product, _activeDiscountRules),
-                Quantity = 1,
+                Quantity = increment, AllowsFractional = product.AllowsFractional,
                 AvailableStock = product.StockQty
             };
             Cart.Add(target);
@@ -130,6 +148,29 @@ public partial class PosViewModel : ObservableObject
 
         SelectedCartItem = target;
         Recalculate();
+    }
+
+    [RelayCommand]
+    private void ApplyQuantity()
+    {
+        var item = GetTargetCartItem(); if(item is null) return;
+        try
+        {
+            if(!decimal.TryParse(QuantityInput, out var quantity)) throw new InvalidOperationException("Enter a valid quantity.");
+            InventoryRules.ValidateQuantity(quantity,item.AllowsFractional);
+            var available = _products.GetById(item.ProductId)?.StockQty ?? 0;
+            if(quantity>available) throw new InvalidOperationException($"Only {available:0.###} {item.UnitOfMeasure} available.");
+            item.AvailableStock=available; item.Quantity=quantity;
+            Cart=new ObservableCollection<CartItem>(Cart); SelectedCartItem=item; Recalculate();
+        }
+        catch(Exception ex) { DialogService.ShowWarning(ex.Message,"Quantity"); }
+    }
+
+    [RelayCommand]
+    private void SetQuantityPreset(string value)
+    {
+        QuantityInput=decimal.Parse(value,System.Globalization.CultureInfo.InvariantCulture).ToString("0.###");
+        ApplyQuantity();
     }
 
     private CartItem? GetTargetCartItem() => SelectedCartItem ?? Cart.LastOrDefault();
@@ -241,7 +282,7 @@ public partial class PosViewModel : ObservableObject
         var items = _sales.GetSaleItems(sale.SaleId)
             .Select(i => new CartItem
             {
-                ProductName = i.ProductName,
+                ProductName = i.ProductName, UnitOfMeasure = i.UnitOfMeasure,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice
             }).ToList();

@@ -484,7 +484,7 @@ public class ReceiptService
             AddItemRow(
                 grid,
                 row++,
-                item.ProductName,
+                item.ProductName + $" ({item.UnitOfMeasure})",
                 FormatQuantity(item.Quantity),
                 $"₱{item.LineTotal:N2}",
                 FontWeights.Normal,
@@ -705,7 +705,7 @@ public class ReceiptService
     }
 
     private static string FormatQuantity(decimal quantity) =>
-        quantity == decimal.Truncate(quantity) ? quantity.ToString("N0") : quantity.ToString("N2");
+        quantity == decimal.Truncate(quantity) ? quantity.ToString("N0") : quantity.ToString("0.###");
 
     private static SolidColorBrush Freeze(SolidColorBrush brush)
     {

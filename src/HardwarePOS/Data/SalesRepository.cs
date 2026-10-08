@@ -1,4 +1,6 @@
 using HardwarePOS.Models;
+using HardwarePOS.Services;
+using HardwarePOS.Helpers;
 using Microsoft.Data.SqlClient;
 
 namespace HardwarePOS.Data;
@@ -30,17 +32,22 @@ public class SalesRepository
 
         try
         {
-            foreach (var item in items)
+            // Lock the invoice range before products, matching void/return sale-before-stock ordering.
+            var invoiceNo = GenerateInvoiceNo(conn, tx);
+            foreach (var item in items.OrderBy(i => i.ProductId))
             {
                 using var check = conn.CreateCommand();
                 check.Transaction = tx;
                 check.CommandText = """
-                    SELECT StockQty
+                    SELECT StockQty, AllowsFractional
                     FROM dbo.Products WITH (UPDLOCK, ROWLOCK)
                     WHERE ProductId = @Id AND IsArchived = 0;
                     """;
                 check.Parameters.AddWithValue("@Id", item.ProductId);
-                var stockObj = check.ExecuteScalar();
+                using var stockReader = check.ExecuteReader();
+                if (!stockReader.Read()) throw new InvalidOperationException("Product is unavailable.");
+                InventoryRules.ValidateQuantity(item.Quantity, stockReader.GetBoolean(1));
+                object? stockObj = stockReader.GetDecimal(0);
                 if (stockObj is null)
                     throw new InvalidOperationException($"Product '{item.ProductName}' is unavailable.");
                 var stock = (decimal)stockObj;
@@ -48,7 +55,8 @@ public class SalesRepository
                     throw new InvalidOperationException($"Insufficient stock for '{item.ProductName}'. Available: {stock}.");
             }
 
-            var invoiceNo = GenerateInvoiceNo(conn, tx);
+            var paidAmounts = InventoryRules.AllocatePaidTotal(items.Select(i => i.LineTotal).ToArray(), totalDue);
+            var paidByProduct = items.Select((item,index) => (item.ProductId, Amount: paidAmounts[index])).ToDictionary(x => x.ProductId, x => x.Amount);
             int saleId;
             using (var cmd = conn.CreateCommand())
             {
@@ -77,21 +85,32 @@ public class SalesRepository
                 saleId = (int)cmd.ExecuteScalar()!;
             }
 
-            foreach (var item in items)
+            foreach (var item in items.OrderBy(i => i.ProductId))
             {
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.Transaction = tx;
                     cmd.CommandText = """
-                        INSERT INTO dbo.SaleItems (SaleId, ProductId, Quantity, UnitPrice, LineTotal)
-                        VALUES (@SaleId, @ProductId, @Qty, @Price, @Line);
+                        INSERT INTO dbo.SaleItems (SaleId, ProductId, Quantity, UnitPrice, LineTotal, NameSnapshot, UnitSnapshot, RefundableAmount)
+                        VALUES (@SaleId, @ProductId, @Qty, @Price, @Line, @Name, @Unit, @Paid);
+                        SELECT CAST(SCOPE_IDENTITY() AS int);
                         """;
                     cmd.Parameters.AddWithValue("@SaleId", saleId);
                     cmd.Parameters.AddWithValue("@ProductId", item.ProductId);
                     cmd.Parameters.AddWithValue("@Qty", item.Quantity);
                     cmd.Parameters.AddWithValue("@Price", item.UnitPrice);
                     cmd.Parameters.AddWithValue("@Line", item.LineTotal);
-                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@Name", item.ProductName);
+                    cmd.Parameters.AddWithValue("@Unit", item.UnitOfMeasure);
+                    cmd.Parameters.AddWithValue("@Paid", paidByProduct[item.ProductId]);
+                    var saleItemId = (int)cmd.ExecuteScalar()!;
+                    foreach (var allocation in BatchStock.Take(conn, tx, item.ProductId, item.Quantity))
+                    {
+                        using var allocationCmd = BatchStock.Command(conn, tx,
+                            "INSERT dbo.SaleAllocations(SaleItemId,BatchId,Quantity) VALUES(@Item,@Batch,@Qty);",
+                            ("@Item",saleItemId),("@Batch",allocation.BatchId),("@Qty",allocation.Quantity));
+                        allocationCmd.ExecuteNonQuery();
+                    }
                 }
 
                 decimal newBalance;
@@ -104,7 +123,7 @@ public class SalesRepository
                         WHERE ProductId = @ProductId AND StockQty >= @Qty AND IsArchived = 0;
                         IF @@ROWCOUNT = 0
                             THROW 50003, 'Insufficient stock during checkout.', 1;
-                        SELECT StockQty FROM dbo.Products WHERE ProductId = @ProductId;
+                        SELECT StockQty, AllowsFractional FROM dbo.Products WHERE ProductId = @ProductId;
                         """;
                     cmd.Parameters.AddWithValue("@Qty", item.Quantity);
                     cmd.Parameters.AddWithValue("@ProductId", item.ProductId);
@@ -346,7 +365,7 @@ public class SalesRepository
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.ProductName, si.Quantity, si.UnitPrice, si.LineTotal
+            SELECT COALESCE(si.NameSnapshot,p.ProductName), si.Quantity, si.UnitPrice, si.LineTotal,COALESCE(si.UnitSnapshot,p.UnitOfMeasure)
             FROM dbo.SaleItems si
             INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
             WHERE si.SaleId = @Id;
@@ -360,7 +379,7 @@ public class SalesRepository
                 ProductName = reader.GetString(0),
                 Quantity = reader.GetDecimal(1),
                 UnitPrice = reader.GetDecimal(2),
-                LineTotal = reader.GetDecimal(3)
+                LineTotal = reader.GetDecimal(3), UnitOfMeasure=reader.GetString(4)
             });
         }
         return list;

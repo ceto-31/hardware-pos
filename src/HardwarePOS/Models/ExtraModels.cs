@@ -28,7 +28,7 @@ public class TopProductRow
     public string? ImagePath { get; set; }
     public decimal QtySold { get; set; }
     public decimal Revenue { get; set; }
-    public string QtyLabel => $"{QtySold:N0} {UnitOfMeasure}";
+    public string QtyLabel => $"{QtySold:0.###} {UnitOfMeasure}";
 }
 
 public class RecentSaleRow
@@ -67,6 +67,7 @@ public class SaleHistoryRow
 
 public class SaleHistoryItemRow
 {
+    public string UnitOfMeasure { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }

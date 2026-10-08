@@ -7,6 +7,7 @@ public class CartItem
     public string UnitOfMeasure { get; set; } = "Piece";
     public decimal RegularUnitPrice { get; set; }
     public decimal UnitPrice { get; set; }
+    public bool AllowsFractional { get; set; }
     public decimal Quantity { get; set; } = 1;
     public decimal AvailableStock { get; set; }
     public decimal RegularLineTotal => Math.Round(RegularUnitPrice * Quantity, 2);

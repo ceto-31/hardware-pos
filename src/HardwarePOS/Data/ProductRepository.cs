@@ -8,7 +8,7 @@ public class ProductRepository
     public List<Product> GetAll(
         string? search = null,
         bool includeArchived = false,
-        int? categoryId = null)
+        int? categoryId = null, int? unitId = null)
     {
         var list = new List<Product>();
         using var conn = DbConnectionFactory.Create();
@@ -19,17 +19,20 @@ public class ProductRepository
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
-                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
             LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
             WHERE (@IncludeArchived = 1 OR p.IsArchived = 0)
               AND (@CategoryId IS NULL OR p.CategoryId = @CategoryId)
+              AND (@UnitId IS NULL OR p.UnitId = @UnitId)
               AND (
                     @Search IS NULL OR @Search = N''
                     OR p.ProductCode LIKE N'%' + @Search + N'%'
                     OR p.ProductName LIKE N'%' + @Search + N'%'
+                    OR p.Brand LIKE N'%' + @Search + N'%'
+                    OR p.Color LIKE N'%' + @Search + N'%'
                     OR p.ProductDetails LIKE N'%' + @Search + N'%'
                   )
             ORDER BY p.IsArchived DESC, p.ProductName;
@@ -37,6 +40,7 @@ public class ProductRepository
         cmd.Parameters.AddWithValue("@IncludeArchived", includeArchived);
         cmd.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@UnitId", (object?)unitId ?? DBNull.Value);
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -54,7 +58,7 @@ public class ProductRepository
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
-                   p.SalePrice, p.SaleStartDate, p.SaleEndDate
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
@@ -68,6 +72,7 @@ public class ProductRepository
 
     public int Insert(Product product)
     {
+        Validate(product);
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var tx = conn.BeginTransaction();
@@ -82,12 +87,12 @@ public class ProductRepository
                     INSERT INTO dbo.Products
                         (ProductCode, ProductName, ProductDetails, UnitId, UnitOfMeasure,
                          CostPrice, SellingPrice, StockQty, ReorderLevel, CategoryId, SupplierId, IsArchived,
-                         ExpirationDate, SalePrice, SaleStartDate, SaleEndDate)
+                         ExpirationDate, SalePrice, SaleStartDate, SaleEndDate, Brand, Color, AllowsFractional)
                     VALUES
                         (@ProductCode, @Name, @Details, @UnitId,
                          ISNULL((SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId), N'Piece'),
                          @Cost, @Sell, @Stock, @Reorder, @CategoryId, @SupplierId, 0,
-                         @ExpirationDate, @SalePrice, @SaleStartDate, @SaleEndDate);
+                         @ExpirationDate, @SalePrice, @SaleStartDate, @SaleEndDate, @Brand, @Color, @Fractional);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);
                     """;
                 AddParams(cmd, product);
@@ -108,6 +113,7 @@ public class ProductRepository
                 ledger.Parameters.AddWithValue("@Qty", product.StockQty);
                 ledger.Parameters.AddWithValue("@Balance", product.StockQty);
                 ledger.ExecuteNonQuery();
+                BatchStock.Add(conn, tx, productId, null, null, product.StockQty, DateTime.Now, product.ExpirationDate, "Opening stock — supplier/delivery unknown");
             }
 
             tx.Commit();
@@ -122,14 +128,23 @@ public class ProductRepository
 
     public void Update(Product product)
     {
+        Validate(product);
         using var conn = DbConnectionFactory.Create();
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
+            IF EXISTS(SELECT 1 FROM dbo.Products p WHERE p.ProductId=@Id AND
+                (ISNULL(p.UnitId,0)<>ISNULL(@UnitId,0)) AND
+                (EXISTS(SELECT 1 FROM dbo.InventoryLedger WHERE ProductId=@Id) OR EXISTS(SELECT 1 FROM dbo.SaleItems WHERE ProductId=@Id) OR EXISTS(SELECT 1 FROM dbo.InventoryBatches WHERE ProductId=@Id)))
+                THROW 50121,'A product with stock history must keep its unit. Create a separate product for a different unit.',1;
+            IF @Fractional=0 AND EXISTS(SELECT 1 FROM dbo.InventoryBatches WHERE ProductId=@Id AND RemainingQuantity<>FLOOR(RemainingQuantity))
+                THROW 50122,'Fractional stock remains. Keep fractional quantities enabled.',1;
+            IF @Fractional=0 AND EXISTS(SELECT 1 FROM dbo.SaleItems WHERE ProductId=@Id AND Quantity<>FLOOR(Quantity))
+                THROW 50123,'This product has fractional sales. Keep fractional quantities enabled so returns retain their original units.',1;
             UPDATE dbo.Products SET
                 ProductCode = @ProductCode,
                 ProductName = @Name,
-                ProductDetails = @Details,
+                ProductDetails = @Details, Brand=@Brand, Color=@Color, AllowsFractional=@Fractional,
                 UnitId = @UnitId,
                 UnitOfMeasure = ISNULL(
                     (SELECT UnitName FROM dbo.Units WHERE UnitId = @UnitId),
@@ -149,6 +164,15 @@ public class ProductRepository
         AddParams(cmd, product);
         cmd.Parameters.AddWithValue("@Id", product.ProductId);
         cmd.ExecuteNonQuery();
+    }
+
+    private static void Validate(Product product)
+    {
+        BatchStock.RequireAdmin();
+        if(string.IsNullOrWhiteSpace(product.ProductName)) throw new InvalidOperationException("Product name is required.");
+        if(product.StockQty<0 || product.CostPrice<0 || product.SellingPrice<0 || product.ReorderLevel<0)
+            throw new InvalidOperationException("Prices, stock, and reorder level cannot be negative.");
+        if(product.StockQty>0) HardwarePOS.Services.InventoryRules.ValidateQuantity(product.StockQty,product.AllowsFractional);
     }
 
     public void Archive(int productId, bool archived = true)
@@ -173,6 +197,7 @@ public class ProductRepository
                 OR EXISTS (SELECT 1 FROM dbo.StockIns WHERE ProductId = @Id)
                 OR EXISTS (SELECT 1 FROM dbo.StockOuts WHERE ProductId = @Id)
                 OR EXISTS (SELECT 1 FROM dbo.InventoryLedger WHERE ProductId = @Id)
+                OR EXISTS (SELECT 1 FROM dbo.InventoryBatches WHERE ProductId = @Id)
             THEN 1 ELSE 0 END;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
@@ -236,6 +261,9 @@ public class ProductRepository
             string.IsNullOrWhiteSpace(product.ProductCode) ? DBNull.Value : product.ProductCode.Trim());
         cmd.Parameters.AddWithValue("@Name", product.ProductName);
         cmd.Parameters.AddWithValue("@Details", (object?)product.ProductDetails ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Brand", (object?)product.Brand ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Color", (object?)product.Color ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Fractional", product.AllowsFractional);
         cmd.Parameters.AddWithValue("@UnitId", (object?)product.UnitId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Cost", product.CostPrice);
         cmd.Parameters.AddWithValue("@Sell", product.SellingPrice);
@@ -281,6 +309,7 @@ public class ProductRepository
         ExpirationDate = ReadOptionalDate(reader, 16),
         SalePrice = ReadOptionalDecimal(reader, 17),
         SaleStartDate = ReadOptionalDate(reader, 18),
-        SaleEndDate = ReadOptionalDate(reader, 19)
+        SaleEndDate = ReadOptionalDate(reader, 19),
+        Brand=reader.IsDBNull(20)?null:reader.GetString(20), Color=reader.IsDBNull(21)?null:reader.GetString(21), AllowsFractional=reader.GetBoolean(22)
     };
 }

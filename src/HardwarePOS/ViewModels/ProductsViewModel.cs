@@ -31,6 +31,9 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private int _editingId;
     [ObservableProperty] private string _productCode = string.Empty;
     [ObservableProperty] private string _productName = string.Empty;
+    [ObservableProperty] private string _brand = string.Empty;
+    [ObservableProperty] private string _color = string.Empty;
+    [ObservableProperty] private bool _allowsFractional;
     [ObservableProperty] private string _productDetails = string.Empty;
     [ObservableProperty] private int? _unitId;
     [ObservableProperty] private decimal _costPrice;
@@ -129,6 +132,7 @@ public partial class ProductsViewModel : ObservableObject
         ProductCode = item.ProductCode;
         ProductName = item.ProductName;
         ProductDetails = item.ProductDetails ?? string.Empty;
+        Brand = item.Brand ?? string.Empty; Color = item.Color ?? string.Empty; AllowsFractional = item.AllowsFractional;
         UnitId = item.UnitId;
         CostPrice = item.CostPrice;
         SellingPrice = item.SellingPrice;
@@ -192,6 +196,7 @@ public partial class ProductsViewModel : ObservableObject
                 ProductCode = string.IsNullOrWhiteSpace(ProductCode) ? $"PRD-{DateTime.Now:HHmmss}" : ProductCode.Trim(),
                 ProductName = ProductName.Trim(),
                 ProductDetails = string.IsNullOrWhiteSpace(ProductDetails) ? null : ProductDetails.Trim(),
+                Brand = Brand.Trim(), Color = Color.Trim(), AllowsFractional = AllowsFractional,
                 UnitId = UnitId,
                 UnitOfMeasure = unitName,
                 CostPrice = CostPrice,
@@ -339,7 +344,8 @@ public partial class ProductsViewModel : ObservableObject
     private void ClearForm()
     {
         EditingId = 0;
-        ProductCode = ProductName = ProductDetails = string.Empty;
+        ProductCode = ProductName = ProductDetails = Brand = Color = string.Empty;
+        AllowsFractional = false;
         UnitId = UnitOptions.FirstOrDefault()?.UnitId;
         CostPrice = SellingPrice = SalePrice = StockQty = 0;
         SaleStartDate = SaleEndDate = null;

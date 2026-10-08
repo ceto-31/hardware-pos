@@ -7,6 +7,10 @@ public class Product
     public int ProductId { get; set; }
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
+    public string? Brand { get; set; }
+    public string? Color { get; set; }
+    public bool AllowsFractional { get; set; }
+    public string VariantDetails => string.Join(" · ", new[] { CategoryName, Brand, Color, ProductDetails, UnitOfMeasure }.Where(s => !string.IsNullOrWhiteSpace(s)));
     public string? ProductDetails { get; set; }
     public int? UnitId { get; set; }
     public string UnitOfMeasure { get; set; } = "Piece";

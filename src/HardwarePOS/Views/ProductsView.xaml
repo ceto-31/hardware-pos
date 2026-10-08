@@ -103,7 +103,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N0}" Width="84" MinWidth="72">
+                        <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=0.###}" Width="84" MinWidth="72">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ManagementNumericHeader}"/>
                             </DataGridTextColumn.HeaderStyle>
@@ -191,10 +191,15 @@
                 <TextBox Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="Product Name" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBlock Text="Details" Style="{StaticResource DialogFieldLabel}"/>
-                <TextBox Text="{Binding ProductDetails, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
+                <TextBlock Text="Brand" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding Brand, UpdateSourceTrigger=PropertyChanged}" MaxLength="100"/>
+                <TextBlock Text="Color" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}" MaxLength="100"/>
+                <TextBlock Text="Specifications / details (size, length, thickness)" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBox MaxLength="500" Text="{Binding ProductDetails, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
                 <TextBlock Text="Unit" Style="{StaticResource DialogFieldLabel}"/>
                 <ComboBox ItemsSource="{Binding UnitOptions}" DisplayMemberPath="UnitName" SelectedValuePath="UnitId" SelectedValue="{Binding UnitId}"/>
+                <CheckBox Content="Allow fractional quantities (kg, meter, etc.)" IsChecked="{Binding AllowsFractional}" Margin="0,8,0,8"/>
                 <TextBlock Text="Cost Price" Style="{StaticResource DialogFieldLabel}"/>
                 <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="Selling Price" Style="{StaticResource DialogFieldLabel}"/>
@@ -257,7 +262,7 @@
                         Visibility="{Binding HasExpirationDate, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="Category" Style="{StaticResource DialogFieldLabel}"/>
                 <ComboBox ItemsSource="{Binding CategoryOptions}" DisplayMemberPath="CategoryName" SelectedValuePath="CategoryId" SelectedValue="{Binding CategoryId, TargetNullValue=0}"/>
-                <TextBlock Text="Supplier" Style="{StaticResource DialogFieldLabel}"/>
+                <TextBlock Text="Preferred supplier (each delivery can use a different supplier)" Style="{StaticResource DialogFieldLabel}"/>
                 <ComboBox ItemsSource="{Binding SupplierOptions}" DisplayMemberPath="CompanyName" SelectedValuePath="SupplierId" SelectedValue="{Binding SupplierId, TargetNullValue=0}"/>
             </StackPanel>
         </views:FormOverlay>

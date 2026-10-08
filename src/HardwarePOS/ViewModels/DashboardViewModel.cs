@@ -28,9 +28,16 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private decimal _totalRevenue;
     [ObservableProperty] private int _totalProducts;
     [ObservableProperty] private int _totalSuppliers;
-    [ObservableProperty] private int _lowStockCount;
-    [ObservableProperty] private int _outOfStockCount;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(StockAttentionCount))] private int _lowStockCount;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(StockAttentionCount))] private int _outOfStockCount;
     [ObservableProperty] private int _expiringSoonCount;
+    [ObservableProperty] private string _lastUpdated = string.Empty;
+    [ObservableProperty] private string _chartPeriodLabel = string.Empty;
+    [ObservableProperty] private decimal _chartTotal;
+    [ObservableProperty] private bool _hasChartActivity;
+    public int StockAttentionCount => LowStockCount + OutOfStockCount;
+    public decimal TopProductMaximum => Math.Max(1m, TopProducts.Select(p => p.Revenue).DefaultIfEmpty(0m).Max());
+    partial void OnTopProductsChanged(ObservableCollection<TopProductRow> value) => OnPropertyChanged(nameof(TopProductMaximum));
 
     [ObservableProperty] private ObservableCollection<string> _chartRangeOptions = new() { "Daily", "Weekly", "Monthly", "Yearly" };
     [ObservableProperty] private string _selectedChartRange = "Daily";
@@ -41,7 +48,6 @@ public partial class DashboardViewModel : ObservableObject
     [
         new Axis { Labeler = v => $"₱{v:N0}", MinLimit = 0, SeparatorsPaint = new SolidColorPaint(new SKColor(226, 232, 240)), TextSize = 11 }
     ];
-    [ObservableProperty] private ISeries[] _paymentSeries = Array.Empty<ISeries>();
 
     [ObservableProperty] private ObservableCollection<TopProductRow> _topProducts = new();
     [ObservableProperty] private ObservableCollection<Product> _inventoryAlerts = new();
@@ -80,7 +86,6 @@ public partial class DashboardViewModel : ObservableObject
         ExpiringSoonCount = summary.ExpiringSoonCount;
 
         ReloadCharts();
-        BuildPaymentDonut();
         TopProducts = new ObservableCollection<TopProductRow>(_dashboard.GetTopProducts(6));
         InventoryAlerts = new ObservableCollection<Product>(_dashboard.GetInventoryAlerts().Take(6));
         ExpirationAlerts = new ObservableCollection<Product>(_dashboard.GetExpirationAlerts().Take(6));
@@ -88,6 +93,7 @@ public partial class DashboardViewModel : ObservableObject
         ScheduledDiscounts = IsAdmin
             ? new ObservableCollection<Discount>(_dashboard.GetScheduledDiscounts(6))
             : new ObservableCollection<Discount>();
+        LastUpdated = $"Updated {DateTime.Now:h:mm tt}";
     }
 
     private void ReloadCharts()
@@ -101,24 +107,17 @@ public partial class DashboardViewModel : ObservableObject
             "Yearly" => _dashboard.GetYearlySales(),
             _ => _dashboard.GetDailySales(year)
         };
-        (OverviewSeries, OverviewXAxes) = BuildLine(points, "Sales");
-    }
-
-    private void BuildPaymentDonut()
-    {
-        var cash = Math.Max((double)TodaySales, 0);
-        PaymentSeries =
-        [
-            new PieSeries<double>
-            {
-                Name = "Cash",
-                Values = [cash > 0 ? cash : 0.0001],
-                InnerRadius = 70,
-                Fill = new SolidColorPaint(SKColor.Parse("#2563EB")),
-                Stroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 3 },
-                DataLabelsPaint = null
-            }
-        ];
+        ChartPeriodLabel = range switch
+        {
+            "Weekly" => $"Last 12 weeks · {year}",
+            "Monthly" => $"January–December {year}",
+            "Yearly" => $"{year - 4}–{year}",
+            _ => $"Last 14 days · {year}"
+        };
+        ChartTotal = points.Sum(p => p.Amount);
+        HasChartActivity = points.Any(p => p.Amount != 0);
+        (OverviewSeries, OverviewXAxes) = BuildLine(points, "Net sales");
+        YAxes[0].MinLimit = (double)Math.Min(0m, points.Select(p => p.Amount).DefaultIfEmpty(0m).Min());
     }
 
     private static (ISeries[] series, Axis[] axes) BuildLine(List<SalesPoint> points, string title)
@@ -133,14 +132,14 @@ public partial class DashboardViewModel : ObservableObject
                 Name = title,
                 Values = values,
                 Fill = new SolidColorPaint(line.WithAlpha(40)),
-                GeometrySize = 8,
+                GeometrySize = 5,
                 GeometryStroke = new SolidColorPaint(line) { StrokeThickness = 2 },
                 GeometryFill = new SolidColorPaint(SKColors.White),
                 Stroke = new SolidColorPaint(line) { StrokeThickness = 2.5f },
-                LineSmoothness = 0.35
+                LineSmoothness = 0
             }
         ];
-        Axis[] axes = [new Axis { Labels = labels, LabelsRotation = 15, TextSize = 11, Padding = new LiveChartsCore.Drawing.Padding(4) }];
+        Axis[] axes = [new Axis { Labels = labels, LabelsRotation = 0, TextSize = 11, Padding = new LiveChartsCore.Drawing.Padding(4) }];
         return (series, axes);
     }
 }

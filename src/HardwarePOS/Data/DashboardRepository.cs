@@ -13,14 +13,14 @@ public class DashboardRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
+                ISNULL((SELECT SUM(Amount) FROM dbo.SalesMovements WHERE CAST(EventDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(SYSDATETIME() AS DATE)), 0),
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0), 0),
+                ISNULL((SELECT SUM(Amount) FROM dbo.SalesMovements), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Suppliers WHERE IsArchived = 0), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty > 0 AND StockQty <= ReorderLevel), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Products WHERE IsArchived = 0 AND StockQty <= 0), 0),
-                ISNULL((SELECT SUM(TotalDue) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
+                ISNULL((SELECT SUM(Amount) FROM dbo.SalesMovements WHERE CAST(EventDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
                 ISNULL((SELECT COUNT(*) FROM dbo.Sales WHERE IsVoided = 0 AND CAST(SaleDate AS DATE) = CAST(DATEADD(DAY, -1, SYSDATETIME()) AS DATE)), 0),
                 ISNULL((
                     SELECT SUM(si.Quantity)
@@ -110,9 +110,9 @@ public class DashboardRepository
                 FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30)) v(number)
                 WHERE v.number < @Days
             )
-            SELECT d.SaleDay, ISNULL(SUM(s.TotalDue), 0)
+            SELECT d.SaleDay, ISNULL(SUM(s.Amount), 0)
             FROM Days d
-            LEFT JOIN dbo.Sales s ON CAST(s.SaleDate AS DATE) = d.SaleDay AND YEAR(s.SaleDate) = @Year AND s.IsVoided = 0
+            LEFT JOIN dbo.SalesMovements s ON CAST(s.EventDate AS DATE) = d.SaleDay AND YEAR(s.EventDate) = @Year
             GROUP BY d.SaleDay ORDER BY d.SaleDay;
             """, ("@Days", days), ("@Year", year), d => d.ToString("MMM dd"));
     }
@@ -125,9 +125,9 @@ public class DashboardRepository
                 FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15)) v(number)
                 WHERE v.number < @Weeks
             )
-            SELECT w.WeekStart, ISNULL(SUM(s.TotalDue), 0)
+            SELECT w.WeekStart, ISNULL(SUM(s.Amount), 0)
             FROM Weeks w
-            LEFT JOIN dbo.Sales s ON s.SaleDate >= w.WeekStart AND s.SaleDate < DATEADD(WEEK, 1, w.WeekStart) AND YEAR(s.SaleDate) = @Year AND s.IsVoided = 0
+            LEFT JOIN dbo.SalesMovements s ON s.EventDate >= w.WeekStart AND s.EventDate < DATEADD(WEEK, 1, w.WeekStart) AND YEAR(s.EventDate) = @Year
             GROUP BY w.WeekStart ORDER BY w.WeekStart;
             """, ("@Weeks", weeks), ("@Year", year), d => d.ToString("MMM dd"));
     }
@@ -139,9 +139,9 @@ public class DashboardRepository
                 SELECT DATEFROMPARTS(@Year, v.number, 1) AS MonthStart
                 FROM (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) v(number)
             )
-            SELECT m.MonthStart, ISNULL(SUM(s.TotalDue), 0)
+            SELECT m.MonthStart, ISNULL(SUM(s.Amount), 0)
             FROM Months m
-            LEFT JOIN dbo.Sales s ON s.SaleDate >= m.MonthStart AND s.SaleDate < DATEADD(MONTH, 1, m.MonthStart) AND s.IsVoided = 0
+            LEFT JOIN dbo.SalesMovements s ON s.EventDate >= m.MonthStart AND s.EventDate < DATEADD(MONTH, 1, m.MonthStart)
             GROUP BY m.MonthStart ORDER BY m.MonthStart;
             """, ("@Year", year), ("@Dummy", 0), d => d.ToString("MMM"));
     }
@@ -157,9 +157,9 @@ public class DashboardRepository
                 SELECT YEAR(SYSDATETIME()) - v.number AS Yr
                 FROM (VALUES (0),(1),(2),(3),(4)) v(number)
             )
-            SELECT y.Yr, ISNULL(SUM(s.TotalDue), 0)
+            SELECT y.Yr, ISNULL(SUM(s.Amount), 0)
             FROM Years y
-            LEFT JOIN dbo.Sales s ON YEAR(s.SaleDate) = y.Yr AND s.IsVoided = 0
+            LEFT JOIN dbo.SalesMovements s ON YEAR(s.EventDate) = y.Yr
             GROUP BY y.Yr ORDER BY y.Yr;
             """;
         using var reader = cmd.ExecuteReader();
@@ -168,38 +168,10 @@ public class DashboardRepository
         return list;
     }
 
-    public List<TopProductRow> GetTopProducts(int take = 8)
-    {
-        var list = new List<TopProductRow>();
-        using var conn = DbConnectionFactory.Create();
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT TOP (@Take) p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath,
-                   SUM(si.Quantity), SUM(si.LineTotal)
-            FROM dbo.SaleItems si
-            INNER JOIN dbo.Sales s ON s.SaleId = si.SaleId AND s.IsVoided = 0
-            INNER JOIN dbo.Products p ON p.ProductId = si.ProductId
-            LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
-            GROUP BY p.ProductName, ISNULL(u.UnitName, p.UnitOfMeasure), p.ImagePath
-            ORDER BY SUM(si.LineTotal) DESC;
-            """;
-        cmd.Parameters.AddWithValue("@Take", take);
-        using var reader = cmd.ExecuteReader();
-        var rank = 1;
-        while (reader.Read())
-            list.Add(new TopProductRow
-            {
-                Rank = rank++,
-                ProductName = reader.GetString(0),
-                UnitOfMeasure = reader.GetString(1),
-                ImagePath = reader.IsDBNull(2) ? null : reader.GetString(2),
-                QtySold = reader.GetDecimal(3),
-                Revenue = reader.GetDecimal(4)
-            });
-        return list;
-    }
-
+    public List<TopProductRow> GetTopProducts(int take = 8) =>
+        new SalesReportRepository().GetProducts(new DateTime(1900,1,1),DateTime.Today)
+            .Where(p=>p.NetSales>0).Take(take).Select((p,i)=>new TopProductRow
+            {Rank=i+1,ProductName=p.ProductName,UnitOfMeasure=p.Unit,QtySold=p.NetQuantity,Revenue=p.NetSales,ImagePath=p.ImagePath}).ToList();
     public List<RecentSaleRow> GetRecentSales(int take = 8)
     {
         var list = new List<RecentSaleRow>();

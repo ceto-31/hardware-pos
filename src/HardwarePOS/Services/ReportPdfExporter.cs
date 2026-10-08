@@ -11,16 +11,12 @@ public static class ReportPdfExporter
     private const string MutedText = "#64748B";
     private const string ZebraFill = "#F8FAFC";
 
-    public static void Export(
-        string filePath,
-        string reportType,
-        int? year,
-        IReadOnlyList<string> headers,
-        IReadOnlyList<ReportRow> rows,
-        string? summaryLine = null)
+    public static void Export(string filePath, ReportDocument document)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
         var generatedAt = DateTime.Now;
-        var columnCount = headers.Count;
+        var columnCount = document.Headers.Count;
+        var rightAligned = document.RightAlignedColumns.ToHashSet();
 
         Document.Create(container =>
         {
@@ -28,36 +24,28 @@ public static class ReportPdfExporter
             {
                 page.Size(PageSizes.A4);
                 page.Margin(40);
-                page.DefaultTextStyle(x => x.FontSize(10));
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Segoe UI"));
 
                 page.Header().Column(column =>
                 {
                     column.Item().Text("4KV Hardware").Bold().FontSize(18).FontColor(PrimaryBlue);
-                    column.Item().PaddingTop(4).Text(reportType).SemiBold().FontSize(14);
+                    column.Item().PaddingTop(4).Text(document.Title).SemiBold().FontSize(14);
                     column.Item().PaddingTop(8).Column(meta =>
                     {
                         meta.Item().Text(text =>
                         {
-                            text.Span("Report: ").FontColor(MutedText);
-                            text.Span(reportType);
+                            text.Span($"{document.PeriodLabel}: ").FontColor(MutedText);
+                            text.Span(document.PeriodValue);
                         });
-                        if (year is not null)
-                        {
-                            meta.Item().Text(text =>
-                            {
-                                text.Span("Year: ").FontColor(MutedText);
-                                text.Span(year.Value.ToString());
-                            });
-                        }
                         meta.Item().Text(text =>
                         {
                             text.Span("Generated: ").FontColor(MutedText);
-                            text.Span(generatedAt.ToString("MMMM dd, yyyy hh:mm tt"));
+                            text.Span(generatedAt.ToString("MMMM dd, yyyy hh:mm tt", SalesReportText.Culture));
                         });
                         meta.Item().Text(text =>
                         {
                             text.Span("Records: ").FontColor(MutedText);
-                            text.Span(rows.Count.ToString());
+                            text.Span(document.Rows.Count.ToString(SalesReportText.Culture));
                         });
                     });
                     column.Item().PaddingTop(12).LineHorizontal(1).LineColor("#E2E8F0");
@@ -65,47 +53,80 @@ public static class ReportPdfExporter
 
                 page.Content().PaddingTop(16).Column(column =>
                 {
-                    if (!string.IsNullOrWhiteSpace(summaryLine))
-                    {
-                        column.Item().PaddingBottom(12).Text(summaryLine).SemiBold().FontSize(11);
-                    }
+                    foreach (var line in document.SummaryLines)
+                        column.Item().Text(line).SemiBold().FontSize(11);
+
+                    if (document.SummaryLines.Count > 0)
+                        column.Item().PaddingBottom(8);
+
+                    foreach (var note in document.Notes)
+                        column.Item().PaddingBottom(2).Text(note).FontSize(9).FontColor(MutedText);
+
+                    if (document.Notes.Count > 0)
+                        column.Item().PaddingBottom(8);
 
                     column.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            for (var i = 0; i < columnCount; i++)
-                                columns.RelativeColumn();
+                            if(columnCount==5)
+                            {
+                                columns.ConstantColumn(128); columns.RelativeColumn();
+                                columns.ConstantColumn(76); columns.ConstantColumn(55); columns.ConstantColumn(88);
+                            }
+                            else
+                                for (var i = 0; i < columnCount; i++)
+                                    columns.RelativeColumn(i==0 && columnCount==4 ? 2f : 1.1f);
                         });
 
                         table.Header(header =>
                         {
-                            foreach (var h in headers)
+                            for (var i = 0; i < columnCount; i++)
                             {
-                                header.Cell().Background(PrimaryBlue).Padding(8)
-                                    .Text(h).FontColor(Colors.White).SemiBold();
+                                var caption = document.Headers[i];
+                                var alignRight = rightAligned.Contains(i);
+                                header.Cell().Background(PrimaryBlue).Padding(8).Element(cell =>
+                                {
+                                    var text = cell.Text(caption).FontColor(Colors.White).SemiBold();
+                                    if (alignRight)
+                                        text.AlignRight();
+                                });
                             }
                         });
 
-                        for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
-                        {
-                            var row = rows[rowIndex];
-                            var values = GetRowValues(row, columnCount);
-                            var zebra = rowIndex % 2 == 1;
+                        for (var rowIndex = 0; rowIndex < document.Rows.Count; rowIndex++)
+                            WriteRow(table, document.Rows[rowIndex], columnCount, rightAligned, rowIndex % 2 == 1, bold: false);
 
-                            foreach (var value in values)
-                            {
-                                table.Cell().Element(cell =>
-                                {
-                                    cell.Background(zebra ? ZebraFill : Colors.White)
-                                        .BorderBottom(1)
-                                        .BorderColor("#E2E8F0")
-                                        .Padding(8)
-                                        .Text(value);
-                                });
-                            }
-                        }
+                        if (document.TotalRow is { Length: > 0 } total)
+                            WriteRow(table, total, columnCount, rightAligned, zebra: false, bold: true);
                     });
+                    foreach (var section in document.Sections)
+                    {
+                        column.Item().PaddingTop(18).Text(section.Title).SemiBold().FontSize(13);
+                        if(section.Rows.Count==0)
+                        {
+                            column.Item().Text("No products recorded in this period.").FontColor(MutedText);
+                            continue;
+                        }
+                        column.Item().PaddingTop(8).Table(table=>
+                        {
+                            var numeric=section.RightAlignedColumns.ToHashSet();
+                            table.ColumnsDefinition(columns=>
+                            {
+                                for(var i=0;i<section.Headers.Count;i++) columns.RelativeColumn(i==0?2.5f:1f);
+                            });
+                            table.Header(header=>
+                            {
+                                for(var i=0;i<section.Headers.Count;i++)
+                                {
+                                    var cell=header.Cell().Background(PrimaryBlue).Padding(6);
+                                    if(numeric.Contains(i)) cell=cell.AlignRight();
+                                    cell.Text(section.Headers[i]).FontColor(Colors.White).SemiBold();
+                                }
+                            });
+                            for(var i=0;i<section.Rows.Count;i++) WriteRow(table,section.Rows[i],section.Headers.Count,numeric,i%2==1,false);
+                        });
+                    }
                 });
 
                 page.Footer().AlignCenter().Text(text =>
@@ -119,10 +140,31 @@ public static class ReportPdfExporter
         }).GeneratePdf(filePath);
     }
 
-    private static IEnumerable<string> GetRowValues(ReportRow row, int columnCount)
+    private static void WriteRow(
+        TableDescriptor table,
+        string[] values,
+        int columnCount,
+        HashSet<int> rightAligned,
+        bool zebra,
+        bool bold)
     {
-        var values = new[] { row.Col1, row.Col2, row.Col3, row.Col4 };
         for (var i = 0; i < columnCount; i++)
-            yield return values[i];
+        {
+            var value = i < values.Length ? values[i] : string.Empty;
+            var alignRight = rightAligned.Contains(i);
+            table.Cell().Element(cell =>
+            {
+                var styled = cell
+                    .Background(bold ? "#EFF6FF" : zebra ? ZebraFill : Colors.White)
+                    .BorderBottom(1)
+                    .BorderColor("#E2E8F0")
+                    .Padding(6);
+                if (alignRight)
+                    styled = styled.AlignRight();
+                var text = styled.Text(value);
+                if (bold)
+                    text.SemiBold();
+            });
+        }
     }
 }

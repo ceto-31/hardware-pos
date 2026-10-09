@@ -85,8 +85,16 @@ public class ReportSummaryItem
     public string Detail { get; init; } = string.Empty;
 }
 
+public class MonthOption
+{
+    public int Month { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public override string ToString() => Name;
+}
+
 public class ReportDocument
 {
+    public IReadOnlyList<(string Label, string Value)> HeaderFields { get; init; } = [];
     public IReadOnlyList<ReportSection> Sections { get; init; } = [];
     public string Title { get; init; } = string.Empty;
     public string PeriodLabel { get; init; } = "Period";

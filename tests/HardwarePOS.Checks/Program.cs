@@ -68,9 +68,28 @@ internal static class Program
             var totals=new[] {new DailyTotal {Date=day,Amount=100,TransactionCount=1},new DailyTotal {Date=day.AddDays(1),Amount=-20,RefundAmount=20}};
             var daily=SalesReportBuilder.BuildDaily(totals,day,day.AddDays(1),day,day.AddDays(10));
             Equal(80m,daily.TotalSales,"Daily net sales"); Equal(100m,daily.SalesAmount,"Sales before refunds"); Equal(20m,daily.RefundAmount,"Refunds reported by processing date");
-            Equal(daily.TotalSales,SalesReportBuilder.BuildWeekly(totals,2026,day,day.AddDays(10)).TotalSales,"Weekly reconciliation");
+            Equal(daily.TotalSales,SalesReportBuilder.BuildWeekly(totals,2026,1,day,day.AddDays(10)).TotalSales,"Weekly reconciliation");
             Equal(daily.TotalSales,SalesReportBuilder.BuildMonthly(totals,2026,day,day.AddDays(10)).TotalSales,"Monthly reconciliation");
-            Equal(daily.TotalSales,SalesReportBuilder.BuildYearly(totals,2026,2026,day,day.AddDays(10)).TotalSales,"Yearly reconciliation");
+            Equal(daily.TotalSales,SalesReportBuilder.BuildMonthly(totals,2026,day,day.AddDays(10)).TotalSales,"Yearly all months reconciliation");
+            var february=SalesReportBuilder.BuildDaily(totals,new DateTime(2026,2,1),new DateTime(2026,2,28),day,new DateTime(2026,3,1));
+            Equal(true,february.Periods.All(p=>p.Start.Month==2 && p.End.Month==2),"Yearly February stays inside February");
+            Equal(0m,february.TotalSales,"February excludes January sales");
+            static string WeekLabel(int week,DateTime start,DateTime end)=>
+                $"Week {week} \u2014 {start.ToString("MMM d",SalesReportText.Culture)}\u2013{end.Day.ToString(SalesReportText.Culture)}";
+            void ExpectWeeks(int year,int month,int count,DateTime lastStart,DateTime lastEnd)
+            {
+                var built=SalesReportBuilder.BuildWeekly([],year,month,new DateTime(year,1,1),new DateTime(year,12,31));
+                Equal(count,built.Periods.Count,$"{year}-{month:00} week count");
+                Equal(WeekLabel(1,new DateTime(year,month,1),new DateTime(year,month,7)),built.Periods[0].FullLabel,$"{year}-{month:00} first week");
+                Equal(WeekLabel(count,lastStart,lastEnd),built.Periods[^1].FullLabel,$"{year}-{month:00} last week");
+                Equal(lastStart,built.Periods[^1].Start,$"{year}-{month:00} last week start");
+                Equal(lastEnd,built.Periods[^1].End,$"{year}-{month:00} last week end");
+                Equal(SalesPeriodStatus.Complete,built.Periods[^1].Status,$"{year}-{month:00} last week is not partial");
+            }
+            ExpectWeeks(2025,2,4,new DateTime(2025,2,22),new DateTime(2025,2,28));
+            ExpectWeeks(2024,2,5,new DateTime(2024,2,29),new DateTime(2024,2,29));
+            ExpectWeeks(2026,4,5,new DateTime(2026,4,29),new DateTime(2026,4,30));
+            ExpectWeeks(2026,1,5,new DateTime(2026,1,29),new DateTime(2026,1,31));
             if(args.Contains("--database")) DatabaseChecks(args.Contains("--visual"));
             Console.WriteLine($"{_checks} checks passed.");
             // Offscreen WPF/Skia shutdown handlers can wait on an absent dispatcher loop.
@@ -226,6 +245,63 @@ internal static class Program
             Reject(()=>sales.VoidSale(ownSale.SaleId,2,"Cashier","Again"),"Cashier duplicate void blocked");
             SessionManager.SignOut();
             Reject(()=>sales.VoidSale(expired.SaleId,1,"Admin","Logged out"),"Signed-out sessions cannot void");
+            SessionManager.SignIn(new UserAccount {UserId=1,RoleName="Admin",FullName="Check admin",IsActive=true});
+            var wall=products.Insert(new Product {ProductName="Wall Paint",ProductCode="WALL",UnitId=piece,CategoryId=2,SellingPrice=80});
+            inventory.StockIn(1,wall,10,DateTime.Today,null,"Ten cans",1);
+            Equal(10m,products.GetById(wall)!.StockQty,"Wall paint starts saleable at 10");
+            Equal(0m,products.GetById(wall)!.BoQty,"Wall paint starts with no BO");
+            inventory.StockOut(wall,2,"Damaged",DateTime.Today,"Dented cans",1);
+            var damaged=products.GetById(wall)!;
+            Equal(8m,damaged.StockQty,"Damage deducts saleable stock once");
+            Equal(2m,damaged.BoQty,"Damage moves quantity into BO");
+            Equal(10m,damaged.TotalPhysicalQty,"Total physical keeps damaged quantity");
+            var wallBo=returns.GetBadStock().First(b=>b.ProductName=="Wall Paint");
+            Equal(8m,wallBo.SaleableQty,"BO list shows saleable stock");
+            Equal(2m,wallBo.ProductBoQty,"BO list shows remaining BO");
+            Equal(10m,wallBo.TotalPhysicalQty,"BO list shows total physical stock");
+            Reject(()=>returns.DisposeBadStock(wallBo.BadStockId,0,"Disposed","None"),"Zero BO quantity rejected");
+            Reject(()=>returns.DisposeBadStock(wallBo.BadStockId,-1,"Disposed","None"),"Negative BO quantity rejected");
+            Reject(()=>returns.DisposeBadStock(wallBo.BadStockId,.5m,"Disposed","Half can"),"Fractional BO quantity rejected");
+            Reject(()=>returns.DisposeBadStock(wallBo.BadStockId,3,"Disposed","Too many"),"BO quantity over the balance rejected");
+            Equal(8m,products.GetById(wall)!.StockQty,"Rejected BO actions leave saleable stock");
+            Equal(2m,products.GetById(wall)!.BoQty,"Rejected BO actions leave BO");
+            returns.DisposeBadStock(wallBo.BadStockId,2,"Disposed","Thrown away");
+            Equal(8m,products.GetById(wall)!.StockQty,"Disposal does not deduct saleable stock");
+            Equal(0m,products.GetById(wall)!.BoQty,"Disposal clears remaining BO");
+            Equal(8m,products.GetById(wall)!.TotalPhysicalQty,"Total physical after disposal is saleable only");
+            var boHistory=returns.GetDispositions(wallBo.BadStockId);
+            Equal(1,boHistory.Count,"BO history records the disposal");
+            Equal("Disposed",boHistory[0].Action,"BO history action");
+            Equal(2m,boHistory[0].Quantity,"BO history quantity");
+            Equal("Thrown away",boHistory[0].Reason,"BO history reason");
+            Equal("Check admin",boHistory[0].CreatedByName,"BO history user");
+            Equal(1m,Number("SELECT COUNT(*) FROM dbo.ActivityLog WHERE ActivityType=N'BO' AND CreatedBy=1 AND Description LIKE N'%Damaged to BO: 2 Wall Paint%' AND Description LIKE N'%Dented cans%'"),"Damage to BO is audited");
+            Equal(1m,Number($"SELECT COUNT(*) FROM dbo.ActivityLog WHERE ActivityType=N'BO' AND CreatedBy=1 AND Description LIKE N'%BO #{wallBo.BadStockId}: Disposed, 2.%' AND Description LIKE N'%Thrown away%'"),"BO disposal is audited");
+            Execute($"""
+                INSERT dbo.Sales(InvoiceNo,SaleDate,CashierId,Subtotal,TotalDue,CashTendered,ChangeAmount)
+                VALUES('FEB-SALE','2026-02-10',1,40,40,40,0);
+                DECLARE @sale int=SCOPE_IDENTITY();
+                INSERT dbo.SaleItems(SaleId,ProductId,Quantity,UnitPrice,LineTotal)
+                VALUES(@sale,{product},1,40,40);
+                DECLARE @item int=SCOPE_IDENTITY();
+                INSERT dbo.CustomerReturns(SaleItemId,Quantity,RefundAmount,ItemCondition,Reason,CreatedBy,CreatedAt)
+                VALUES(@item,1,15,'Defective','Late damage',1,'2026-03-10');
+                INSERT dbo.Sales(InvoiceNo,SaleDate,CashierId,Subtotal,TotalDue,CashTendered,ChangeAmount,IsVoided)
+                VALUES('FEB-VOID','2026-02-12',1,99,99,99,0,1);
+                """);
+            var febTotals=reports.GetDailyTotals(new DateTime(2026,2,1),new DateTime(2026,2,28));
+            var marTotals=reports.GetDailyTotals(new DateTime(2026,3,1),new DateTime(2026,3,31));
+            Equal(40m,febTotals.Sum(d=>d.Amount),"February sales exclude the void and the March refund");
+            Equal(0m,febTotals.Sum(d=>d.RefundAmount),"February has no processed refund");
+            Equal(-15m,marTotals.Sum(d=>d.Amount),"March deducts the refund on its processing date");
+            Equal(15m,marTotals.Sum(d=>d.RefundAmount),"March reports the refund amount");
+            Equal(febTotals.Sum(d=>d.Amount),SalesReportBuilder.BuildWeekly(febTotals,2026,2,new DateTime(2026,1,1),new DateTime(2026,10,9)).TotalSales,"Weekly February matches its daily totals");
+            var yearTotals=reports.GetDailyTotals(new DateTime(2026,1,1),new DateTime(2026,12,31));
+            Equal(yearTotals.Sum(d=>d.Amount),SalesReportBuilder.BuildMonthly(yearTotals,2026,new DateTime(2026,1,1),DateTime.Today).TotalSales,"Yearly all months matches daily totals");
+            var februaryRows=SalesReportBuilder.BuildDaily(febTotals,new DateTime(2026,2,1),new DateTime(2026,2,28),new DateTime(2026,1,1),DateTime.Today);
+            Equal(true,februaryRows.Periods.All(p=>p.Start.Month==2 && p.End.Month==2),"Stored February rows stay inside February");
+            SessionManager.SignIn(new UserAccount {UserId=2,RoleName="Cashier",FullName="Check cashier",IsActive=true});
+            Equal(40m,new SalesReportRepository().GetDailyTotals(new DateTime(2026,2,1),new DateTime(2026,2,28)).Sum(d=>d.Amount),"Cashier can read February store sales");
             SessionManager.SignIn(new UserAccount {UserId=1,RoleName="Admin",FullName="Check admin",IsActive=true});
             if(visual) VisualChecks.Run(product);
         }

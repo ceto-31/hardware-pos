@@ -13,7 +13,9 @@
 - Each delivery records its supplier, date, original quantity, remaining quantity, and optional expiry. The same product can have deliveries from multiple suppliers.
 - Supplier Deliveries filters those records by supplier and product. The Stock In form also shows earlier deliveries for the selected product.
 - Sales consume available batches in receipt-date order (FIFO). Voids and usable returns restore their original allocations when available.
-- Stock Out can use a selected delivery or FIFO. Damaged stock moves into BO. BO records retain the delivery/supplier when known; disposal or return-to-supplier records reduce BO only, without deducting saleable stock again.
+- Stock Out can use a selected delivery or FIFO. Damaged stock moves into BO and is recorded once in the activity log, with the user, quantity, reason, and date. BO records retain the delivery/supplier when known.
+- Saleable stock is the quantity available to sell. BO is the remaining defective quantity. Total physical stock is saleable plus remaining BO. Stock Monitoring shows all three. Disposing BO or returning it to the supplier reduces only the remaining BO quantity.
+- Stock Out "Returned to supplier (good stock)" deducts saleable stock. If that product still has BO, the screen asks for confirmation, because damaged goods should leave through the BO tab. The BO tab lists each disposal and supplier return.
 - Supplier attribution follows the recorded allocation. Staff must follow the same physical stock rotation for it to identify the actual delivery reliably.
 
 ## Returns and voids
@@ -29,6 +31,8 @@
 
 - Today's Sales is available to administrators and cashiers. It shows only the current day's store sales, refunds, net sales, receipt/product details, and top products. Refresh today reloads the current date; other daily-range selections do not affect it.
 - Daily, weekly, monthly, and yearly reports use their selected period and show sales, refunds, net sales, and the best-selling products. Product rankings can use net sales amount or net quantity; quantities retain their units.
+- Weekly sales use a month and a year. Each week stays inside that month: days 1–7, 8–14, 15–21, 22–28, and day 29 through the last day when the month is longer. Labels read "Week 1 — Feb 1–7". Weekly totals match that month's daily totals.
+- Yearly sales use one year. All months lists that year's twelve months, titled "Yearly Sales — 2026". Choosing a month lists only that month's days, titled "February 2026 Sales", including its transactions and top products. The PDF states the year, month, exact date range, sales before refunds, refunds, net sales, transaction count, and top products.
 - Daily reports support a date-range summary and a single-day receipt/product detail report.
 - Refunds reduce net sales on the date the return is processed. Voided transactions are excluded. Product totals and detail lines reconcile with net sales.
 - Administrators open an in-system PDF preview before saving or printing. The saved PDF is the same document shown in preview.

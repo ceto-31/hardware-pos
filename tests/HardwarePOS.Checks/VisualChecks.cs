@@ -46,6 +46,7 @@ internal static class VisualChecks
         foreach(var (tab,name) in new[]{(1,"stock-in"),(2,"stock-out"),(3,"inventory-history"),(4,"supplier-deliveries"),(5,"bo")})
         {
             inventory.SelectedTabIndex=tab;inventory.OutCategoryId=1;inventory.OutProductId=product;
+            if(tab==5) inventory.SelectedBadStock=inventory.BadStock.FirstOrDefault(b=>b.ProductName=="Wall Paint")??inventory.BadStock.FirstOrDefault();
             Render(new InventoryView {DataContext=inventory},Path.Combine(output,name+".png"));
         }
         var pos=new PosViewModel();pos.Load();pos.SelectedProduct=pos.ProductList.First(p=>p.ProductId==product);pos.AddSelectedCommand.Execute(null);pos.QuantityInput="0.5";pos.ApplyQuantityCommand.Execute(null);
@@ -61,6 +62,29 @@ internal static class VisualChecks
             var document=(ReportDocument)typeof(ReportsViewModel).GetMethod("BuildDocument",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(reports,null)!;
             Export(document,Path.Combine(output,$"report-{view}.pdf"));
         }
+        reports.WeeklyYear=2024;reports.WeeklyMonth=2;reports.SelectedView=ReportView.Weekly;Wait(reports);
+        var weeks=string.Join(" | ",reports.VisibleSalesRows.Select(r=>$"{r.FullLabel} {r.Start:yyyy-MM-dd} {r.End:yyyy-MM-dd}"));
+        if(reports.HasError||reports.HasValidation||reports.ReportTitle!="Weekly Sales — February 2024"||reports.VisibleSalesRows.Count!=5
+            ||reports.VisibleSalesRows[0].Start!=new DateTime(2024,2,1)            ||reports.VisibleSalesRows[4].Start!=new DateTime(2024,2,29)||reports.VisibleSalesRows[4].End!=new DateTime(2024,2,29)
+            ||reports.VisibleSalesRows[0].FullLabel!="Week 1 \u2014 Feb 1\u20137"||reports.VisibleSalesRows[4].FullLabel!="Week 5 \u2014 Feb 29\u201329")
+            throw new Exception($"February 2024 weeks did not load: {reports.ReportTitle} / {reports.ErrorMessage}{reports.ValidationMessage} / {reports.FooterText} / {weeks}");
+        Render(new ReportsView {DataContext=reports},Path.Combine(output,"reports-weekly-feb-2024.png"));
+        var weeklyDocument=Document(reports);
+        Export(weeklyDocument,Path.Combine(output,"report-weekly-feb-2024.pdf"));
+        MatchDocument(reports,weeklyDocument);
+        reports.YearlyYear=DateTime.Today.Year;reports.YearlyMonth=0;reports.SelectedView=ReportView.Yearly;Wait(reports);
+        if(reports.HasError||reports.HasValidation||reports.ReportTitle!=$"Yearly Sales — {DateTime.Today.Year}")
+            throw new Exception("Yearly all-months report did not load: "+reports.ReportTitle);
+        Render(new ReportsView {DataContext=reports},Path.Combine(output,"reports-yearly-all.png"));
+        reports.YearlyMonth=2;Wait(reports);
+        if(reports.HasError||reports.HasValidation||reports.ReportTitle!=$"February {DateTime.Today.Year} Sales"||reports.VisibleSalesRows.Any(r=>r.Start.Month!=2||r.End.Month!=2)||reports.DailyDetails.Any(d=>d.EventDate.Month!=2))
+            throw new Exception("Yearly February included another month: "+reports.ReportTitle);
+        Render(new ReportsView {DataContext=reports},Path.Combine(output,"reports-yearly-february.png"));
+        var februaryDocument=Document(reports);
+        Export(februaryDocument,Path.Combine(output,"report-yearly-february.pdf"));
+        MatchDocument(reports,februaryDocument);
+        if(!februaryDocument.HeaderFields.Any(f=>f.Label=="Month"&&f.Value=="February")||!februaryDocument.HeaderFields.Any(f=>f.Label=="Year"&&f.Value==DateTime.Today.Year.ToString())||!februaryDocument.HeaderFields.Any(f=>f.Label=="Date range"&&f.Value.Contains("Feb")))
+            throw new Exception("Yearly February PDF header is missing the year, month, or date range");
         reports.SelectedView=ReportView.Daily;reports.SingleDayDetail=true;reports.DailyFrom=DateTime.Today;Wait(reports);
         var detail=(ReportDocument)typeof(ReportsViewModel).GetMethod("BuildDocument",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(reports,null)!;
         Export(detail,Path.Combine(output,"report-single-day.pdf"));
@@ -78,15 +102,43 @@ internal static class VisualChecks
             var expected=new HardwarePOS.Data.SalesReportRepository().GetDailyTotals(DateTime.Today,DateTime.Today).Sum(d=>d.Amount);
             if(reports.DailyDetails.Sum(d=>d.Amount)!=expected || reports.TopProducts.Sum(p=>p.NetSales)!=expected)
                 throw new Exception($"Today's sales amounts did not reconcile for {role}");
-            var todayDocument=(ReportDocument)typeof(ReportsViewModel).GetMethod("BuildDocument",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(reports,null)!;
+            var todayDocument=Document(reports);
             if(!todayDocument.Title.StartsWith("Today's sales")) throw new Exception("Today's preview has the wrong title");
             Render(new ReportsView {DataContext=reports},Path.Combine(output,$"reports-today-{role}.png"));
             Console.WriteLine($"PASS Today's sales date filtering, totals, and preview for {role}");
+            if(role=="Cashier")
+            {
+                reports.WeeklyYear=DateTime.Today.Year;reports.WeeklyMonth=2;reports.SelectedView=ReportView.Weekly;Wait(reports);
+                if(reports.HasError||reports.HasValidation) throw new Exception("Cashier weekly report failed: "+(reports.ErrorMessage??reports.ValidationMessage));
+                reports.YearlyYear=DateTime.Today.Year;reports.YearlyMonth=2;reports.SelectedView=ReportView.Yearly;Wait(reports);
+                if(reports.HasError||reports.HasValidation||reports.VisibleSalesRows.Any(r=>r.Start.Month!=2||r.End.Month!=2))
+                    throw new Exception("Cashier yearly February included another month or failed to load");
+                reports.YearlyMonth=0;Wait(reports);
+                if(reports.ReportTitle!=$"Yearly Sales — {DateTime.Today.Year}") throw new Exception("Cashier yearly title was "+reports.ReportTitle);
+                reports.SelectedView=ReportView.StockIn;Wait(reports);
+                if(!reports.HasError) throw new Exception("Cashier stock-in report was not rejected");
+                reports.SelectedView=ReportView.StockOut;Wait(reports);
+                if(!reports.HasError) throw new Exception("Cashier stock-out report was not rejected");
+                Console.WriteLine("PASS Cashier can view weekly and yearly sales and cannot open stock reports");
+            }
             reports.SelectedView=ReportView.Monthly;Wait(reports);
         }
         HardwarePOS.Helpers.SessionManager.SignIn(admin);
         Console.WriteLine("Visual verification files: "+output);
         app.Shutdown();
+    }
+    private static ReportDocument Document(ReportsViewModel reports)=>
+        (ReportDocument)typeof(ReportsViewModel).GetMethod("BuildDocument",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(reports,null)!;
+    private static void MatchDocument(ReportsViewModel reports,ReportDocument document)
+    {
+        string Value(string label)=>reports.SummaryItems.First(i=>i.Label==label).Value;
+        var net=Value("Net sales");var sales=Value("Sales before refunds");var refunds=Value("Refunds");
+        if(document.TotalRow is null||document.TotalRow[^1]!=net||document.TotalRow[1]!=sales||document.TotalRow[2]!=refunds)
+            throw new Exception("PDF totals do not match the screen");
+        foreach(var label in new[]{"Sales before refunds","Refunds","Net sales","Transactions"})
+            if(!document.SummaryLines.Any(line=>line.StartsWith(label+":")&&line.Contains(Value(label))))
+                throw new Exception("PDF summary does not match the screen for "+label);
+        Console.WriteLine("PASS Screen totals match the PDF for "+document.Title);
     }
     private static void Wait(ReportsViewModel vm)
     {

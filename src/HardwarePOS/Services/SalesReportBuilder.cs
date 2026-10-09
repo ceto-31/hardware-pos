@@ -24,11 +24,24 @@ public static class SalesReportBuilder
         return null;
     }
 
-    public static string? ValidateYearRange(int fromYear, int toYear)
+    public static string? ValidateReportingMonth(int year, int month, DateTime today)
     {
-        if (fromYear > toYear)
-            return "From year must be on or before To year.";
+        if (month is < 1 or > 12)
+            return "Select a month.";
+        if (new DateTime(year, month, 1) > today.Date)
+            return "That month has not started yet.";
         return null;
+    }
+
+    public static string? ValidateYearlyPeriod(int year, int month, DateTime today)
+    {
+        if (month == 0)
+        {
+            if (new DateTime(year, 1, 1) > today.Date)
+                return "That year has not started yet.";
+            return null;
+        }
+        return ValidateReportingMonth(year, month, today);
     }
 
     public static SalesReportResult BuildDaily(
@@ -61,31 +74,34 @@ public static class SalesReportBuilder
     public static SalesReportResult BuildWeekly(
         IReadOnlyList<DailyTotal> totals,
         int year,
+        int month,
         DateTime? recordsStart,
         DateTime today)
     {
-        var yearStart = new DateTime(year, 1, 1);
-        var yearEnd = new DateTime(year, 12, 31);
+        var monthStart = new DateTime(year, month, 1);
+        var days = DateTime.DaysInMonth(year, month);
+        var monthEnd = new DateTime(year, month, days);
         var byDate = Index(totals);
         var periods = new List<SalesPeriodRow>();
-        for (var weekStart = MondayOf(yearStart); weekStart <= yearEnd; weekStart = weekStart.AddDays(7))
+        var week = 1;
+        for (var day = 1; day <= days; day += 7, week++)
         {
-            var weekEnd = weekStart.AddDays(6);
-            var clampedStart = weekStart < yearStart ? yearStart : weekStart;
-            var clampedEnd = weekEnd > yearEnd ? yearEnd : weekEnd;
+            var start = new DateTime(year, month, day);
+            var end = new DateTime(year, month, Math.Min(day + 6, days));
+            var span = $"{start.ToString("MMM d", Culture)}\u2013{end.Day.ToString(Culture)}";
             periods.Add(Make(
-                clampedStart,
-                clampedEnd,
-                clampedStart.ToString("MMM d", Culture),
-                FormatSpan(clampedStart, clampedEnd),
-                clippedWeek: clampedStart != weekStart || clampedEnd != weekEnd,
+                start,
+                end,
+                $"Week {week}",
+                $"Week {week} \u2014 {span}",
+                clippedWeek: false,
                 byDate,
                 recordsStart,
                 today));
         }
 
-        var description = $"{FormatSpan(yearStart, yearEnd)} · {CountPhrase(periods.Count, "week")} · Monday to Sunday · Excludes voided sales";
-        return Finish(periods, yearStart, yearEnd, "week", description);
+        var description = $"{monthStart.ToString("MMMM yyyy", Culture)} · {CountPhrase(periods.Count, "week")} · Weeks counted from the 1st · Excludes voided sales";
+        return Finish(periods, monthStart, monthEnd, "week", description);
     }
 
     public static SalesReportResult BuildMonthly(
@@ -114,36 +130,6 @@ public static class SalesReportBuilder
         var yearStart = new DateTime(year, 1, 1);
         var yearEnd = new DateTime(year, 12, 31);
         return Finish(periods, yearStart, yearEnd, "month", Describe(yearStart, yearEnd, periods.Count, "month"));
-    }
-
-    public static SalesReportResult BuildYearly(
-        IReadOnlyList<DailyTotal> totals,
-        int fromYear,
-        int toYear,
-        DateTime? recordsStart,
-        DateTime today)
-    {
-        var byDate = Index(totals);
-        var periods = new List<SalesPeriodRow>();
-        for (var year = fromYear; year <= toYear; year++)
-        {
-            var start = new DateTime(year, 1, 1);
-            var end = new DateTime(year, 12, 31);
-            var label = year.ToString(Culture);
-            periods.Add(Make(
-                start,
-                end,
-                label,
-                label,
-                clippedWeek: false,
-                byDate,
-                recordsStart,
-                today));
-        }
-
-        var rangeStart = new DateTime(fromYear, 1, 1);
-        var rangeEnd = new DateTime(toYear, 12, 31);
-        return Finish(periods, rangeStart, rangeEnd, "year", Describe(rangeStart, rangeEnd, periods.Count, "year"));
     }
 
     private static SalesReportResult Finish(

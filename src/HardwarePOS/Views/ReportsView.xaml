@@ -67,11 +67,15 @@
                             <DatePicker SelectedDate="{Binding DailyTo}" Width="156"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsWeekly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Month" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="160"
+                                      ItemsSource="{Binding MonthOptions}" DisplayMemberPath="Name"
+                                      SelectedValuePath="Month" SelectedValue="{Binding WeeklyMonth}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsWeekly, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
                             <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
                                       ItemsSource="{Binding YearOptions}" SelectedItem="{Binding WeeklyYear}"/>
-                            <TextBlock Text="Weeks run Monday to Sunday." Margin="0,4,0,0" FontSize="12"
-                                       Foreground="{StaticResource MutedBrush}"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsMonthly, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
@@ -79,14 +83,15 @@
                                       ItemsSource="{Binding YearOptions}" SelectedItem="{Binding MonthlyYear}"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsYearly, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="From year" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
                             <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
-                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding YearFrom}"/>
+                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding YearlyYear}"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsYearly, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="To year" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
-                                      ItemsSource="{Binding YearOptions}" SelectedItem="{Binding YearTo}"/>
+                            <TextBlock Text="Month" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="160"
+                                      ItemsSource="{Binding YearlyMonthOptions}" DisplayMemberPath="Name"
+                                      SelectedValuePath="Month" SelectedValue="{Binding YearlyMonth}"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsOther, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
@@ -250,6 +255,19 @@
 
                             <TextBlock Text="{Binding FooterText}" Margin="0,8,0,0" FontSize="12"
                                        Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+                            <StackPanel Visibility="{Binding ShowMonthTransactions,Converter={StaticResource BoolToVis}}" Margin="0,18,0,0">
+                                <TextBlock Text="{Binding MonthTransactionsTitle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding DailyDetails}" Style="{StaticResource ReportsDataGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Invoice" Binding="{Binding Invoice}" Width="180"/>
+                                        <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
+                                        <DataGridTextColumn Header="Qty" Binding="{Binding Quantity,StringFormat=0.###}" Width="80"/>
+                                        <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="70"/>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Event}" Width="80"/>
+                                        <DataGridTextColumn Header="Amount" Binding="{Binding Amount,StringFormat=₱{0:N2}}" Width="130" ElementStyle="{StaticResource ReportsNumericText}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
                             <StackPanel Visibility="{Binding ShowDailyDetails,Converter={StaticResource BoolToVis}}" Margin="0,18,0,0">
                                 <TextBlock Text="Transactions and products for this day" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                 <DataGrid ItemsSource="{Binding DailyDetails}" Style="{StaticResource ReportsDataGrid}">

@@ -31,6 +31,8 @@ public partial class ReportsViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<SalesDetailRow> _dailyDetails = new();
     private List<ProductSalesRow> _productSource = [];
     public bool ShowDailyDetails => IsToday || (IsDaily && SingleDayDetail);
+    public bool ShowMonthTransactions => IsYearly && YearlyMonth > 0;
+    public string MonthTransactionsTitle => YearlyMonth > 0 ? $"{MonthName(YearlyMonth)} transactions" : "Transactions";
     public bool ShowDailyTo => IsDaily && !SingleDayDetail;
     public bool ShowChartSection => !ShowDailyDetails;
     public string ProductRankingNote => RankByQuantity
@@ -55,10 +57,20 @@ public partial class ReportsViewModel : ObservableObject
     [ObservableProperty] private DateTime? _dailyFrom;
     [ObservableProperty] private DateTime? _dailyTo;
     [ObservableProperty] private int _weeklyYear;
+    [ObservableProperty] private int _weeklyMonth;
     [ObservableProperty] private int _monthlyYear;
-    [ObservableProperty] private int _yearFrom;
-    [ObservableProperty] private int _yearTo;
+    [ObservableProperty] private int _yearlyYear;
+    [ObservableProperty] private int _yearlyMonth;
     [ObservableProperty] private int _otherYear;
+    private static readonly IReadOnlyList<MonthOption> Months =
+        Enumerable.Range(1, 12).Select(month => new MonthOption
+        {
+            Month = month,
+            Name = SalesReportText.Culture.DateTimeFormat.GetMonthName(month)
+        }).ToList();
+    public IReadOnlyList<MonthOption> MonthOptions => Months;
+    public IReadOnlyList<MonthOption> YearlyMonthOptions { get; } =
+        new[] { new MonthOption { Month = 0, Name = "All months" } }.Concat(Months).ToList();
     [ObservableProperty] private bool _hideZeroRows;
 
     [ObservableProperty] private bool _isLoading;
@@ -128,9 +140,10 @@ public partial class ReportsViewModel : ObservableObject
         DailyFrom = today.AddDays(-29);
         DailyTo = today;
         WeeklyYear = today.Year;
+        WeeklyMonth = today.Month;
         MonthlyYear = today.Year;
-        YearFrom = today.Year - 4;
-        YearTo = today.Year;
+        YearlyYear = today.Year;
+        YearlyMonth = 0;
         OtherYear = today.Year;
         HideZeroRows = false;
         _suppress = false;
@@ -146,9 +159,15 @@ public partial class ReportsViewModel : ObservableObject
     partial void OnDailyFromChanged(DateTime? value) { if(SingleDayDetail) DailyTo=value; RequestRefresh(); }
     partial void OnDailyToChanged(DateTime? value) => RequestRefresh();
     partial void OnWeeklyYearChanged(int value) => RequestRefresh();
+    partial void OnWeeklyMonthChanged(int value) => RequestRefresh();
     partial void OnMonthlyYearChanged(int value) => RequestRefresh();
-    partial void OnYearFromChanged(int value) => RequestRefresh();
-    partial void OnYearToChanged(int value) => RequestRefresh();
+    partial void OnYearlyYearChanged(int value) => RequestRefresh();
+    partial void OnYearlyMonthChanged(int value)
+    {
+        OnPropertyChanged(nameof(ShowMonthTransactions));
+        OnPropertyChanged(nameof(MonthTransactionsTitle));
+        RequestRefresh();
+    }
     partial void OnOtherYearChanged(int value) => RequestRefresh();
 
     partial void OnHideZeroRowsChanged(bool value)
@@ -191,7 +210,8 @@ public partial class ReportsViewModel : ObservableObject
         {
             ReportView.Daily when DailyFrom is null || DailyTo is null => "Choose a From date and a To date.",
             ReportView.Daily => SalesReportBuilder.ValidateDailyRange(DailyFrom!.Value, DailyTo!.Value, today),
-            ReportView.Yearly => SalesReportBuilder.ValidateYearRange(YearFrom, YearTo),
+            ReportView.Weekly => SalesReportBuilder.ValidateReportingMonth(WeeklyYear, WeeklyMonth, today),
+            ReportView.Yearly => SalesReportBuilder.ValidateYearlyPeriod(YearlyYear, YearlyMonth, today),
             _ => null
         };
 
@@ -211,14 +231,15 @@ public partial class ReportsViewModel : ObservableObject
         var dailyFrom = DailyFrom ?? today;
         var dailyTo = DailyTo ?? today;
         var weeklyYear = WeeklyYear;
+        var weeklyMonth = WeeklyMonth;
         var monthlyYear = MonthlyYear;
-        var yearFrom = YearFrom;
-        var yearTo = YearTo;
+        var yearlyYear = YearlyYear;
+        var yearlyMonth = YearlyMonth;
         var otherYear = OtherYear;
 
         try
         {
-            var loaded = await Task.Run(() => LoadReport(view, today, dailyFrom, dailyTo, weeklyYear, monthlyYear, yearFrom, yearTo, otherYear));
+            var loaded = await Task.Run(() => LoadReport(view, today, dailyFrom, dailyTo, weeklyYear, weeklyMonth, monthlyYear, yearlyYear, yearlyMonth, otherYear));
             if (id != _requestId) return;
             Apply(view, loaded);
         }
@@ -244,31 +265,35 @@ public partial class ReportsViewModel : ObservableObject
         DateTime dailyFrom,
         DateTime dailyTo,
         int weeklyYear,
+        int weeklyMonth,
         int monthlyYear,
-        int yearFrom,
-        int yearTo,
+        int yearlyYear,
+        int yearlyMonth,
         int otherYear)
     {
         if (view is ReportView.Today or ReportView.Daily or ReportView.Weekly or ReportView.Monthly or ReportView.Yearly)
         {
+            var monthEnd = (int year, int month) => new DateTime(year, month, DateTime.DaysInMonth(year, month));
             var (from, to) = view switch
             {
                 ReportView.Today => (today, today),
                 ReportView.Daily => (dailyFrom.Date, dailyTo.Date),
-                ReportView.Weekly => (new DateTime(weeklyYear, 1, 1), new DateTime(weeklyYear, 12, 31)),
+                ReportView.Weekly => (new DateTime(weeklyYear, weeklyMonth, 1), monthEnd(weeklyYear, weeklyMonth)),
                 ReportView.Monthly => (new DateTime(monthlyYear, 1, 1), new DateTime(monthlyYear, 12, 31)),
-                _ => (new DateTime(yearFrom, 1, 1), new DateTime(yearTo, 12, 31))
+                ReportView.Yearly when yearlyMonth == 0 => (new DateTime(yearlyYear, 1, 1), new DateTime(yearlyYear, 12, 31)),
+                _ => (new DateTime(yearlyYear, yearlyMonth, 1), monthEnd(yearlyYear, yearlyMonth))
             };
             if(to>today) to=today;
-            var snapshot = _salesReports.Capture(from,to,view is ReportView.Daily or ReportView.Today);
+            var snapshot = _salesReports.Capture(from,to,view is ReportView.Daily or ReportView.Today || (view == ReportView.Yearly && yearlyMonth > 0));
             var totals = snapshot.Totals;
             var recordsStart = snapshot.RecordsStart;
             var result = view switch
             {
                 ReportView.Daily or ReportView.Today => SalesReportBuilder.BuildDaily(totals, from, to, recordsStart, today),
-                ReportView.Weekly => SalesReportBuilder.BuildWeekly(totals, weeklyYear, recordsStart, today),
+                ReportView.Weekly => SalesReportBuilder.BuildWeekly(totals, weeklyYear, weeklyMonth, recordsStart, today),
                 ReportView.Monthly => SalesReportBuilder.BuildMonthly(totals, monthlyYear, recordsStart, today),
-                _ => SalesReportBuilder.BuildYearly(totals, yearFrom, yearTo, recordsStart, today)
+                ReportView.Yearly when yearlyMonth == 0 => SalesReportBuilder.BuildMonthly(totals, yearlyYear, recordsStart, today),
+                _ => SalesReportBuilder.BuildDaily(totals, from, to, recordsStart, today)
             };
             return new LoadedReport { Sales=result, Products=snapshot.Products, Details=snapshot.Details };
         }
@@ -294,7 +319,7 @@ public partial class ReportsViewModel : ObservableObject
             PeriodDescription = loaded.Sales.PeriodDescription;
             TableTitle = TableTitleFor(view);
             PeriodColumnHeader = PeriodHeader(view);
-            SummaryItems = new ObservableCollection<ReportSummaryItem>(SalesSummary(loaded.Sales, view));
+            SummaryItems = new ObservableCollection<ReportSummaryItem>(SalesSummary(loaded.Sales));
             ApplySalesRows();
             BuildSalesChart(loaded.Sales, view);
             ApplyOtherColumns(view);
@@ -374,11 +399,12 @@ public partial class ReportsViewModel : ObservableObject
 
         var fullLabels = result.Periods.Select(period => period.FullLabel).ToArray();
         var shortLabels = result.Periods.Select(period => period.ShortLabel).ToArray();
-        ChartCaption = ChartNote(result, view);
+        var dailyShape = result.PeriodSingular == "day";
+        ChartCaption = ChartNote(result, dailyShape);
 
         ISeries[] series;
         LegendPosition legend;
-        if (view == ReportView.Daily && result.Periods.Count>1)
+        if (dailyShape && result.Periods.Count>1)
         {
             series = [Line(result.Periods.Select(period => period.Amount).ToArray(), fullLabels, "Net Sales", SalesColor)];
             legend = LegendPosition.Hidden;
@@ -506,27 +532,29 @@ public partial class ReportsViewModel : ObservableObject
     private static string LabelAt(string[] labels, int index) =>
         index >= 0 && index < labels.Length ? labels[index] : string.Empty;
 
-    private static string ChartNote(SalesReportResult result, ReportView view)
+    private static string ChartNote(SalesReportResult result, bool dailyShape)
     {
         var parts = new List<string>();
         if (result.Periods.Any(period => period.Amount is null or 0m))
-            parts.Add("A period with no bar is upcoming, before the first record, or had no sales. The table shows which.");
-        if (result.IncludesToDate && view != ReportView.Daily)
+            parts.Add(dailyShape
+                ? "A day with no point is before the first record or had no sales. The table shows which."
+                : "A period with no bar is upcoming, before the first record, or had no sales. The table shows which.");
+        if (result.IncludesToDate && !dailyShape)
             parts.Add("The lighter bar is the current period, to date.");
         else if (result.IncludesToDate)
             parts.Add("Today is included to date.");
         return string.Join(" ", parts);
     }
 
-    private static IEnumerable<ReportSummaryItem> SalesSummary(SalesReportResult result, ReportView view)
+    private static IEnumerable<ReportSummaryItem> SalesSummary(SalesReportResult result)
     {
         yield return new ReportSummaryItem {Label="Sales before refunds",Value=SalesReportText.Money(result.SalesAmount)};
         yield return new ReportSummaryItem {Label="Refunds",Value=SalesReportText.Money(result.RefundAmount)};
-        var bestName = view switch
+        var bestName = result.PeriodSingular switch
         {
-            ReportView.Weekly => "Best week",
-            ReportView.Monthly => "Best month",
-            ReportView.Yearly => "Best year",
+            "week" => "Best week",
+            "month" => "Best month",
+            "year" => "Best year",
             _ => "Best day"
         };
         yield return new ReportSummaryItem
@@ -598,12 +626,13 @@ public partial class ReportsViewModel : ObservableObject
         var rows = (HideZeroRows ? result.Periods.Where(period => period.Amount != 0m || period.RefundAmount!=0) : result.Periods)
             .Select(period => new[] { period.PdfPeriod, period.SalesDisplay,period.RefundDisplay,period.AmountDisplay }).ToList();
         var notes=SalesNotes();
-        if(SelectedView==ReportView.Weekly) notes.Add("Weeks run Monday–Sunday and are clipped to the selected calendar year.");
+        if(SelectedView==ReportView.Weekly) notes.Add("Weeks are counted from the 1st of the month (days 1–7, 8–14, …).");
         if(hidden>0) notes.Add($"{hidden} zero-activity rows hidden. Totals cover the complete selected period.");
         var totalLabel=result.IncludesToDate?"Total to date":"Total";
         return new ReportDocument
         {
             Title=ReportTitle + (IsDaily?" — daily summary":""), PeriodValue=result.RangeText,
+            HeaderFields=HeaderFields(result),
             SummaryLines=SummaryItems.Select(i=>$"{i.Label}: {i.Value} {i.Detail}".Trim()).ToList(),
             Notes=notes, Headers=[PeriodColumnHeader,"Sales before refunds","Refunds","Net sales"], RightAlignedColumns=[1,2,3],
             Rows=rows, TotalRow=[totalLabel,SalesReportText.Money(result.SalesAmount),SalesReportText.Money(result.RefundAmount),SalesReportText.Money(result.TotalSales)],
@@ -657,9 +686,10 @@ public partial class ReportsViewModel : ObservableObject
         {
             ReportView.Today => $"4KV_Todays_Sales_{_sales?.RangeStart:yyyy-MM-dd}.pdf",
             ReportView.Daily => $"4KV_Daily_Sales_{DailyFrom:yyyy-MM-dd}_to_{DailyTo:yyyy-MM-dd}.pdf",
-            ReportView.Weekly => $"4KV_Weekly_Sales_{WeeklyYear}.pdf",
+            ReportView.Weekly => $"4KV_Weekly_Sales_{WeeklyYear}-{WeeklyMonth:00}.pdf",
             ReportView.Monthly => $"4KV_Monthly_Sales_{MonthlyYear}.pdf",
-            ReportView.Yearly => $"4KV_Yearly_Sales_{YearFrom}-{YearTo}.pdf",
+            ReportView.Yearly when YearlyMonth == 0 => $"4KV_Yearly_Sales_{YearlyYear}.pdf",
+            ReportView.Yearly => $"4KV_Sales_{YearlyYear}-{YearlyMonth:00}.pdf",
             ReportView.StockIn => $"4KV_Stock_In_History_{OtherYear}.pdf",
             ReportView.StockOut => $"4KV_Stock_Out_History_{OtherYear}.pdf",
             _ => $"4KV_All_Sales_Transactions_{OtherYear}.pdf"
@@ -702,6 +732,8 @@ public partial class ReportsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsWeekly));
         OnPropertyChanged(nameof(IsMonthly));
         OnPropertyChanged(nameof(IsYearly));
+        OnPropertyChanged(nameof(ShowMonthTransactions));
+        OnPropertyChanged(nameof(MonthTransactionsTitle));
         OnPropertyChanged(nameof(IsOther));
     }
 
@@ -715,42 +747,56 @@ public partial class ReportsViewModel : ObservableObject
         ExportPdfCommand.NotifyCanExecuteChanged();
     }
 
-    private static string Title(ReportView view) => view switch
+    private string Title(ReportView view) => view switch
     {
         ReportView.Today => "Today's sales",
         ReportView.Daily => "Daily sales",
-        ReportView.Weekly => "Weekly sales",
+        ReportView.Weekly => $"Weekly Sales — {MonthName(WeeklyMonth)} {WeeklyYear}",
         ReportView.Monthly => "Monthly sales",
-        ReportView.Yearly => "Yearly sales",
+        ReportView.Yearly when YearlyMonth == 0 => $"Yearly Sales — {YearlyYear}",
+        ReportView.Yearly => $"{MonthName(YearlyMonth)} {YearlyYear} Sales",
         ReportView.StockIn => "Stock in history",
         ReportView.StockOut => "Stock out history",
         _ => "All sales transactions"
     };
 
-    private static string TableTitleFor(ReportView view) => view switch
+    private string TableTitleFor(ReportView view) => view switch
     {
         ReportView.Today => "Today's sales summary",
         ReportView.Weekly => "Weekly sales by week",
         ReportView.Monthly => "Monthly sales by month",
-        ReportView.Yearly => "Yearly sales by year",
+        ReportView.Yearly when YearlyMonth == 0 => "Yearly sales by month",
+        ReportView.Yearly => "Sales by day",
         _ => "Daily sales by date"
     };
 
-    private static string PeriodHeader(ReportView view) => view switch
+    private string PeriodHeader(ReportView view) => view switch
     {
         ReportView.Weekly => "Week",
         ReportView.Monthly => "Month",
-        ReportView.Yearly => "Year",
+        ReportView.Yearly when YearlyMonth == 0 => "Month",
         _ => "Date"
     };
 
-    private static string BestName(ReportView view) => view switch
+    private IReadOnlyList<(string Label, string Value)> HeaderFields(SalesReportResult result) => SelectedView switch
     {
-        ReportView.Weekly => "Best week",
-        ReportView.Monthly => "Best month",
-        ReportView.Yearly => "Best year",
-        _ => "Best day"
+        ReportView.Weekly =>
+        [
+            ("Year", WeeklyYear.ToString(SalesReportText.Culture)),
+            ("Month", MonthName(WeeklyMonth)),
+            ("Date range", result.RangeText)
+        ],
+        ReportView.Yearly =>
+        [
+            ("Year", YearlyYear.ToString(SalesReportText.Culture)),
+            ("Month", YearlyMonth == 0 ? "All months" : MonthName(YearlyMonth)),
+            ("Date range", result.RangeText)
+        ],
+        _ => []
     };
+
+    private static string MonthName(int month) =>
+        SalesReportText.Culture.DateTimeFormat.GetMonthName(month);
 
     private static string FormatReason(string? reason) => reason switch
     {

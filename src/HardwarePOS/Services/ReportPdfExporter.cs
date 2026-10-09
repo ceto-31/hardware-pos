@@ -32,11 +32,25 @@ public static class ReportPdfExporter
                     column.Item().PaddingTop(4).Text(document.Title).SemiBold().FontSize(14);
                     column.Item().PaddingTop(8).Column(meta =>
                     {
-                        meta.Item().Text(text =>
+                        if (document.HeaderFields.Count > 0)
                         {
-                            text.Span($"{document.PeriodLabel}: ").FontColor(MutedText);
-                            text.Span(document.PeriodValue);
-                        });
+                            foreach (var field in document.HeaderFields)
+                            {
+                                meta.Item().Text(text =>
+                                {
+                                    text.Span($"{field.Label}: ").FontColor(MutedText);
+                                    text.Span(field.Value);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            meta.Item().Text(text =>
+                            {
+                                text.Span($"{document.PeriodLabel}: ").FontColor(MutedText);
+                                text.Span(document.PeriodValue);
+                            });
+                        }
                         meta.Item().Text(text =>
                         {
                             text.Span("Generated: ").FontColor(MutedText);

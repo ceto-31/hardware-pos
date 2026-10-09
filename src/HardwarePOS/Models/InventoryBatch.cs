@@ -40,4 +40,23 @@ public class BadStockRow
     public decimal RemainingQuantity { get; set; }
     public string Unit { get; set; } = "";
     public string Reason { get; set; } = "";
+    public decimal SaleableQty { get; set; }
+    public decimal ProductBoQty { get; set; }
+    public decimal TotalPhysicalQty => SaleableQty + ProductBoQty;
+}
+
+public class BadStockDisposition
+{
+    public DateTime CreatedAt { get; set; }
+    public string Action { get; set; } = "";
+    public string ActionLabel => Action == "ReturnedToSupplier" ? "Returned to supplier" : "Disposed";
+    public decimal Quantity { get; set; }
+    public string Reason { get; set; } = "";
+    public string CreatedByName { get; set; } = "";
+}
+
+public class StockOutReasonOption
+{
+    public string Value { get; init; } = "";
+    public string Label { get; init; } = "";
 }

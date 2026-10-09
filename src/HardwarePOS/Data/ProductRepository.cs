@@ -19,11 +19,17 @@ public class ProductRepository
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
-                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional,
+                   bo.BoQty
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
             LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
+            OUTER APPLY (
+                SELECT ISNULL(SUM(RemainingQuantity), 0) AS BoQty
+                FROM dbo.BadStock
+                WHERE ProductId = p.ProductId
+            ) bo
             WHERE (@IncludeArchived = 1 OR p.IsArchived = 0)
               AND (@CategoryId IS NULL OR p.CategoryId = @CategoryId)
               AND (@UnitId IS NULL OR p.UnitId = @UnitId)
@@ -58,11 +64,17 @@ public class ProductRepository
                    ISNULL(u.UnitName, p.UnitOfMeasure), p.CostPrice, p.SellingPrice,
                    p.StockQty, p.ReorderLevel, p.CategoryId, c.CategoryName,
                    p.SupplierId, s.CompanyName, p.IsArchived, p.ProductCode, p.UnitId, p.ImagePath, p.ExpirationDate,
-                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional
+                   p.SalePrice, p.SaleStartDate, p.SaleEndDate, p.Brand, p.Color, p.AllowsFractional,
+                   bo.BoQty
             FROM dbo.Products p
             LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = p.SupplierId
             LEFT JOIN dbo.Units u ON u.UnitId = p.UnitId
+            OUTER APPLY (
+                SELECT ISNULL(SUM(RemainingQuantity), 0) AS BoQty
+                FROM dbo.BadStock
+                WHERE ProductId = p.ProductId
+            ) bo
             WHERE p.ProductId = @Id;
             """;
         cmd.Parameters.AddWithValue("@Id", productId);
@@ -310,6 +322,7 @@ public class ProductRepository
         SalePrice = ReadOptionalDecimal(reader, 17),
         SaleStartDate = ReadOptionalDate(reader, 18),
         SaleEndDate = ReadOptionalDate(reader, 19),
-        Brand=reader.IsDBNull(20)?null:reader.GetString(20), Color=reader.IsDBNull(21)?null:reader.GetString(21), AllowsFractional=reader.GetBoolean(22)
+        Brand=reader.IsDBNull(20)?null:reader.GetString(20), Color=reader.IsDBNull(21)?null:reader.GetString(21), AllowsFractional=reader.GetBoolean(22),
+        BoQty = reader.FieldCount > 23 && !reader.IsDBNull(23) ? reader.GetDecimal(23) : 0
     };
 }

@@ -27,6 +27,15 @@ public partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<Supplier> _historySuppliers = new();
     [ObservableProperty] private ObservableCollection<BadStockRow> _badStock = new();
     [ObservableProperty] private BadStockRow? _selectedBadStock;
+    [ObservableProperty] private ObservableCollection<BadStockDisposition> _boHistory = new();
+    public string SelectedProductStock => SelectedBadStock is { } row
+        ? $"Saleable {row.SaleableQty:0.###}   ·   BO {row.ProductBoQty:0.###}   ·   Total physical {row.TotalPhysicalQty:0.###} {row.Unit}"
+        : "Select a BO entry to see saleable, BO, and total physical stock.";
+    partial void OnSelectedBadStockChanged(BadStockRow? value)
+    {
+        BoHistory = new ObservableCollection<BadStockDisposition>(value is null ? [] : new ReturnsRepository().GetDispositions(value.BadStockId));
+        OnPropertyChanged(nameof(SelectedProductStock));
+    }
     [ObservableProperty] private int _deliverySupplierFilter;
     [ObservableProperty] private int? _outBatchId;
     [ObservableProperty] private decimal _boQuantity = 1;
@@ -85,9 +94,12 @@ public partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<Product> _inProductOptions = new();
     [ObservableProperty] private ObservableCollection<Product> _outProductOptions = new();
     [ObservableProperty] private ObservableCollection<Supplier> _supplierOptions = new();
-    [ObservableProperty] private ObservableCollection<string> _stockOutReasons = new()
+    [ObservableProperty] private ObservableCollection<StockOutReasonOption> _stockOutReasons = new()
     {
-        "Damaged", "ReturnedToSupplier", "InternalUse", "Expired"
+        new() { Value = "Damaged", Label = "Damaged (moves to BO)" },
+        new() { Value = "ReturnedToSupplier", Label = "Returned to supplier (good stock)" },
+        new() { Value = "InternalUse", Label = "Internal use" },
+        new() { Value = "Expired", Label = "Expired" }
     };
 
     // Stock In
@@ -266,6 +278,15 @@ public partial class InventoryViewModel : ObservableObject
         {
             DialogService.ShowWarning("Select category, product, reason, and a quantity greater than zero.", "Stock Out");
             return;
+        }
+
+        if (OutReason == "ReturnedToSupplier")
+        {
+            var boQty = _products.GetById(OutProductId.Value)?.BoQty ?? 0;
+            if (boQty > 0 && !DialogService.Confirm(
+                $"This product has {boQty:0.###} in BO. Damaged items already left saleable stock; return them from the BO tab. Continue deducting saleable stock?",
+                "Stock Out"))
+                return;
         }
 
         try

@@ -17,6 +17,8 @@ public class Product
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }
     public decimal StockQty { get; set; }
+    public decimal BoQty { get; set; }
+    public decimal TotalPhysicalQty => StockQty + BoQty;
     public decimal ReorderLevel { get; set; } = 10;
     public int? CategoryId { get; set; }
     public string? CategoryName { get; set; }

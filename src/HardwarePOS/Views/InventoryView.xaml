@@ -106,7 +106,23 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*"/>
                             <DataGridTextColumn Header="UOM" Binding="{Binding UnitOfMeasure}" Width="80"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=0.###}" Width="90">
+                            <DataGridTextColumn Header="Saleable" Binding="{Binding StockQty, StringFormat=0.###}" Width="90">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                </DataGridTextColumn.HeaderStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="BO" Binding="{Binding BoQty, StringFormat=0.###}" Width="70">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
+                                </DataGridTextColumn.HeaderStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource GridNumericCell}"/>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Total physical" Binding="{Binding TotalPhysicalQty, StringFormat=0.###}" Width="120">
                                 <DataGridTextColumn.HeaderStyle>
                                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource GridNumericHeader}"/>
                                 </DataGridTextColumn.HeaderStyle>
@@ -211,7 +227,7 @@
                     </Grid>
                     <TextBlock Text="Reason" Style="{StaticResource FieldLabel}"/>
                     <Grid>
-                        <ComboBox x:Name="OutReasonBox" ItemsSource="{Binding StockOutReasons}" SelectedItem="{Binding OutReason}"/>
+                        <ComboBox x:Name="OutReasonBox" ItemsSource="{Binding StockOutReasons}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding OutReason}"/>
                         <TextBlock Text="Select a reason…" Tag="{Binding SelectedItem,ElementName=OutReasonBox}" Style="{StaticResource DropdownPlaceholder}"/>
                     </Grid>
                     <TextBlock Text="Damaged items move from saleable stock to BO. Dispose or return them from the BO tab." TextWrapping="Wrap" Foreground="#64748B" Margin="0,6,0,4"/>
@@ -273,6 +289,17 @@
                     </WrapPanel>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                    <TextBlock Text="{Binding SelectedProductStock}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="BO history" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <DataGrid ItemsSource="{Binding BoHistory}" MaxHeight="140" Margin="0,0,0,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding CreatedAt, StringFormat='MMM d yyyy h:mm tt'}" Width="170"/>
+                            <DataGridTextColumn Header="Action" Binding="{Binding ActionLabel}" Width="150"/>
+                            <DataGridTextColumn Header="Qty" Binding="{Binding Quantity,StringFormat=0.###}" Width="70"/>
+                            <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="*"/>
+                            <DataGridTextColumn Header="By" Binding="{Binding CreatedByName}" Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                     <TextBlock Text="For the selected BO entry" FontWeight="SemiBold"/>
                     <WrapPanel>
                         <TextBlock Text="Quantity" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Width="100" Text="{Binding BoQuantityText,UpdateSourceTrigger=PropertyChanged}"/>

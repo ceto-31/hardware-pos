@@ -139,14 +139,29 @@ public class InventoryRepository
                 newBalance = (decimal)cmd.ExecuteScalar()!;
             }
 
+            string? productName = null;
+            if (reason == "Damaged")
+            {
+                using var nameCmd = BatchStock.Command(conn, tx,
+                    "SELECT ProductName FROM dbo.Products WHERE ProductId=@Id;", ("@Id", productId));
+                productName = (string)nameCmd.ExecuteScalar()!;
+            }
             foreach (var allocation in BatchStock.Take(conn, tx, productId, quantity, batchId))
             {
                 using var allocationCmd = BatchStock.Command(conn, tx,
                     "INSERT dbo.StockOutAllocations(StockOutId,BatchId,Quantity) VALUES(@Id,@Batch,@Qty);",
                     ("@Id",stockOutId),("@Batch",allocation.BatchId),("@Qty",allocation.Quantity));
                 allocationCmd.ExecuteNonQuery();
-                if (reason == "Damaged") BatchStock.AddBadStock(conn,tx,productId,allocation.BatchId,null,allocation.Quantity,
-                    string.IsNullOrWhiteSpace(remarks)?"Damaged stock":remarks,createdBy);
+                if (reason != "Damaged") continue;
+                var note = string.IsNullOrWhiteSpace(remarks) ? "Damaged stock" : remarks.Trim();
+                BatchStock.AddBadStock(conn,tx,productId,allocation.BatchId,null,allocation.Quantity,note,createdBy);
+                var description = $"Damaged to BO: {allocation.Quantity:0.###} {productName} (batch #{allocation.BatchId}). {note}";
+                if (description.Length > 500) description = description[..500];
+                using var log = BatchStock.Command(conn, tx, """
+                    INSERT dbo.ActivityLog(ActivityType,Description,CreatedBy,CreatedAt)
+                    VALUES(N'BO',@Description,@User,SYSDATETIME());
+                    """, ("@Description", description), ("@User", createdBy));
+                log.ExecuteNonQuery();
             }
             InsertLedger(conn, tx, productId, "OUT", -quantity, newBalance, stockOutId,
                 $"{reason}: {remarks}".Trim(' ', ':'), createdBy);

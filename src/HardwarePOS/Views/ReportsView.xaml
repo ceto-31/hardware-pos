@@ -51,20 +51,14 @@
                                      IsChecked="{Binding SelectedView, Converter={StaticResource EnumEquals}, ConverterParameter=Transactions}"/>
                     </WrapPanel>
 
-                    <CheckBox Content="Single-day detail (transactions and products)" IsChecked="{Binding SingleDayDetail}"
-                              Visibility="{Binding IsDaily,Converter={StaticResource BoolToVis}}" Margin="0,0,0,12"/>
                     <StackPanel Orientation="Horizontal" Visibility="{Binding IsToday,Converter={StaticResource BoolToVis}}" Margin="0,0,0,12">
                         <TextBlock Text="All store sales for today, including refunds and top products." VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" Margin="0,0,12,0"/>
                         <Button Content="Refresh today" Command="{Binding RetryCommand}" Style="{StaticResource SecondaryButton}"/>
                     </StackPanel>
                     <WrapPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsDaily, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="From" Style="{StaticResource FieldLabel}"/>
-                            <DatePicker SelectedDate="{Binding DailyFrom}" Width="156"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,16,8" Visibility="{Binding ShowDailyTo, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="To" Style="{StaticResource FieldLabel}"/>
-                            <DatePicker SelectedDate="{Binding DailyTo}" Width="156"/>
+                            <TextBlock Text="Date" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding DailyDate}" Width="180"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsWeekly, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Month" Style="{StaticResource FieldLabel}"/>
@@ -76,6 +70,12 @@
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
                             <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
                                       ItemsSource="{Binding YearOptions}" SelectedItem="{Binding WeeklyYear}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsMonthly, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Month" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Style="{StaticResource InlineDropdown}" Width="160"
+                                      ItemsSource="{Binding MonthOptions}" DisplayMemberPath="Name"
+                                      SelectedValuePath="Month" SelectedValue="{Binding MonthlyMonth}"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,16,8" Visibility="{Binding IsMonthly, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
@@ -93,12 +93,54 @@
                                       ItemsSource="{Binding YearlyMonthOptions}" DisplayMemberPath="Name"
                                       SelectedValuePath="Month" SelectedValue="{Binding YearlyMonth}"/>
                         </StackPanel>
-                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsOther, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Margin="0,0,16,8" Visibility="{Binding IsTransactionReport, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
                             <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
                                       ItemsSource="{Binding YearOptions}" SelectedItem="{Binding OtherYear}"/>
                         </StackPanel>
                     </WrapPanel>
+
+                    <StackPanel Visibility="{Binding IsStockReport, Converter={StaticResource BoolToVis}}" Margin="0,4,0,0">
+                        <TextBlock Text="Date range" Style="{StaticResource ReportSummaryLabel}" Margin="0,0,0,6"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <RadioButton Content="Daily" GroupName="StockPeriod" Style="{StaticResource SegmentedOption}"
+                                         IsChecked="{Binding StockPeriod, Converter={StaticResource EnumEquals}, ConverterParameter=Daily}"/>
+                            <RadioButton Content="Weekly" GroupName="StockPeriod" Style="{StaticResource SegmentedOption}"
+                                         IsChecked="{Binding StockPeriod, Converter={StaticResource EnumEquals}, ConverterParameter=Weekly}"/>
+                            <RadioButton Content="Monthly" GroupName="StockPeriod" Style="{StaticResource SegmentedOption}"
+                                         IsChecked="{Binding StockPeriod, Converter={StaticResource EnumEquals}, ConverterParameter=Monthly}"/>
+                            <RadioButton Content="Yearly" GroupName="StockPeriod" Style="{StaticResource SegmentedOption}"
+                                         IsChecked="{Binding StockPeriod, Converter={StaticResource EnumEquals}, ConverterParameter=Yearly}"/>
+                        </WrapPanel>
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,16,8" Visibility="{Binding IsStockDaily, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Date" Style="{StaticResource FieldLabel}"/>
+                                <DatePicker SelectedDate="{Binding StockDailyDate}" Width="180"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8" Visibility="{Binding IsStockWeekly, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Date in week" Style="{StaticResource FieldLabel}"/>
+                                <DatePicker SelectedDate="{Binding StockWeekDate}" Width="180"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8" Visibility="{Binding IsStockMonthly, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Month" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox Style="{StaticResource InlineDropdown}" Width="160"
+                                          ItemsSource="{Binding MonthOptions}" DisplayMemberPath="Name"
+                                          SelectedValuePath="Month" SelectedValue="{Binding StockMonth}"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8" Visibility="{Binding IsStockMonthly, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                          ItemsSource="{Binding YearOptions}" SelectedItem="{Binding StockMonthYear}"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8" Visibility="{Binding IsStockYearly, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Year" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox Style="{StaticResource InlineDropdown}" Width="120"
+                                          ItemsSource="{Binding YearOptions}" SelectedItem="{Binding StockYear}"/>
+                            </StackPanel>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding StockPeriodCaption}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextBrush}" FontSize="13"/>
+                    </StackPanel>
                     <TextBlock Text="{Binding ValidationMessage}" Margin="0,8,0,0" TextWrapping="Wrap"
                                Foreground="{StaticResource DangerBrush}" FontSize="13"
                                Visibility="{Binding HasValidation, Converter={StaticResource BoolToVis}}"/>
@@ -240,18 +282,24 @@
                             <DataGrid x:Name="OtherGrid"
                                       Style="{StaticResource ReportsDataGrid}"
                                       ItemsSource="{Binding OtherRows}"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       Visibility="{Binding IsSalesView, Converter={StaticResource InverseBoolToVis}}">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Binding="{Binding Col1}" Width="160" MinWidth="120"
+                                    <DataGridTextColumn Binding="{Binding Col1}" Width="180" MinWidth="168"
                                                         ElementStyle="{StaticResource ReportsText}"/>
                                     <DataGridTextColumn Binding="{Binding Col2}" Width="*" MinWidth="140"
                                                         ElementStyle="{StaticResource ReportsText}"/>
-                                    <DataGridTextColumn Binding="{Binding Col3}" Width="*" MinWidth="110"
+                                    <DataGridTextColumn Binding="{Binding Col3}" Width="*" MinWidth="120"
                                                         ElementStyle="{StaticResource ReportsText}"/>
-                                    <DataGridTextColumn Binding="{Binding Col4}" Width="160" MinWidth="110"
+                                    <DataGridTextColumn Binding="{Binding Col4}" Width="160" MinWidth="130"
+                                                        ElementStyle="{StaticResource ReportsText}"/>
+                                    <DataGridTextColumn Binding="{Binding Col5}" Width="140" MinWidth="120"
                                                         ElementStyle="{StaticResource ReportsText}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
+                            <TextBlock Text="{Binding StockEmptyMessage}" Margin="0,16" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Visibility="{Binding ShowStockEmpty, Converter={StaticResource BoolToVis}}"/>
 
                             <TextBlock Text="{Binding FooterText}" Margin="0,8,0,0" FontSize="12"
                                        Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>

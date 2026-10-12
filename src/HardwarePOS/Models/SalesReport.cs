@@ -12,6 +12,27 @@ public enum ReportView
     Today
 }
 
+public enum StockReportPeriod
+{
+    Daily,
+    Weekly,
+    Monthly,
+    Yearly
+}
+
+public readonly record struct StockReportWindow(DateTime Start, DateTime End, string Label)
+{
+    public bool Contains(DateTime localTimestamp) => localTimestamp >= Start && localTimestamp < End;
+
+    public bool ContainsUtc(DateTime utcTimestamp, TimeZoneInfo zone)
+    {
+        var utc = utcTimestamp.Kind == DateTimeKind.Utc
+            ? utcTimestamp
+            : DateTime.SpecifyKind(utcTimestamp, DateTimeKind.Utc);
+        return Contains(TimeZoneInfo.ConvertTimeFromUtc(utc, zone));
+    }
+}
+
 public enum SalesPeriodStatus
 {
     Complete,
@@ -99,6 +120,7 @@ public class ReportDocument
     public string Title { get; init; } = string.Empty;
     public string PeriodLabel { get; init; } = "Period";
     public string PeriodValue { get; init; } = string.Empty;
+    public bool FlexibleColumns { get; init; }
     public IReadOnlyList<string> SummaryLines { get; init; } = [];
     public IReadOnlyList<string> Notes { get; init; } = [];
     public IReadOnlyList<string> Headers { get; init; } = [];

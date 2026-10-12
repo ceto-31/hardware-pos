@@ -6,6 +6,7 @@ public class ReportRow
     public string Col2 { get; set; } = string.Empty;
     public string Col3 { get; set; } = string.Empty;
     public string Col4 { get; set; } = string.Empty;
+    public string Col5 { get; set; } = string.Empty;
     public bool ExcludeFromTotal { get; set; }
 }
 
@@ -16,6 +17,7 @@ public class StockInReportRow
     public string? SupplierName { get; set; }
     public string Unit { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
+    public DateTime? ExpirationDate { get; set; }
 }
 
 public class StockOutReportRow

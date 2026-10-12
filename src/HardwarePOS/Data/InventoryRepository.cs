@@ -213,7 +213,7 @@ public class InventoryRepository
         return list;
     }
 
-    public List<StockInReportRow> GetStockInReport(int year)
+    public List<StockInReportRow> GetStockInReport(DateTime start, DateTime end)
     {
         var list = new List<StockInReportRow>();
         using var conn = DbConnectionFactory.Create();
@@ -221,19 +221,33 @@ public class InventoryRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT
-                COALESCE(si.DateReceived, CAST(l.CreatedAt AS date)) AS MovementDate,
+                recorded.RecordedAt,
                 p.ProductName,
                 s.CompanyName,
-                COALESCE(si.Quantity, l.QtyChange) AS Quantity, p.UnitOfMeasure
+                COALESCE(si.Quantity, l.QtyChange) AS Quantity,
+                p.UnitOfMeasure,
+                batch.ExpirationDate
             FROM dbo.InventoryLedger l
             INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
             LEFT JOIN dbo.StockIns si ON si.StockInId = l.ReferenceId
             LEFT JOIN dbo.Suppliers s ON s.SupplierId = si.SupplierId
+            CROSS APPLY (
+                SELECT CAST(
+                    (COALESCE(si.CreatedAt, l.CreatedAt) AT TIME ZONE 'UTC') AT TIME ZONE @Tz
+                    AS datetime2(0)) AS RecordedAt
+            ) recorded
+            OUTER APPLY (
+                SELECT TOP (1) ExpirationDate
+                FROM dbo.InventoryBatches
+                WHERE StockInId = si.StockInId
+                ORDER BY BatchId
+            ) batch
             WHERE l.MovementType = N'IN'
-              AND YEAR(COALESCE(si.DateReceived, l.CreatedAt)) = @Year
-            ORDER BY MovementDate DESC, l.LedgerId DESC;
+              AND recorded.RecordedAt >= @Start
+              AND recorded.RecordedAt < @End
+            ORDER BY recorded.RecordedAt DESC, l.LedgerId DESC;
             """;
-        cmd.Parameters.AddWithValue("@Year", year);
+        AddPeriod(cmd, start, end);
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -243,13 +257,15 @@ public class InventoryRepository
                 MovementDate = reader.GetDateTime(0),
                 ProductName = reader.GetString(1),
                 SupplierName = reader.IsDBNull(2) ? null : reader.GetString(2),
-                Quantity = reader.GetDecimal(3), Unit=reader.GetString(4)
+                Quantity = reader.GetDecimal(3),
+                Unit = reader.GetString(4),
+                ExpirationDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5)
             });
         }
         return list;
     }
 
-    public List<StockOutReportRow> GetStockOutReport(int year)
+    public List<StockOutReportRow> GetStockOutReport(DateTime start, DateTime end)
     {
         var list = new List<StockOutReportRow>();
         using var conn = DbConnectionFactory.Create();
@@ -257,18 +273,25 @@ public class InventoryRepository
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT
-                COALESCE(so.DateOut, CAST(l.CreatedAt AS date)) AS MovementDate,
+                recorded.RecordedAt,
                 p.ProductName,
                 ABS(l.QtyChange) AS Quantity,
-                COALESCE(so.Reason, l.Remarks) AS Reason, p.UnitOfMeasure
+                COALESCE(so.Reason, l.Remarks) AS Reason,
+                p.UnitOfMeasure
             FROM dbo.InventoryLedger l
             INNER JOIN dbo.Products p ON p.ProductId = l.ProductId
             LEFT JOIN dbo.StockOuts so ON so.StockOutId = l.ReferenceId
+            CROSS APPLY (
+                SELECT CAST(
+                    (COALESCE(so.CreatedAt, l.CreatedAt) AT TIME ZONE 'UTC') AT TIME ZONE @Tz
+                    AS datetime2(0)) AS RecordedAt
+            ) recorded
             WHERE l.MovementType = N'OUT'
-              AND YEAR(COALESCE(so.DateOut, l.CreatedAt)) = @Year
-            ORDER BY MovementDate DESC, l.LedgerId DESC;
+              AND recorded.RecordedAt >= @Start
+              AND recorded.RecordedAt < @End
+            ORDER BY recorded.RecordedAt DESC, l.LedgerId DESC;
             """;
-        cmd.Parameters.AddWithValue("@Year", year);
+        AddPeriod(cmd, start, end);
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -278,10 +301,18 @@ public class InventoryRepository
                 MovementDate = reader.GetDateTime(0),
                 ProductName = reader.GetString(1),
                 Quantity = reader.GetDecimal(2),
-                Reason = reader.IsDBNull(3) ? null : reader.GetString(3), Unit=reader.GetString(4)
+                Reason = reader.IsDBNull(3) ? null : reader.GetString(3),
+                Unit = reader.GetString(4)
             });
         }
         return list;
+    }
+
+    private static void AddPeriod(SqlCommand cmd, DateTime start, DateTime end)
+    {
+        cmd.Parameters.AddWithValue("@Start", start);
+        cmd.Parameters.AddWithValue("@End", end);
+        cmd.Parameters.AddWithValue("@Tz", TimeZoneInfo.Local.Id);
     }
 
     private static void EnsureActiveProduct(SqlConnection conn, SqlTransaction tx, int productId, decimal quantity)

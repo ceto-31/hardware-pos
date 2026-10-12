@@ -90,6 +90,50 @@ internal static class Program
             ExpectWeeks(2024,2,5,new DateTime(2024,2,29),new DateTime(2024,2,29));
             ExpectWeeks(2026,4,5,new DateTime(2026,4,29),new DateTime(2026,4,30));
             ExpectWeeks(2026,1,5,new DateTime(2026,1,29),new DateTime(2026,1,31));
+            var leapMonth=SalesReportBuilder.BuildDaily([],new DateTime(2024,2,1),new DateTime(2024,2,29),new DateTime(2024,1,1),new DateTime(2024,3,1));
+            Equal(29,leapMonth.Periods.Count,"February 2024 has 29 days");
+            Equal(new DateTime(2024,2,29),leapMonth.Periods[^1].Start,"Leap day stays in February");
+            Equal(true,leapMonth.Periods.All(p=>p.Start.Month==2 && p.End.Month==2),"Leap-month days stay inside February");
+            var march=SalesReportBuilder.BuildDaily([],new DateTime(2026,3,1),new DateTime(2026,3,31),new DateTime(2026,1,1),new DateTime(2026,4,1));
+            Equal(31,march.Periods.Count,"March 2026 has 31 days");
+            Equal(true,march.Periods.All(p=>p.Start.Month==3),"March days stay inside March");
+            var year2025=SalesReportBuilder.BuildMonthly([],2025,new DateTime(2025,1,1),new DateTime(2026,1,1));
+            Equal(new DateTime(2025,1,1),year2025.RangeStart,"2025 starts on January 1");
+            Equal(new DateTime(2025,12,31),year2025.RangeEnd,"2025 ends on December 31");
+            Equal(12,year2025.Periods.Count,"2025 lists every month");
+            var stockDay=StockReportRange.Day(new DateTime(2026,10,12));
+            Equal(new DateTime(2026,10,12),stockDay.Start,"Stock daily starts at midnight");
+            Equal(new DateTime(2026,10,13),stockDay.End,"Stock daily ends at the next midnight");
+            Equal("October 12, 2026",stockDay.Label,"Stock daily label");
+            Equal(true,stockDay.Contains(new DateTime(2026,10,12,23,59,59)),"Stock daily includes the last second");
+            Equal(false,stockDay.Contains(new DateTime(2026,10,13)),"Stock daily excludes the next day");
+            var stockWeek=StockReportRange.Week(new DateTime(2026,10,14));
+            Equal(new DateTime(2026,10,12),stockWeek.Start,"Stock week starts Monday");
+            Equal(new DateTime(2026,10,19),stockWeek.End,"Stock week ends the next Monday");
+            Equal("Week of October 12\u201318, 2026",stockWeek.Label,"Stock week label");
+            Equal(true,stockWeek.Contains(new DateTime(2026,10,18,23,59,0)),"Stock week includes Sunday");
+            Equal(false,stockWeek.Contains(new DateTime(2026,10,19)),"Stock week excludes the next Monday");
+            var crossing=StockReportRange.Week(new DateTime(2026,12,31));
+            Equal(new DateTime(2026,12,28),crossing.Start,"Year-end week starts on its Monday");
+            Equal(new DateTime(2027,1,4),crossing.End,"Year-end week ends the following Monday");
+            Equal("Week of December 28, 2026\u2013January 3, 2027",crossing.Label,"Year-end week label");
+            var leap=StockReportRange.Month(2024,2);
+            Equal(new DateTime(2024,3,1),leap.End,"Leap-year February ends on March 1");
+            Equal(true,leap.Contains(new DateTime(2024,2,29,18,0,0)),"Leap day stays in February");
+            Equal(false,leap.Contains(new DateTime(2024,3,1)),"March 1 stays out of February");
+            var longMonth=StockReportRange.Month(2026,3);
+            Equal(new DateTime(2026,4,1),longMonth.End,"March ends on April 1");
+            Equal("March 2026",longMonth.Label,"Monthly stock label");
+            var stockYear=StockReportRange.Year(2025);
+            Equal(new DateTime(2025,1,1),stockYear.Start,"Stock year starts January 1");
+            Equal(new DateTime(2026,1,1),stockYear.End,"Stock year ends the next January 1");
+            Equal("Year 2025",stockYear.Label,"Yearly stock label");
+            Equal(false,stockYear.Contains(new DateTime(2026,1,1)),"Next New Year is excluded");
+            var zone=TimeZoneInfo.Local;
+            var insideUtc=TimeZoneInfo.ConvertTimeToUtc(new DateTime(2026,10,12,23,30,0),zone);
+            var outsideUtc=TimeZoneInfo.ConvertTimeToUtc(new DateTime(2026,10,13,0,30,0),zone);
+            Equal(true,stockDay.ContainsUtc(insideUtc,zone),"Local late evening stays on the selected day");
+            Equal(false,stockDay.ContainsUtc(outsideUtc,zone),"The next local morning stays out of the selected day");
             if(args.Contains("--database")) DatabaseChecks(args.Contains("--visual"));
             Console.WriteLine($"{_checks} checks passed.");
             // Offscreen WPF/Skia shutdown handlers can wait on an absent dispatcher loop.
@@ -291,6 +335,8 @@ internal static class Program
                 """);
             var febTotals=reports.GetDailyTotals(new DateTime(2026,2,1),new DateTime(2026,2,28));
             var marTotals=reports.GetDailyTotals(new DateTime(2026,3,1),new DateTime(2026,3,31));
+            Equal(40m,reports.GetDailyTotals(new DateTime(2026,2,10),new DateTime(2026,2,10)).Sum(d=>d.Amount),"October-style single day includes only that date");
+            Equal(0m,reports.GetDailyTotals(new DateTime(2026,2,11),new DateTime(2026,2,11)).Sum(d=>d.Amount),"The following day excludes that sale");
             Equal(40m,febTotals.Sum(d=>d.Amount),"February sales exclude the void and the March refund");
             Equal(0m,febTotals.Sum(d=>d.RefundAmount),"February has no processed refund");
             Equal(-15m,marTotals.Sum(d=>d.Amount),"March deducts the refund on its processing date");
@@ -303,6 +349,58 @@ internal static class Program
             SessionManager.SignIn(new UserAccount {UserId=2,RoleName="Cashier",FullName="Check cashier",IsActive=true});
             Equal(40m,new SalesReportRepository().GetDailyTotals(new DateTime(2026,2,1),new DateTime(2026,2,28)).Sum(d=>d.Amount),"Cashier can read February store sales");
             SessionManager.SignIn(new UserAccount {UserId=1,RoleName="Admin",FullName="Check admin",IsActive=true});
+            var boundary=products.Insert(new Product {ProductName="Boundary Paint",ProductCode="BOUND",UnitId=piece,CategoryId=2,SellingPrice=10});
+            inventory.StockIn(1,boundary,2,new DateTime(2026,3,15),new DateTime(2027,6,1),"Inside",1);
+            inventory.StockIn(1,boundary,1,new DateTime(2026,3,16),null,"Outside",1);
+            int StockInId(string remarks)
+            {
+                using var cmd=conn.CreateCommand();
+                cmd.CommandText="SELECT TOP 1 StockInId FROM dbo.StockIns WHERE ProductId=@Product AND Remarks=@Remarks ORDER BY StockInId DESC;";
+                cmd.Parameters.AddWithValue("@Product",boundary);
+                cmd.Parameters.AddWithValue("@Remarks",remarks);
+                return (int)cmd.ExecuteScalar()!;
+            }
+            void Stamp(string table,string idColumn,int id,DateTime utc,string movement)
+            {
+                using var cmd=conn.CreateCommand();
+                cmd.CommandText=$"UPDATE dbo.{table} SET CreatedAt=@At WHERE {idColumn}=@Id; UPDATE dbo.InventoryLedger SET CreatedAt=@At WHERE ReferenceId=@Id AND MovementType=@Movement;";
+                cmd.Parameters.AddWithValue("@At",utc);
+                cmd.Parameters.AddWithValue("@Id",id);
+                cmd.Parameters.AddWithValue("@Movement",movement);
+                cmd.ExecuteNonQuery();
+            }
+            var localZone=TimeZoneInfo.Local;
+            DateTime ToUtc(DateTime local)=>TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local,DateTimeKind.Unspecified),localZone);
+            var inside=StockInId("Inside");
+            var outside=StockInId("Outside");
+            Stamp("StockIns","StockInId",inside,ToUtc(new DateTime(2026,3,15,23,30,0)),"IN");
+            Stamp("StockIns","StockInId",outside,ToUtc(new DateTime(2026,3,16,0,30,0)),"IN");
+            inventory.StockOut(boundary,1,"Damaged",new DateTime(2026,3,15),"Scratched",1);
+            int stockOutId;
+            using(var cmd=conn.CreateCommand())
+            {
+                cmd.CommandText="SELECT TOP 1 StockOutId FROM dbo.StockOuts WHERE ProductId=@Product ORDER BY StockOutId DESC;";
+                cmd.Parameters.AddWithValue("@Product",boundary);
+                stockOutId=(int)cmd.ExecuteScalar()!;
+            }
+            Stamp("StockOuts","StockOutId",stockOutId,ToUtc(new DateTime(2026,3,15,23,30,0)),"OUT");
+            var dayRows=inventory.GetStockInReport(new DateTime(2026,3,15),new DateTime(2026,3,16));
+            Equal(1,dayRows.Count(r=>r.ProductName=="Boundary Paint"),"Daily stock in keeps only the selected date");
+            Equal(new DateTime(2027,6,1),dayRows.Single(r=>r.ProductName=="Boundary Paint").ExpirationDate!.Value.Date,"Stock in report shows the delivery expiration");
+            Equal(2m,dayRows.Single(r=>r.ProductName=="Boundary Paint").Quantity,"Daily stock in quantity");
+            var week=StockReportRange.Week(new DateTime(2026,3,15));
+            var weekRows=inventory.GetStockInReport(week.Start,week.End);
+            Equal(1,weekRows.Count(r=>r.ProductName=="Boundary Paint"),"Weekly stock in stays inside Monday through Sunday");
+            var march=inventory.GetStockInReport(new DateTime(2026,3,1),new DateTime(2026,4,1));
+            Equal(2,march.Count(r=>r.ProductName=="Boundary Paint"),"Monthly stock in includes both March records");
+            Equal(0,inventory.GetStockInReport(new DateTime(2026,2,1),new DateTime(2026,3,1)).Count(r=>r.ProductName=="Boundary Paint"),"February excludes March stock in");
+            Equal(2,inventory.GetStockInReport(new DateTime(2026,1,1),new DateTime(2027,1,1)).Count(r=>r.ProductName=="Boundary Paint"),"Yearly stock in includes the selected year");
+            Equal(0,inventory.GetStockInReport(new DateTime(2025,1,1),new DateTime(2026,1,1)).Count(r=>r.ProductName=="Boundary Paint"),"Year 2025 excludes 2026 stock in");
+            var outDay=inventory.GetStockOutReport(new DateTime(2026,3,15),new DateTime(2026,3,16));
+            Equal(1,outDay.Count(r=>r.ProductName=="Boundary Paint"),"Daily stock out keeps only the selected date");
+            Equal("Damaged",outDay.Single(r=>r.ProductName=="Boundary Paint").Reason,"Stock out report keeps the recorded reason");
+            Equal(0,inventory.GetStockOutReport(new DateTime(2026,3,16),new DateTime(2026,3,17)).Count(r=>r.ProductName=="Boundary Paint"),"The next day excludes that stock out");
+            Equal(true,inventory.GetHistory(boundary).Any(r=>r.MovementType=="IN") && inventory.GetHistory(boundary).Any(r=>r.MovementType=="OUT"),"Stock movement log still lists both movements");
             if(visual) VisualChecks.Run(product);
         }
         finally

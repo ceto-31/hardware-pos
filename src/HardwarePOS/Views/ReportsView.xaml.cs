@@ -37,6 +37,8 @@ public partial class ReportsView : UserControl
             or nameof(ReportsViewModel.Col4Header)
             or nameof(ReportsViewModel.ShowCol3)
             or nameof(ReportsViewModel.ShowCol4)
+            or nameof(ReportsViewModel.ShowCol5)
+            or nameof(ReportsViewModel.Col5Header)
             or nameof(ReportsViewModel.SelectedView))
         {
             SyncColumns();
@@ -81,7 +83,7 @@ public partial class ReportsView : UserControl
         if (SalesGrid.Columns.Count > 0)
             SalesGrid.Columns[0].Header = vm.PeriodColumnHeader;
 
-        if (OtherGrid.Columns.Count < 4) return;
+        if (OtherGrid.Columns.Count < 5) return;
 
         OtherGrid.Columns[0].Header = vm.Col1Header;
         OtherGrid.Columns[1].Header = vm.Col2Header;
@@ -89,6 +91,8 @@ public partial class ReportsView : UserControl
         OtherGrid.Columns[2].Visibility = vm.ShowCol3 ? Visibility.Visible : Visibility.Collapsed;
         OtherGrid.Columns[3].Header = vm.Col4Header;
         OtherGrid.Columns[3].Visibility = vm.ShowCol4 ? Visibility.Visible : Visibility.Collapsed;
+        OtherGrid.Columns[4].Header = vm.Col5Header;
+        OtherGrid.Columns[4].Visibility = vm.ShowCol5 ? Visibility.Visible : Visibility.Collapsed;
 
         var textHeader = (Style)FindResource("ReportsColumnHeader");
         var moneyHeader = (Style)FindResource("ReportsNumericHeader");

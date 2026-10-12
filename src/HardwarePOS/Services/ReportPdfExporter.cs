@@ -83,14 +83,14 @@ public static class ReportPdfExporter
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            if(columnCount==5)
+                            if(columnCount==5 && !document.FlexibleColumns)
                             {
                                 columns.ConstantColumn(128); columns.RelativeColumn();
                                 columns.ConstantColumn(76); columns.ConstantColumn(55); columns.ConstantColumn(88);
                             }
                             else
                                 for (var i = 0; i < columnCount; i++)
-                                    columns.RelativeColumn(i==0 && columnCount==4 ? 2f : 1.1f);
+                                    columns.RelativeColumn(i == 0 && (columnCount == 4 || document.FlexibleColumns) ? 2f : 1.1f);
                         });
 
                         table.Header(header =>
